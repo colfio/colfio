@@ -103,6 +103,25 @@ class Scene {
 		}
 		return result;
 	}
+	
+	clearScene() {
+		
+		// call the finalization function
+		for(let [key, gameObj] of this.gameObjects){
+			for(let component of gameObj.components){
+				component.finalize();
+			}
+		}
+		
+		this.globalAttributes = new Map();
+		this.subscribers = new Map();
+		this.subscribedMessages = new Map();
+		this.gameObjectTags = new Map();
+		this.gameObjects = new Map();
+		this.sortedObjects = new Array();
+		this.objectsToRemove = new Array();
+		this.componentsToRemove = new Array();
+	}
 
 	// sends message to all subscribers
 	_sendmsg(msg) {
@@ -166,6 +185,7 @@ class Scene {
 	}
 
 	_removeComponentImmediately(component) {
+		component.finalize();
 		this.subscribedMessages.delete (component.id);
 
 		if (this.subscribedMessages.has(component.id)) {
@@ -318,6 +338,10 @@ class Component {
 	draw(ctx) {
 		// will be overridden
 	}
+	
+	finalize(){
+		// will be overridden
+	}
 
 }
 
@@ -330,20 +354,30 @@ class InputManager extends Component {
 
 		let context = this.scene.context;
 		let canvas = context.canvas;
-		canvas.addEventListener("touchstart", (evt) => {
+		
+		// must be done this way, because we want to
+		// remove these listeners while finalization
+		this.startHandler = (evt) => {
 			this.handleStart(evt);
-		}, false);
-		canvas.addEventListener("touchend", (evt) => {
+		};
+		this.endHandler = (evt) => {
 			this.handleEnd(evt);
-		}, false);
-		canvas.addEventListener("mousedown", (evt) => {
-			this.handleStart(evt);
-		}, false);
-		canvas.addEventListener("mouseup", (evt) => {
-			this.handleEnd(evt);
-		}, false);
+		};
+		
+		
+		canvas.addEventListener("touchstart", this.startHandler, false);
+		canvas.addEventListener("touchend", this.endHandler, false);
+		canvas.addEventListener("mousedown", this.startHandler, false);
+		canvas.addEventListener("mouseup", this.endHandler, false);
 	}
 
+	finalize(){
+		canvas.removeEventListener("touchstart", this.startHandler);
+		canvas.removeEventListener("touchend", this.endHandler);
+		canvas.removeEventListener("mousedown", this.startHandler);
+		canvas.removeEventListener("mouseup", this.endHandler);
+	}
+	
 	handleStart(evt) {
 		evt.preventDefault();
 		if (typeof(evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
