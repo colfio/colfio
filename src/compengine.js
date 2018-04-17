@@ -1,20 +1,12 @@
 
-class Sprite {
-	constructor(atlas, offsetX, offsetY, width, height) {
-		this.atlas = atlas;
-		this.offsetX = offsetX;
-		this.offsetY = offsetY;
-		this.width = width;
-		this.height = height;
-	}
-}
-
 const MSG_OBJECT_ADDED = 1;
 const MSG_OBJECT_REMOVED = 2;
 
 class Context {
-	constructor(canvas){
+	constructor(canvas) {
 		this.canvas = canvas;
+		this.canvasHeight = canvas.height;
+		this.canvasWidth = canvas.width;
 	}
 }
 
@@ -26,9 +18,11 @@ class Scene {
 		}
 
 		Scene.scene = this;
-		
+
 		this.context = context;
-		
+		// list of global attributes attached to whole game
+		this.globalAttributes = new Map();
+
 		// messages keys and all subscribers that listens to specific keys
 		this.subscribers = new Map();
 		// component ids and list of all message keys they listen to
@@ -41,18 +35,30 @@ class Scene {
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
 	}
+	
+	addGlobalAttribute(key, val) {
+		this.globalAttributes.set(key, val);
+	}
+
+	getGlobalAttribute(key) {
+		return this.globalAttributes.get(key);
+	}
+
+	removeGlobalAttribute(key) {
+		this.globalAttributes.delete (key);
+	}
 
 	// adds a new game object into scene
 	addGameObject(obj) {
+		obj.scene = this;
+				
 		// initialize all components
 		for (let component of obj.components) {
 			component.owner = obj;
 			component.scene = this;
 			component.oninit();
 		}
-		
-		obj.scene = this;
-		
+
 		if (!this.gameObjectTags.has(obj.tag)) {
 			this.gameObjectTags.set(obj.tag, new Map());
 		}
@@ -72,7 +78,7 @@ class Scene {
 	findAllObjectsByTag(tag) {
 		let result = new Array();
 		if (this.gameObjectTags.has(tag)) {
-			for (let [key, gameObject] of this.gameObjectTags.get(tag)) {
+			for (let[key, gameObject]of this.gameObjectTags.get(tag)) {
 				result.push(gameObject);
 			}
 		}
@@ -81,10 +87,10 @@ class Scene {
 
 	// sends message to all subscribers
 	_sendmsg(msg) {
-		if (this.subscribers.has(msg.messageKey)) {
+		if (this.subscribers.has(msg.action)) {
 			// get all subscribed components
-			let subscribedComponents = this.subscribers.get(msg.messageKey);
-			for (let component of subscribedComponents) {
+			let subscribedComponents = this.subscribers.get(msg.action);
+			for (let[key, component]of subscribedComponents) {
 				// send message
 				component.onmessage(msg);
 			}
@@ -133,11 +139,13 @@ class Scene {
 	}
 
 	_removeComponentImmediately(component) {
-		let allMsgKeys = this.subscribedMessages.get(component.id);
 		this.subscribedMessages.delete (component.id);
 
-		for (let msgKey of allMsgKeys) {
-			this.subscribers.get(msgKey).delete (component.id);
+		if(this.subscribedMessages.has(component.id)) {
+			let allMsgKeys = this.subscribedMessages.get(component.id);
+			for (let msgKey of allMsgKeys) {
+				this.subscribers.get(msgKey).delete (component.id);
+			}	
 		}
 	}
 
@@ -150,8 +158,8 @@ class Scene {
 	}
 
 	update(delta, absolute) {
-		for (let [key, gameObject] of this.gameObjects) {
-			gameObject._update(delta, absolute);
+		for (let[key, gameObject]of this.gameObjects) {
+			gameObject.update(delta, absolute);
 		}
 
 		this._removePendingComponents();
@@ -159,12 +167,11 @@ class Scene {
 	}
 
 	draw(ctx) {
-		for (let [key, gameObject] of this.gameObjects) {
-			gameObject._draw(ctx);
+		for (let[key, gameObject]of this.gameObjects) {
+			gameObject.draw(ctx);
 		}
 	}
 }
-
 
 class GameObject {
 
@@ -181,7 +188,7 @@ class GameObject {
 
 	addComponent(component) {
 		this.components.push(component);
-		if(this.scene != null){
+		if (this.scene != null) {
 			this.scene.addComponent(component);
 		}
 	}
@@ -190,7 +197,7 @@ class GameObject {
 		for (var i = 0; i < components.length; i++) {
 			if (components[i] == component) {
 				this.components.splice(i, 1);
-				if(this.scene != null){
+				if (this.scene != null) {
 					this.scene.removeComponent(component);
 				}
 				return true;
@@ -211,13 +218,13 @@ class GameObject {
 		this.attributes.delete (key);
 	}
 
-	_update(delta, absolute) {
+	update(delta, absolute) {
 		for (let component of this.components) {
 			component.update(delta, absolute);
 		}
 	}
 
-	_draw(ctx) {
+	draw(ctx) {
 		for (let component of this.components) {
 			component.draw(ctx)
 		}
@@ -226,8 +233,8 @@ class GameObject {
 GameObject.idCounter = 0;
 
 class Msg {
-	constructor(messageKey, component, gameObject, data) {
-		this.messageKey = messageKey;
+	constructor(action, component, gameObject, data) {
+		this.action = action;
 		this.component = component;
 		this.gameObject = gameObject;
 		this.data = data;
@@ -241,19 +248,19 @@ class Component {
 		this.owner = null;
 		this.scene = null;
 	}
-	
+
 	oninit() {
 		// will be overridden
 	}
 
-	subscribe(messageKey) {
-		this.scene._subscribe(messageKey, this);
+	subscribe(action) {
+		this.scene._subscribeComponent(action, this);
 	}
 
-	sendmsg(messageKey, data) {
-		this.scene._sendmsg(new Msg(messageKey, this, this.owner, data));
+	sendmsg(action, data) {
+		this.scene._sendmsg(new Msg(action, this, this.owner, data));
 	}
-	
+
 	onmessage(msg) {
 		// will be overridden
 	}
@@ -270,11 +277,56 @@ class Component {
 
 Component.idCounter = 0;
 
-class Renderer extends Component {
-	draw(ctx) {
-		if (this.owner.sprite != null) {
-			ctx.drawImage(this.owner.sprite.atlas, this.owner.sprite.offsetX, this.owner.sprite.offsetY,
-				this.owner.sprite.width, this.owner.sprite.height, this.owner.posX, this.owner.posY, this.owner.sprite.width, this.owner.sprite.height);
+class InputManager extends Component {
+
+	oninit() {
+		this.lastTouch = null;
+
+		let context = this.scene.context;
+		let canvas = context.canvas;
+		canvas.addEventListener("touchstart", (evt) => {
+			this.handleStart(evt);
+		}, false);
+		canvas.addEventListener("touchend", (evt) => {
+			this.handleEnd(evt);
+		}, false);
+		canvas.addEventListener("mousedown", (evt) => {
+			this.handleStart(evt);
+		}, false);
+		canvas.addEventListener("mouseup", (evt) => {
+			this.handleEnd(evt);
+		}, false);
+	}
+
+	handleStart(evt) {
+		evt.preventDefault();
+		if (typeof(evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
+			// only single-touch
+			this.lastTouch = evt.changedTouches[0];
+		} else {
+			this.lastTouch = evt;
 		}
 	}
+
+	handleEnd(evt) {
+		evt.preventDefault();
+		var posX,
+		posY;
+
+		if (typeof(evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
+			posX = evt.changedTouches[0].pageX;
+			posY = evt.changedTouches[1].pageY;
+
+		} else {
+			// mouse
+			posX = evt.pageX;
+			posY = evt.pageY;
+		}
+
+		if (Math.abs(this.lastTouch.pageX - posX) < 10 &&
+			Math.abs(this.lastTouch.pageY - posY) < 10) {
+			this.sendmsg(MSG_TOUCH, [posX, posY]);
+		}
+	}
+
 }
