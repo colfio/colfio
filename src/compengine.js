@@ -31,6 +31,8 @@ class Scene {
 		this.gameObjectTags = new Map();
 		// collection of all game objects, mapped by their id
 		this.gameObjects = new Map();
+		// game objects sorted by z-index, used for drawing
+		this.sortedObjects = new Array();
 
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
@@ -67,6 +69,15 @@ class Scene {
 		this.gameObjectTags.get(obj.tag).set(obj.id, obj);
 		this.gameObjects.set(obj.id, obj);
 
+		// keep the third collection sorted by z-index
+		let fnd = this.sortedObjects.binaryFind(obj, (current, search) => {
+			if(current.zIndex == search.zIndex) return 0;
+			else if(current.zIndex > search.zIndex) return 1;
+			else return -1;
+		});
+		
+		this.sortedObjects.splice(fnd.index, 0, obj);
+		
 		this._sendmsg(new Msg(MSG_OBJECT_ADDED, null, obj));
 	}
 
@@ -122,6 +133,15 @@ class Scene {
 
 		this.gameObjectTags.get(obj.tag).delete (obj.id);
 		this.gameObjects.delete (obj.id);
+		
+		for(let i=0; i<this.sortedObjects.length; i++){
+			if(this.sortedObjects[i].id == obj.id){
+				this.sortedObjects.splice(i,1);
+				break;
+			}
+		}
+		
+		
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
@@ -156,7 +176,8 @@ class Scene {
 		this.componentsToRemove = [];
 
 	}
-
+	
+	
 	update(delta, absolute) {
 		for (let[key, gameObject]of this.gameObjects) {
 			gameObject.update(delta, absolute);
@@ -167,7 +188,7 @@ class Scene {
 	}
 
 	draw(ctx) {
-		for (let[key, gameObject]of this.gameObjects) {
+		for(let gameObject of this.sortedObjects){
 			gameObject.draw(ctx);
 		}
 	}
@@ -181,6 +202,7 @@ class GameObject {
 		this.components = new Array();
 		this.posX = 0;
 		this.posY = 0;
+		this.zIndex = 0;
 		this.sprite = null;
 		this.scene = null;
 		this.attributes = new Map();
