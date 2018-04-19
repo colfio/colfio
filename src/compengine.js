@@ -37,7 +37,7 @@ class Scene {
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
 	}
-	
+
 	addGlobalAttribute(key, val) {
 		this.globalAttributes.set(key, val);
 	}
@@ -53,12 +53,10 @@ class Scene {
 	// adds a new game object into scene
 	addGameObject(obj) {
 		obj.scene = this;
-				
+
 		// initialize all components
 		for (let component of obj.components) {
-			component.owner = obj;
-			component.scene = this;
-			component.oninit();
+			this.addGameObjectComponent(component, obj);
 		}
 
 		if (!this.gameObjectTags.has(obj.tag)) {
@@ -71,16 +69,26 @@ class Scene {
 
 		// keep the third collection sorted by z-index
 		let fnd = this.sortedObjects.binaryFind(obj, (current, search) => {
-			if(current.zIndex == search.zIndex) return 0;
-			else if(current.zIndex > search.zIndex) return 1;
-			else return -1;
-		});
-		
+				if (current.zIndex == search.zIndex)
+					return 0;
+				else if (current.zIndex > search.zIndex)
+					return 1;
+				else
+					return -1;
+			});
+
 		this.sortedObjects.splice(fnd.index, 0, obj);
-		
+
 		this._sendmsg(new Msg(MSG_OBJECT_ADDED, null, obj));
 	}
 
+	
+	addGameObjectComponent(component, owner) {
+		component.owner = owner;
+		component.scene = this;
+		component.oninit();
+	}
+	
 	removeGameObject(obj) {
 		// will be removed at the end of the update loop
 		this.objectsToRemove.push(obj);
@@ -133,15 +141,14 @@ class Scene {
 
 		this.gameObjectTags.get(obj.tag).delete (obj.id);
 		this.gameObjects.delete (obj.id);
-		
-		for(let i=0; i<this.sortedObjects.length; i++){
-			if(this.sortedObjects[i].id == obj.id){
-				this.sortedObjects.splice(i,1);
+
+		for (let i = 0; i < this.sortedObjects.length; i++) {
+			if (this.sortedObjects[i].id == obj.id) {
+				this.sortedObjects.splice(i, 1);
 				break;
 			}
 		}
-		
-		
+
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
@@ -161,11 +168,11 @@ class Scene {
 	_removeComponentImmediately(component) {
 		this.subscribedMessages.delete (component.id);
 
-		if(this.subscribedMessages.has(component.id)) {
+		if (this.subscribedMessages.has(component.id)) {
 			let allMsgKeys = this.subscribedMessages.get(component.id);
 			for (let msgKey of allMsgKeys) {
 				this.subscribers.get(msgKey).delete (component.id);
-			}	
+			}
 		}
 	}
 
@@ -176,8 +183,7 @@ class Scene {
 		this.componentsToRemove = [];
 
 	}
-	
-	
+
 	update(delta, absolute) {
 		for (let[key, gameObject]of this.gameObjects) {
 			gameObject.update(delta, absolute);
@@ -188,7 +194,7 @@ class Scene {
 	}
 
 	draw(ctx) {
-		for(let gameObject of this.sortedObjects){
+		for (let gameObject of this.sortedObjects) {
 			gameObject.draw(ctx);
 		}
 	}
@@ -205,22 +211,23 @@ class GameObject {
 		this.zIndex = 0;
 		this.sprite = null;
 		this.scene = null;
+		this.visible = true;
 		this.attributes = new Map();
 	}
 
 	addComponent(component) {
 		this.components.push(component);
 		if (this.scene != null) {
-			this.scene.addComponent(component);
+			this.scene.addGameObjectComponent(component, this);
 		}
 	}
 
 	removeComponent(component) {
-		for (var i = 0; i < components.length; i++) {
-			if (components[i] == component) {
+		for (var i = 0; i < this.components.length; i++) {
+			if (this.components[i] == component) {
 				this.components.splice(i, 1);
 				if (this.scene != null) {
-					this.scene.removeComponent(component);
+					this.scene._removeComponentImmediately(component);
 				}
 				return true;
 			}
@@ -247,9 +254,26 @@ class GameObject {
 	}
 
 	draw(ctx) {
-		for (let component of this.components) {
-			component.draw(ctx)
+		if (this.visible) {
+			for (let component of this.components) {
+				component.draw(ctx)
+			}
 		}
+	}
+
+	intersects(other) {
+		return this._horizontalIntersection(other) >= 0 &&
+		this._verticalIntersection(other) >= 0;
+	}
+
+	_horizontalIntersection(other) {
+		return Math.min(other.posX + other.sprite.width, this.posX + this.sprite.width)
+		 - Math.max(other.posX, this.posX);
+	}
+
+	_verticalIntersection(other) {
+		return -Math.max(other.posY - other.sprite.height, this.posY - this.sprite.height)
+		 + Math.min(other.posY, this.posY);
 	}
 }
 GameObject.idCounter = 0;
