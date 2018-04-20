@@ -1,7 +1,12 @@
+/**
+ * @file Component-based micro-engine, partially implements ECS pattern (Entity-Component-System)
+ * @author Adam Vesecky <vesecky.adam@gmail.com>
+ */
 
 const MSG_OBJECT_ADDED = 1;
 const MSG_OBJECT_REMOVED = 2;
 
+// context that keeps environmental attributes
 class Context {
 	constructor(canvas) {
 		this.canvas = canvas;
@@ -10,6 +15,8 @@ class Context {
 	}
 }
 
+// Scene that keeps collection of all game
+// objects and calls draw and update upon them
 class Scene {
 
 	constructor(context) {
@@ -23,47 +30,64 @@ class Scene {
 		// list of global attributes attached to whole game
 		this.globalAttributes = new Map();
 
-		// messages keys and all subscribers that listens to specific keys
+		// message action keys and all subscribers that listens to all these actions
 		this.subscribers = new Map();
-		// component ids and list of all message keys they listen to
+		// component ids and list of all actions they listen to
 		this.subscribedMessages = new Map();
 		// collection of all game objects, mapped by their tag and then by their ids
 		this.gameObjectTags = new Map();
-		// collection of all game objects, mapped by their id
+		// collection of all game objects, mapped by their ids
 		this.gameObjects = new Map();
 		// game objects sorted by z-index, used for drawing
 		this.sortedObjects = new Array();
 
+		// temporary collection that keeps objects for removal -> objects should be removed
+		// at the end of the update cycle since we are sure there aren't any running components
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
+
+		// functions that should be invoked with some delay
+		this.pendingInvocations = new Array();
 	}
 
+	// stores a new function that should be invoked after given amount of time
+	addPendingInvocation(delay, func) {
+		this.pendingInvocations.push({
+			delay: delay,
+			time: 0,
+			func: func
+		});
+	}
+
+	// adds a new global attribute
 	addGlobalAttribute(key, val) {
 		this.globalAttributes.set(key, val);
 	}
 
+	// gets a global attribute by its key
 	getGlobalAttribute(key) {
 		return this.globalAttributes.get(key);
 	}
 
+	// removes a global attribute by its key
 	removeGlobalAttribute(key) {
 		this.globalAttributes.delete (key);
 	}
 
-	// adds a new game object into scene
+	// adds a new game object into the scene
 	addGameObject(obj) {
 		obj.scene = this;
 
 		// initialize all components
 		for (let component of obj.components) {
-			this.addGameObjectComponent(component, obj);
+			this._addGameObjectComponent(component, obj);
 		}
 
+		// fill all collections
 		if (!this.gameObjectTags.has(obj.tag)) {
 			this.gameObjectTags.set(obj.tag, new Map());
 		}
 
-		// add game object into the collection
 		this.gameObjectTags.get(obj.tag).set(obj.id, obj);
 		this.gameObjects.set(obj.id, obj);
 
@@ -79,21 +103,16 @@ class Scene {
 
 		this.sortedObjects.splice(fnd.index, 0, obj);
 
+		// notify subscribers that a new object has been added to the scene
 		this._sendmsg(new Msg(MSG_OBJECT_ADDED, null, obj));
 	}
 
-	
-	addGameObjectComponent(component, owner) {
-		component.owner = owner;
-		component.scene = this;
-		component.oninit();
-	}
-	
+	// removes given game object as soon as the update cycle finishes
 	removeGameObject(obj) {
-		// will be removed at the end of the update loop
 		this.objectsToRemove.push(obj);
 	}
 
+	// finds all game objects by their tag
 	findAllObjectsByTag(tag) {
 		let result = new Array();
 		if (this.gameObjectTags.has(tag)) {
@@ -101,18 +120,30 @@ class Scene {
 				result.push(gameObject);
 			}
 		}
+
 		return result;
 	}
-	
+
+	// finds a first object with a given tag
+	findFirstObjectByTag(tag) {
+		if (this.gameObjectTags.has(tag)) {
+			for (let[key, gameObject]of this.gameObjectTags.get(tag)) {
+				return gameObject; // return the first one
+			}
+		}
+		return null;
+	}
+
+	// clears the whole scene, all game objects, attributes and components
 	clearScene() {
-		
+
 		// call the finalization function
-		for(let [key, gameObj] of this.gameObjects){
-			for(let component of gameObj.components){
+		for (let[key, gameObj]of this.gameObjects) {
+			for (let component of gameObj.components) {
 				component.finalize();
 			}
 		}
-		
+
 		this.globalAttributes = new Map();
 		this.subscribers = new Map();
 		this.subscribedMessages = new Map();
@@ -121,6 +152,37 @@ class Scene {
 		this.sortedObjects = new Array();
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
+	}
+
+	// executes the update cycle
+	update(delta, absolute) {
+		// update
+		for (let[key, gameObject]of this.gameObjects) {
+			gameObject.update(delta, absolute);
+		}
+
+		// remove pending components and objects
+		this._removePendingComponents();
+		this._removePendingGameObjects();
+
+		// execute pending invocations
+		var i = this.pendingInvocations.length;
+		while (i--) {
+			let invocation = this.pendingInvocations[i];
+			invocation.time += delta;
+
+			if (invocation.time >= invocation.delay) {
+				invocation.func();
+				this.pendingInvocations.splice(i, 1);
+			}
+		}
+	}
+
+	// executes the draw cycle
+	draw(ctx) {
+		for (let gameObject of this.sortedObjects) {
+			gameObject.draw(ctx);
+		}
 	}
 
 	// sends message to all subscribers
@@ -133,6 +195,13 @@ class Scene {
 				component.onmessage(msg);
 			}
 		}
+	}
+
+	// assignes a new component to a given object
+	_addGameObjectComponent(component, owner) {
+		component.owner = owner;
+		component.scene = this;
+		component.oninit();
 	}
 
 	// subscribes given component for messaging system
@@ -153,6 +222,7 @@ class Scene {
 		this.subscribedMessages.get(component.id).push(msgKey);
 	}
 
+	// immediately removes a given game object
 	_removeGameObjectImmediately(obj) {
 		for (let component of obj.components) {
 			this._removeComponentImmediately(component);
@@ -168,6 +238,7 @@ class Scene {
 			}
 		}
 
+		// send message that the game object has been removed
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
@@ -180,10 +251,12 @@ class Scene {
 		this.objectsToRemove = [];
 	}
 
+	// removes existing component as soon as the update cycle finishes
 	_removeComponent(component) {
 		this.componentsToRemove.push(obj);
 	}
 
+	// immediately removes given component
 	_removeComponentImmediately(component) {
 		component.finalize();
 		this.subscribedMessages.delete (component.id);
@@ -196,6 +269,7 @@ class Scene {
 		}
 	}
 
+	// removes all components that are to be removed
 	_removePendingComponents() {
 		for (let component of this.componentsToRemove) {
 			this._removeComponentImmediately(component);
@@ -203,23 +277,10 @@ class Scene {
 		this.componentsToRemove = [];
 
 	}
-
-	update(delta, absolute) {
-		for (let[key, gameObject]of this.gameObjects) {
-			gameObject.update(delta, absolute);
-		}
-
-		this._removePendingComponents();
-		this._removePendingGameObjects();
-	}
-
-	draw(ctx) {
-		for (let gameObject of this.sortedObjects) {
-			gameObject.draw(ctx);
-		}
-	}
 }
 
+// Game object entity that aggregates generic attributes and components
+// Overall behavior of the game entity is defined by its components
 class GameObject {
 
 	constructor(tag) {
@@ -235,13 +296,15 @@ class GameObject {
 		this.attributes = new Map();
 	}
 
+	// adds a new component
 	addComponent(component) {
 		this.components.push(component);
 		if (this.scene != null) {
-			this.scene.addGameObjectComponent(component, this);
+			this.scene._addGameObjectComponent(component, this);
 		}
 	}
 
+	// removes an existing component
 	removeComponent(component) {
 		for (var i = 0; i < this.components.length; i++) {
 			if (this.components[i] == component) {
@@ -255,14 +318,17 @@ class GameObject {
 		return false;
 	}
 
+	// adds a new attribute
 	addAttribute(key, val) {
 		this.attributes.set(key, val);
 	}
 
+	// gets attribute by key
 	getAttribute(key) {
 		return this.attributes.get(key);
 	}
 
+	// removes an existing attribute
 	removeAttribute(key) {
 		this.attributes.delete (key);
 	}
@@ -281,9 +347,10 @@ class GameObject {
 		}
 	}
 
-	intersects(other) {
-		return this._horizontalIntersection(other) >= 0 &&
-		this._verticalIntersection(other) >= 0;
+	// returns true, if the object intersects with another object
+	intersects(other, tolerance = 0) {
+		return this._horizontalIntersection(other) >= tolerance &&
+		this._verticalIntersection(other) >= tolerance;
 	}
 
 	_horizontalIntersection(other) {
@@ -296,8 +363,10 @@ class GameObject {
 		 + Math.min(other.posY, this.posY);
 	}
 }
-GameObject.idCounter = 0;
+GameObject.idCounter = 0; // static idCounter
 
+
+// Message entity that keeps custom data, a source object and component
 class Msg {
 	constructor(action, component, gameObject, data) {
 		this.action = action;
@@ -307,6 +376,7 @@ class Msg {
 	}
 }
 
+// Component that defines functional behavior of the game object (or its part)
 class Component {
 
 	constructor() {
@@ -315,38 +385,47 @@ class Component {
 		this.scene = null;
 	}
 
+	// called whenever the component is added to the scene
 	oninit() {
-		// will be overridden
+		// override
 	}
 
+	// subscribes itself as a listener for action with given key
 	subscribe(action) {
 		this.scene._subscribeComponent(action, this);
 	}
 
+	// sends message to all subscribers
 	sendmsg(action, data) {
 		this.scene._sendmsg(new Msg(action, this, this.owner, data));
 	}
 
+	// handles incoming message
 	onmessage(msg) {
-		// will be overridden
+		// override
 	}
 
+	// invokes update cycle
 	update(delta, absolute) {
-		// will be overridden
+		// override
 	}
 
+	// invokes drawing cycle
 	draw(ctx) {
-		// will be overridden
+		// override
 	}
-	
-	finalize(){
-		// will be overridden
+
+	// called whenever the component is to be removed
+	finalize() {
+		// override
 	}
 
 }
 
 Component.idCounter = 0;
 
+// Component that handles touch and mouse events and transforms them into messages 
+// that can be subscribed by any other component
 class InputManager extends Component {
 
 	oninit() {
@@ -354,7 +433,7 @@ class InputManager extends Component {
 
 		let context = this.scene.context;
 		let canvas = context.canvas;
-		
+
 		// must be done this way, because we want to
 		// remove these listeners while finalization
 		this.startHandler = (evt) => {
@@ -363,21 +442,20 @@ class InputManager extends Component {
 		this.endHandler = (evt) => {
 			this.handleEnd(evt);
 		};
-		
-		
+
 		canvas.addEventListener("touchstart", this.startHandler, false);
 		canvas.addEventListener("touchend", this.endHandler, false);
 		canvas.addEventListener("mousedown", this.startHandler, false);
 		canvas.addEventListener("mouseup", this.endHandler, false);
 	}
 
-	finalize(){
+	finalize() {
 		canvas.removeEventListener("touchstart", this.startHandler);
 		canvas.removeEventListener("touchend", this.endHandler);
 		canvas.removeEventListener("mousedown", this.startHandler);
 		canvas.removeEventListener("mouseup", this.endHandler);
 	}
-	
+
 	handleStart(evt) {
 		evt.preventDefault();
 		if (typeof(evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
@@ -392,20 +470,23 @@ class InputManager extends Component {
 		evt.preventDefault();
 		var posX,
 		posY;
+		if (this.lastTouch != null) {
+			if (typeof(evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
+				posX = evt.changedTouches[0].pageX;
+				posY = evt.changedTouches[0].pageY;
 
-		if (typeof(evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
-			posX = evt.changedTouches[0].pageX;
-			posY = evt.changedTouches[1].pageY;
+			} else {
+				// mouse
+				posX = evt.pageX;
+				posY = evt.pageY;
+			}
 
-		} else {
-			// mouse
-			posX = evt.pageX;
-			posY = evt.pageY;
-		}
-
-		if (Math.abs(this.lastTouch.pageX - posX) < 10 &&
-			Math.abs(this.lastTouch.pageY - posY) < 10) {
-			this.sendmsg(MSG_TOUCH, [posX, posY]);
+			// 10px tolerance should be enough
+			if (Math.abs(this.lastTouch.pageX - posX) < 10 &&
+				Math.abs(this.lastTouch.pageY - posY) < 10) {
+				// at last send the message to all subscribers about this event
+				this.sendmsg(MSG_TOUCH, [posX, posY]);
+			}
 		}
 	}
 
