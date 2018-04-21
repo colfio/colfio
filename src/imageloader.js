@@ -1,3 +1,9 @@
+/**
+ * @file Helper method that can load images via promises
+ * @author Adam Vesecky <vesecky.adam@gmail.com>
+ */
+
+
 function loadImage(image) {
 	if (!image) {
 		return Promise.reject();

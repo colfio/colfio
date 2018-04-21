@@ -1,3 +1,9 @@
+/**
+ * @file Extension for Array object for sorted arrays
+ * @author Adam Vesecky <vesecky.adam@gmail.com>
+ */
+
+
 function binaryFind(searchElement, comparator) {
 	'use strict';
 
