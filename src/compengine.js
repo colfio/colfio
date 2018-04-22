@@ -39,6 +39,12 @@ class Scene {
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
 
+		// temporary collection that keeps objects for adding -> objects should be added
+		// at the end of the update cycle since we are sure there aren't any running components
+		this.objectsToAdd = new Array();
+		this.componentsToAdd = new Array();
+		
+
 		// functions that should be invoked with some delay
 		this.pendingInvocations = new Array();
 	}
@@ -69,35 +75,7 @@ class Scene {
 
 	// adds a new game object into the scene
 	addGameObject(obj) {
-		obj.scene = this;
-
-		// initialize all components
-		for (let component of obj.components) {
-			this._addGameObjectComponent(component, obj);
-		}
-
-		// fill all collections
-		if (!this.gameObjectTags.has(obj.tag)) {
-			this.gameObjectTags.set(obj.tag, new Map());
-		}
-
-		this.gameObjectTags.get(obj.tag).set(obj.id, obj);
-		this.gameObjects.set(obj.id, obj);
-
-		// keep the third collection sorted by z-index
-		let fnd = this.sortedObjects.binaryFind(obj, (current, search) => {
-			if (current.zIndex == search.zIndex)
-				return 0;
-			else if (current.zIndex > search.zIndex)
-				return 1;
-			else
-				return -1;
-		});
-
-		this.sortedObjects.splice(fnd.index, 0, obj);
-
-		// notify subscribers that a new object has been added to the scene
-		this._sendmsg(new Msg(MSG_OBJECT_ADDED, null, obj));
+		this.objectsToAdd.push(obj);
 	}
 
 	// removes given game object as soon as the update cycle finishes
@@ -145,6 +123,8 @@ class Scene {
 		this.sortedObjects = new Array();
 		this.objectsToRemove = new Array();
 		this.componentsToRemove = new Array();
+		this.objectsToAdd = new Array();
+		this.componentsToAdd = new Array();
 	}
 
 	// executes the update cycle
@@ -154,9 +134,12 @@ class Scene {
 			gameObject.update(delta, absolute);
 		}
 
-		// remove pending components and objects
+		// handle pending components and objects
+		this._addPendingComponents();
+		this._addPendingGameObjects();
 		this._removePendingComponents();
 		this._removePendingGameObjects();
+		
 
 		// execute pending invocations
 		var i = this.pendingInvocations.length;
@@ -190,12 +173,6 @@ class Scene {
 		}
 	}
 
-	// assignes a new component to a given object
-	_addGameObjectComponent(component, owner) {
-		component.owner = owner;
-		component.scene = this;
-		component.oninit();
-	}
 
 	// subscribes given component for messaging system
 	_subscribeComponent(msgKey, component) {
@@ -213,6 +190,39 @@ class Scene {
 		}
 
 		this.subscribedMessages.get(component.id).push(msgKey);
+	}
+
+	_addGameObjectImmediately(obj){
+		obj.scene = this;
+
+		// initialize all components
+		for (let component of obj.components) {
+			this._addComponent(component, obj);
+			component.oninit();
+		}
+
+		// fill all collections
+		if (!this.gameObjectTags.has(obj.tag)) {
+			this.gameObjectTags.set(obj.tag, new Map());
+		}
+
+		this.gameObjectTags.get(obj.tag).set(obj.id, obj);
+		this.gameObjects.set(obj.id, obj);
+
+		// keep the third collection sorted by z-index
+		let fnd = this.sortedObjects.binaryFind(obj, (current, search) => {
+			if (current.zIndex == search.zIndex)
+				return 0;
+			else if (current.zIndex > search.zIndex)
+				return 1;
+			else
+				return -1;
+		});
+
+		this.sortedObjects.splice(fnd.index, 0, obj);
+
+		// notify subscribers that a new object has been added to the scene
+		this._sendmsg(new Msg(MSG_OBJECT_ADDED, null, obj));
 	}
 
 	// immediately removes a given game object
@@ -235,13 +245,43 @@ class Scene {
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
-	// removes all game objects;
+	// adds pending objects
+	_addPendingGameObjects(){
+		for(let obj of this.objectsToAdd){
+			this._addGameObjectImmediately(obj);
+		}
+		
+		this.objectsToAdd = [];
+	}
+
+	// removes pending objects;
 	_removePendingGameObjects() {
 		for (let obj of this.objectsToRemove) {
 			this._removeGameObjectImmediately(obj);
 		}
 
 		this.objectsToRemove = [];
+	}
+
+	// assignes a new component to a given object
+	_addComponent(component, owner) {
+		component.owner = owner;
+		component.scene = this;
+		this.componentsToAdd.push(component);
+	}
+
+	_addComponentImmediately(component, owner){
+		component.owner = owner;
+		component.scene = this;
+		component.oninit();	
+	}
+
+	_addPendingComponents(){
+		for (let obj of this.componentsToAdd) {
+			this._addComponentImmediately(obj, obj.owner); // owner has been already set
+		}
+
+		this.componentsToAdd = [];
 	}
 
 	// removes existing component as soon as the update cycle finishes
@@ -293,7 +333,7 @@ class GameObject {
 	addComponent(component) {
 		this.components.push(component);
 		if (this.scene != null) {
-			this.scene._addGameObjectComponent(component, this);
+			this.scene._addComponent(component, this);
 		}
 	}
 
@@ -416,112 +456,3 @@ class Component {
 }
 
 Component.idCounter = 0;
-
-
-const INPUT_TOUCH = 1;
-const INPUT_DOWN = 1 << 1;
-const INPUT_MOVE = 1 << 2;
-
-const MSG_TOUCH = 100;
-const MSG_DOWN = 101;
-const MSG_MOVE = 102;
-
-// Component that handles touch and mouse events and transforms them into messages 
-// that can be subscribed by any other component
-class InputManager extends Component {
-
-	constructor(mode = INPUT_TOUCH) {
-		super();
-		this.mode = mode;
-	}
-
-	oninit() {
-		this.lastTouch = null;
-
-		let canvas = this.scene.canvas;
-
-		// must be done this way, because we want to
-		// remove these listeners while finalization
-		this.startHandler = (evt) => {
-			this.handleStart(evt);
-		};
-		this.endHandler = (evt) => {
-			this.handleEnd(evt);
-		};
-
-		this.moveHandler = (evt) => {
-			this.handleMove(evt);
-		};
-
-		canvas.addEventListener("touchstart", this.startHandler, false);
-		canvas.addEventListener("touchend", this.endHandler, false);
-		canvas.addEventListener("mousedown", this.startHandler, false);
-		canvas.addEventListener("mouseup", this.endHandler, false);
-
-		if (this.mode |= INPUT_MOVE) {
-			canvas.addEventListener("mousemove", this.moveHandler, false);
-		}
-	}
-
-	finalize() {
-		canvas.removeEventListener("touchstart", this.startHandler);
-		canvas.removeEventListener("touchend", this.endHandler);
-		canvas.removeEventListener("mousedown", this.startHandler);
-		canvas.removeEventListener("mouseup", this.endHandler);
-
-		if (this.mode |= INPUT_MOVE) {
-			canvas.addEventListener("mousemove", this.moveHandler);
-		}
-	}
-
-	handleStart(evt) {
-		evt.preventDefault();
-		if (typeof (evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
-			// only single-touch
-			this.lastTouch = evt.changedTouches[0];
-		} else {
-			this.lastTouch = evt;
-		}
-
-		if (this.mode |= MSG_DOWN) {
-			this.sendmsg(MSG_DOWN, this.getMousePos(this.scene.canvas, evt));
-		}
-	}
-
-	handleMove(evt) {
-		evt.preventDefault();
-		this.sendmsg(MSG_MOVE, this.getMousePos(this.scene.canvas, evt));
-	}
-
-	handleEnd(evt) {
-		evt.preventDefault();
-		var posX, posY;
-		if (this.lastTouch != null) {
-			if (typeof (evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
-				posX = evt.changedTouches[0].pageX;
-				posY = evt.changedTouches[0].pageY;
-
-			} else {
-				// mouse
-				posX = evt.pageX;
-				posY = evt.pageY;
-			}
-
-			// 10px tolerance should be enough
-			if (Math.abs(this.lastTouch.pageX - posX) < 10 &&
-				Math.abs(this.lastTouch.pageY - posY) < 10) {
-				// at last send the message to all subscribers about this event
-				this.sendmsg(MSG_TOUCH, this.getMousePos(this.scene.canvas, evt));
-			}
-		}
-	}
-
-	// Get the mouse position
-	getMousePos(canvas, e) {
-		var rect = canvas.getBoundingClientRect();
-		return {
-			posX: Math.round((e.clientX - rect.left) / (rect.right - rect.left) * canvas.width),
-			posY: Math.round((e.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height)
-		};
-	}
-}
