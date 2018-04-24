@@ -134,12 +134,7 @@ class Scene {
 			gameObject.update(delta, absolute);
 		}
 
-		// handle pending components and objects
-		this._addPendingComponents();
-		this._addPendingGameObjects();
-		this._removePendingComponents();
-		this._removePendingGameObjects();
-		
+		this.submitChanges();
 
 		// execute pending invocations
 		var i = this.pendingInvocations.length;
@@ -152,6 +147,15 @@ class Scene {
 				this.pendingInvocations.splice(i, 1);
 			}
 		}
+	}
+
+	submitChanges(){
+		// handle pending components and objects
+		this._addPendingComponents();
+		this._addPendingGameObjects();
+		this._removePendingComponents();
+		this._removePendingGameObjects();
+		
 	}
 
 	// executes the draw cycle
@@ -451,6 +455,11 @@ class Component {
 	// called whenever the component is to be removed
 	finalize() {
 		// override
+	}
+
+	// finishes this component
+	finish() {
+		this.owner.removeComponent(this);
 	}
 
 }
