@@ -23,6 +23,6 @@ function newGame() {
 		var gameObject = new GameObject('circle');
 		gameObject.sprite = new Sprite(img, 0, 0, img.width, img.height);
 		gameObject.addComponent(new Renderer())
-		scene.addGameObject(gameObject);
+		scene.root.addGameObject(gameObject);
 	});
 }

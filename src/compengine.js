@@ -20,33 +20,12 @@ class Scene {
 
 		this.canvas = canvas;
 		this.canvasCtx = canvas.getContext('2d');
-		// list of global attributes attached to whole game
-		this.globalAttributes = new Map();
+		this.clearScene();
+	}
 
-		// message action keys and all subscribers that listens to all these actions
-		this.subscribers = new Map();
-		// component ids and list of all actions they listen to
-		this.subscribedMessages = new Map();
-		// collection of all game objects, mapped by their tag and then by their ids
-		this.gameObjectTags = new Map();
-		// collection of all game objects, mapped by their ids
-		this.gameObjects = new Map();
-		// game objects sorted by z-index, used for drawing
-		this.sortedObjects = new Array();
-
-		// temporary collection that keeps objects for removal -> objects should be removed
-		// at the end of the update cycle since we are sure there aren't any running components
-		this.objectsToRemove = new Array();
-		this.componentsToRemove = new Array();
-
-		// temporary collection that keeps objects for adding -> objects should be added
-		// at the end of the update cycle since we are sure there aren't any running components
-		this.objectsToAdd = new Array();
-		this.componentsToAdd = new Array();
-		
-
-		// functions that should be invoked with some delay
-		this.pendingInvocations = new Array();
+	submitChanges() {
+		// submit upon the root recursively
+		this.root.submitChanges(true);
 	}
 
 	// stores a new function that should be invoked after given amount of time
@@ -58,29 +37,27 @@ class Scene {
 		});
 	}
 
+	addGlobalGameObject(obj){
+		this.root.addGameObject(obj);
+	}
+
+	removeGlobalGameObject(obj){
+		this.root.removeGameObject(obj);
+	}
+
 	// adds a new global attribute
 	addGlobalAttribute(key, val) {
-		this.globalAttributes.set(key, val);
+		this.root.addAttribute(key, val);
 	}
 
 	// gets a global attribute by its key
 	getGlobalAttribute(key) {
-		return this.globalAttributes.get(key);
+		return this.root.getAttribute(key);
 	}
 
 	// removes a global attribute by its key
 	removeGlobalAttribute(key) {
-		this.globalAttributes.delete(key);
-	}
-
-	// adds a new game object into the scene
-	addGameObject(obj) {
-		this.objectsToAdd.push(obj);
-	}
-
-	// removes given game object as soon as the update cycle finishes
-	removeGameObject(obj) {
-		this.objectsToRemove.push(obj);
+		this.root.removeAttribute(key);
 	}
 
 	// finds all game objects by their tag
@@ -105,36 +82,60 @@ class Scene {
 		return null;
 	}
 
+	findAllObjectsByFlag(flag) {
+		let result = new Array();
+		for (let [key, gameObject] of this.gameObjects) {
+			if (gameObject.hasFlag(flag)) {
+				result.push(gameObject);
+			}
+		}
+		return result;
+	}
+
+	findFirstObjectByFlag(flag) {
+		for (let [key, gameObject] of this.gameObjects) {
+			if (gameObject.hasFlag(flag)) {
+				return gameObject;
+			}
+		}
+	}
+
 	// clears the whole scene, all game objects, attributes and components
 	clearScene() {
 
-		// call the finalization function
-		for (let [key, gameObj] of this.gameObjects) {
-			for (let component of gameObj.components) {
-				component.finalize();
+		if (this.gameObjects !== undefined) {
+			// call the finalization function
+			for (let [key, gameObj] of this.gameObjects) {
+				for (let component of gameObj.components) {
+					component.finalize();
+				}
 			}
 		}
 
-		this.globalAttributes = new Map();
+		this.root = new GameObject("root");
+		this.root.scene = this;
+
+		// message action keys and all subscribers that listens to all these actions
 		this.subscribers = new Map();
+		// component ids and list of all actions they listen to
 		this.subscribedMessages = new Map();
+		// collection of all game objects, mapped by their tag and then by their ids
 		this.gameObjectTags = new Map();
+		// collection of all game objects, mapped by their ids
 		this.gameObjects = new Map();
+		// game objects sorted by z-index, used for drawing
 		this.sortedObjects = new Array();
-		this.objectsToRemove = new Array();
-		this.componentsToRemove = new Array();
-		this.objectsToAdd = new Array();
-		this.componentsToAdd = new Array();
+
+		// functions that should be invoked with some delay
+		this.pendingInvocations = new Array();
 	}
 
 	// executes the update cycle
 	update(delta, absolute) {
 		// update
-		for (let [key, gameObject] of this.gameObjects) {
-			gameObject.update(delta, absolute);
-		}
+		this.root.update(delta, absolute);
 
-		this.submitChanges();
+		this.submitChanges(false);
 
 		// execute pending invocations
 		var i = this.pendingInvocations.length;
@@ -149,14 +150,7 @@ class Scene {
 		}
 	}
 
-	submitChanges(){
-		// handle pending components and objects
-		this._addPendingComponents();
-		this._addPendingGameObjects();
-		this._removePendingComponents();
-		this._removePendingGameObjects();
-		
-	}
+
 
 	// executes the draw cycle
 	draw() {
@@ -196,15 +190,7 @@ class Scene {
 		this.subscribedMessages.get(component.id).push(msgKey);
 	}
 
-	_addGameObjectImmediately(obj){
-		obj.scene = this;
-
-		// initialize all components
-		for (let component of obj.components) {
-			this._addComponent(component, obj);
-			component.oninit();
-		}
-
+	_addGameObject(obj) {
 		// fill all collections
 		if (!this.gameObjectTags.has(obj.tag)) {
 			this.gameObjectTags.set(obj.tag, new Map());
@@ -230,11 +216,7 @@ class Scene {
 	}
 
 	// immediately removes a given game object
-	_removeGameObjectImmediately(obj) {
-		for (let component of obj.components) {
-			this._removeComponentImmediately(component);
-		}
-
+	_removeGameObject(obj) {
 		this.gameObjectTags.get(obj.tag).delete(obj.id);
 		this.gameObjects.delete(obj.id);
 
@@ -244,58 +226,12 @@ class Scene {
 				break;
 			}
 		}
-
 		// send message that the game object has been removed
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
-	// adds pending objects
-	_addPendingGameObjects(){
-		for(let obj of this.objectsToAdd){
-			this._addGameObjectImmediately(obj);
-		}
-		
-		this.objectsToAdd = [];
-	}
 
-	// removes pending objects;
-	_removePendingGameObjects() {
-		for (let obj of this.objectsToRemove) {
-			this._removeGameObjectImmediately(obj);
-		}
-
-		this.objectsToRemove = [];
-	}
-
-	// assignes a new component to a given object
-	_addComponent(component, owner) {
-		component.owner = owner;
-		component.scene = this;
-		this.componentsToAdd.push(component);
-	}
-
-	_addComponentImmediately(component, owner){
-		component.owner = owner;
-		component.scene = this;
-		component.oninit();	
-	}
-
-	_addPendingComponents(){
-		for (let obj of this.componentsToAdd) {
-			this._addComponentImmediately(obj, obj.owner); // owner has been already set
-		}
-
-		this.componentsToAdd = [];
-	}
-
-	// removes existing component as soon as the update cycle finishes
 	_removeComponent(component) {
-		this.componentsToRemove.push(obj);
-	}
-
-	// immediately removes given component
-	_removeComponentImmediately(component) {
-		component.finalize();
 		this.subscribedMessages.delete(component.id);
 
 		if (this.subscribedMessages.has(component.id)) {
@@ -305,14 +241,74 @@ class Scene {
 			}
 		}
 	}
+}
 
-	// removes all components that are to be removed
-	_removePendingComponents() {
-		for (let component of this.componentsToRemove) {
-			this._removeComponentImmediately(component);
+// bit array for flags
+class Flags {
+	constructor() {
+		// flag array 0-128
+		this.flags1 = 0;
+		this.flags2 = 0;
+		this.flags3 = 0;
+		this.flags4 = 0;
+	}
+
+	hasFlag(flag) {
+		let index = this._getFlagIndex(flag);
+		let offset = this._getFlagOffset(flag);
+		let binary = 1 << offset;
+
+		if (index <= 3) {
+			switch (index) {
+				case 0: return (this.flags1 & binary) == binary;
+				case 1: return (this.flags2 & binary) == binary;
+				case 2: return (this.flags3 & binary) == binary;
+				case 3: return (this.flags4 & binary) == binary;
+			}
+		} else {
+			throw Error("Flag values beyond 128 are not supported");
 		}
-		this.componentsToRemove = [];
+	}
 
+	switchFlag(flag1, flag2) {
+		if (this.hasFlag(flag1)) this.setFlag(flag2);
+		else this.resetFlag(flag2);
+
+		if (this.hasFlag(flag2)) this.setFlag(flag1);
+		else this.resetFlag(flag1);
+	}
+
+	setFlag(flag) {
+		this._changeFlag(true, flag);
+	}
+
+	resetFlag(flag) {
+		this._changeFlag(false, flag);
+	}
+
+	_getFlagIndex(flag) {
+		return flag / 4; // sizeof 32bit int
+	}
+
+	_getFlagOffset(flag) {
+		return flag % 4; // sizeof 32bit int
+	}
+
+	_changeFlag(set, flag) {
+		let index = this._getFlagIndex(flag);
+		let offset = this._getFlagOffset(flag);
+		let binary = 1 << offset;
+
+		if (index <= 3) {
+			switch (index) {
+				case 0: if (set) (this.flags1 |= binary); else (this.flags1 ^= binary);
+				case 1: if (set) (this.flags2 |= binary); else (this.flags2 ^= binary);
+				case 2: if (set) (this.flags3 |= binary); else (this.flags3 ^= binary);
+				case 3: if (set) (this.flags4 |= binary); else (this.flags4 ^= binary);
+			}
+		} else {
+			throw Error("Flag values beyond 128 are not supported");
+		}
 	}
 }
 
@@ -323,6 +319,7 @@ class GameObject {
 	constructor(tag) {
 		this.id = GameObject.idCounter++;
 		this.tag = tag;
+		this.parent = null;
 		this.components = new Array();
 		this.posX = 0;
 		this.posY = 0;
@@ -331,13 +328,84 @@ class GameObject {
 		this.scene = null;
 		this.visible = true;
 		this.attributes = new Map();
+
+		// temporary collection that keeps objects for removal -> objects should be removed
+		// at the end of the update cycle since we are sure there aren't any running components
+		this.objectsToRemove = new Array();
+		this.componentsToRemove = new Array();
+		// temporary collection that keeps objects for adding -> objects should be added
+		// at the end of the update cycle since we are sure there aren't any running components
+		this.objectsToAdd = new Array();
+		this.componentsToAdd = new Array();
+
+		this.children = new Map();
 	}
 
-	// adds a new component
-	addComponent(component) {
-		this.components.push(component);
-		if (this.scene != null) {
-			this.scene._addComponent(component, this);
+	submitChanges(recursively = false) {
+
+		// start with game objects
+		this._addPendingGameObjects(!recursively);
+
+		if(recursively){
+			for(let [key, val] of this.children){
+				val.submitChanges(true);
+			}
+		}
+
+		// components should be added after all game objects
+		this._addPendingComponents();
+		
+		this._removePendingComponents();
+		this._removePendingGameObjects(!recursively); 
+	}
+
+	hasFlag(flag) {
+		return this.flags.hasflag(flag);
+	}
+
+	setFlag(flag) {
+		this.flags.setFlag(flag);
+	}
+
+	resetFlag(flag) {
+		this.flags.resetFlag(flag);
+	}
+
+	switchFlag(flag1, flag2) {
+		this.flags.switchFlag(flag1, flag2);
+	}
+
+	remove() {
+		this.parent.removeGameObject(this);
+	}
+
+	// adds a new game object into the scene
+	addGameObject(obj) {
+		obj.scene = this.scene;
+		obj.parent = this;
+		this.objectsToAdd.push(obj);
+	}
+
+	// removes given game object as soon as the update cycle finishes
+	removeGameObject(obj) {
+		obj.visible = false;
+		this.objectsToRemove.push(obj);
+	}
+
+
+	addComponent(component, owner) {
+		component.owner = this;
+		component.scene = this.scene;
+		this.componentsToAdd.push(component);
+	}
+
+	removeComponent(component) {
+		this.componentsToRemove.push(obj);
+	}
+
+	removeAllComponents() {
+		for (let cmp of this.components) {
+			this.removeComponent(cmp);
 		}
 	}
 
@@ -347,7 +415,7 @@ class GameObject {
 			if (this.components[i] == component) {
 				this.components.splice(i, 1);
 				if (this.scene != null) {
-					this.scene._removeComponentImmediately(component);
+					this.scene._removeComponent(component);
 				}
 				return true;
 			}
@@ -371,8 +439,14 @@ class GameObject {
 	}
 
 	update(delta, absolute) {
+		this.submitChanges(false);
+
 		for (let component of this.components) {
 			component.update(delta, absolute);
+		}
+
+		for (let [key, val] of this.children) {
+			val.update(delta, absolute);
 		}
 	}
 
@@ -382,6 +456,70 @@ class GameObject {
 				component.draw(ctx)
 			}
 		}
+		// children are drawn via scene
+	}
+
+	// adds pending objects
+	_addPendingGameObjects(submitChanges = true) {
+		for (let obj of this.objectsToAdd) {
+			// set it in both addGameObject and _addPendingGameObject since
+			// the parent might not had its scene assigned
+			obj.scene = this.scene;
+			obj.parent = this;
+			this.children.set(obj.id, obj);
+			this.scene._addGameObject(obj);
+
+			if(submitChanges){
+				obj.submitChanges(false);
+			}
+		}
+
+		this.objectsToAdd = [];
+	}
+
+	// removes pending objects;
+	_removePendingGameObjects(submitChanges = true) {
+		for (let obj of this.objectsToRemove) {
+			obj.removeAllComponents();
+			obj.submitChanges(false);
+			this.scene._removeGameObject(obj);
+			this.children.delete(obj.id);
+			obj.parent = null;
+			obj.scene = null;
+
+			if(submitChanges){
+				obj.submitChanges(false);
+			}
+		}
+
+		this.objectsToRemove = [];
+	}
+
+	_addPendingComponents() {
+		for (let obj of this.componentsToAdd) {
+			obj.owner = this;
+			obj.scene = this.scene;
+			this.components.push(obj);
+			obj.oninit();
+		}
+
+		this.componentsToAdd = [];
+	}
+
+	// removes all components that are to be removed
+	_removePendingComponents() {
+		for (let component of this.componentsToRemove) {
+			component.finalize();
+
+			for (var i = 0; i < this.components.length; i++) {
+				if (this.components[i] == component) {
+					this.components.splice(i, 1);
+					this.scene._removeComponent(component);
+					break;
+				}
+			}
+		}
+		this.componentsToRemove = [];
 	}
 
 	// returns true, if the object intersects with another object
@@ -461,7 +599,6 @@ class Component {
 	finish() {
 		this.owner.removeComponent(this);
 	}
-
 }
 
 Component.idCounter = 0;
