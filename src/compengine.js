@@ -6,6 +6,11 @@
 const MSG_OBJECT_ADDED = 1;
 const MSG_OBJECT_REMOVED = 2;
 
+const STATE_INACTIVE = 0;
+const STATE_UPDATABLE = 2 ^ 0;
+const STATE_DRAWABLE = 2 ^ 1;
+const STATE_LISTENING = 2 ^ 2;
+
 
 // Scene that keeps collection of all game
 // objects and calls draw and update upon them
@@ -37,11 +42,11 @@ class Scene {
 		});
 	}
 
-	addGlobalGameObject(obj){
+	addGlobalGameObject(obj) {
 		this.root.addGameObject(obj);
 	}
 
-	removeGlobalGameObject(obj){
+	removeGlobalGameObject(obj) {
 		this.root.removeGameObject(obj);
 	}
 
@@ -102,7 +107,6 @@ class Scene {
 
 	// clears the whole scene, all game objects, attributes and components
 	clearScene() {
-
 		if (this.gameObjects !== undefined) {
 			// call the finalization function
 			for (let [key, gameObj] of this.gameObjects) {
@@ -166,7 +170,9 @@ class Scene {
 			let subscribedComponents = this.subscribers.get(msg.action);
 			for (let [key, component] of subscribedComponents) {
 				// send message
-				component.onmessage(msg);
+				if (component.owner.state & STATE_LISTENING == STATE_LISTENING) {
+					component.onmessage(msg);
+				}
 			}
 		}
 	}
@@ -312,6 +318,70 @@ class Flags {
 	}
 }
 
+// simple bounding box
+class BBox {
+	constructor(){
+		this.topLeftX = 0;
+		this.topLeftY = 0;
+		this.bottomRightX = 0;
+		this.bottomRightY = 0;
+	}
+
+	getSize(){
+		return { "width" : (this.bottomRightX - this.topLeftX), "height" : (this.bottomRightY - this.topLeftY)};
+	}
+
+	getCenter(){
+		let size = this.getSize();
+		return { "posX" : (this.topLeftX + size.width/2), "posY" : (this.topLeftY + size.height/2) };
+	}
+
+	intersects(other){
+		return this.horizontalIntersection(other) >= 0 && this.verticalIntersection(other) >= 0;
+	}
+
+	horizontalIntersection(other){
+		return Math.min(other.bottomRightX, this.bottomRightX) - Math.max(other.topLeftX, this.topLeftX);
+	}
+
+	verticalIntersection(other){
+		return Math.min(other.bottomLeftY, this.bottomLeftY) - Math.max(other.topLeftY, this.topLeftY);
+	}
+}
+
+class Mesh {
+	constructor(width, height){
+		this.width = width;
+		this.height = height;
+		this.bbox = new BBox();
+	}
+
+	updateBoundingBox(trans) {
+		this.bbox.topLeftX = trans.posX;
+		this.bbox.topLeftY = trans.posY;
+		this.bbox.bottomRightX = trans.posX + this.width;
+		this.bbox.bottomRightY = trans.posY + this.height;
+	}
+}
+
+class Sprite extends Mesh {
+    constructor(offsetX, offsetY, width, height, image) {
+		super(width, height);
+		this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.image = image;
+    }
+}
+
+// transformation entity
+class Trans{
+	constructor(posX = 0, posY = 0, rotation = 0){
+		this.posX = 0;
+		this.posY = 0;
+		this.rotation = 0;
+	}
+}
+
 // Game object entity that aggregates generic attributes and components
 // Overall behavior of the game entity is defined by its components
 class GameObject {
@@ -321,12 +391,11 @@ class GameObject {
 		this.tag = tag;
 		this.parent = null;
 		this.components = new Array();
-		this.posX = 0;
-		this.posY = 0;
 		this.zIndex = 0;
-		this.sprite = null;
+		this.mesh = null;
 		this.scene = null;
-		this.visible = true;
+		this.trans = new Trans();
+		this.state = STATE_DRAWABLE | STATE_LISTENING | STATE_UPDATABLE;
 		this.attributes = new Map();
 
 		// temporary collection that keeps objects for removal -> objects should be removed
@@ -342,21 +411,20 @@ class GameObject {
 	}
 
 	submitChanges(recursively = false) {
-
 		// start with game objects
 		this._addPendingGameObjects(!recursively);
 
-		if(recursively){
-			for(let [key, val] of this.children){
+		if (recursively) {
+			for (let [key, val] of this.children) {
 				val.submitChanges(true);
 			}
 		}
 
 		// components should be added after all game objects
 		this._addPendingComponents();
-		
+
 		this._removePendingComponents();
-		this._removePendingGameObjects(!recursively); 
+		this._removePendingGameObjects(!recursively);
 	}
 
 	hasFlag(flag) {
@@ -388,7 +456,7 @@ class GameObject {
 
 	// removes given game object as soon as the update cycle finishes
 	removeGameObject(obj) {
-		obj.visible = false;
+		obj.state = STATE_INACTIVE;
 		this.objectsToRemove.push(obj);
 	}
 
@@ -439,19 +507,21 @@ class GameObject {
 	}
 
 	update(delta, absolute) {
-		this.submitChanges(false);
+		if (this.state & STATE_UPDATABLE == STATE_UPDATABLE) {
+			this.submitChanges(false);
 
-		for (let component of this.components) {
-			component.update(delta, absolute);
-		}
+			for (let component of this.components) {
+				component.update(delta, absolute);
+			}
 
-		for (let [key, val] of this.children) {
-			val.update(delta, absolute);
+			for (let [key, val] of this.children) {
+				val.update(delta, absolute);
+			}
 		}
 	}
 
 	draw(ctx) {
-		if (this.visible) {
+		if (this.state & STATE_DRAWABLE == STATE_DRAWABLE) {
 			for (let component of this.components) {
 				component.draw(ctx)
 			}
@@ -469,7 +539,7 @@ class GameObject {
 			this.children.set(obj.id, obj);
 			this.scene._addGameObject(obj);
 
-			if(submitChanges){
+			if (submitChanges) {
 				obj.submitChanges(false);
 			}
 		}
@@ -487,7 +557,7 @@ class GameObject {
 			obj.parent = null;
 			obj.scene = null;
 
-			if(submitChanges){
+			if (submitChanges) {
 				obj.submitChanges(false);
 			}
 		}
@@ -520,22 +590,6 @@ class GameObject {
 			}
 		}
 		this.componentsToRemove = [];
-	}
-
-	// returns true, if the object intersects with another object
-	intersects(other, tolerance = 0) {
-		return this._horizontalIntersection(other) >= tolerance &&
-			this._verticalIntersection(other) >= tolerance;
-	}
-
-	_horizontalIntersection(other) {
-		return Math.min(other.posX + other.sprite.width, this.posX + this.sprite.width)
-			- Math.max(other.posX, this.posX);
-	}
-
-	_verticalIntersection(other) {
-		return -Math.max(other.posY - other.sprite.height, this.posY - this.sprite.height)
-			+ Math.min(other.posY, this.posY);
 	}
 }
 GameObject.idCounter = 0; // static idCounter
