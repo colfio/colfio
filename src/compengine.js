@@ -320,37 +320,37 @@ class Flags {
 
 // simple bounding box
 class BBox {
-	constructor(){
+	constructor() {
 		this.topLeftX = 0;
 		this.topLeftY = 0;
 		this.bottomRightX = 0;
 		this.bottomRightY = 0;
 	}
 
-	getSize(){
-		return { "width" : (this.bottomRightX - this.topLeftX), "height" : (this.bottomRightY - this.topLeftY)};
+	getSize() {
+		return { "width": (this.bottomRightX - this.topLeftX), "height": (this.bottomRightY - this.topLeftY) };
 	}
 
-	getCenter(){
+	getCenter() {
 		let size = this.getSize();
-		return { "posX" : (this.topLeftX + size.width/2), "posY" : (this.topLeftY + size.height/2) };
+		return { "posX": (this.topLeftX + size.width / 2), "posY": (this.topLeftY + size.height / 2) };
 	}
 
-	intersects(other){
+	intersects(other) {
 		return this.horizontalIntersection(other) >= 0 && this.verticalIntersection(other) >= 0;
 	}
 
-	horizontalIntersection(other){
+	horizontalIntersection(other) {
 		return Math.min(other.bottomRightX, this.bottomRightX) - Math.max(other.topLeftX, this.topLeftX);
 	}
 
-	verticalIntersection(other){
+	verticalIntersection(other) {
 		return Math.min(other.bottomLeftY, this.bottomLeftY) - Math.max(other.topLeftY, this.topLeftY);
 	}
 }
 
 class Mesh {
-	constructor(width, height){
+	constructor(width, height) {
 		this.width = width;
 		this.height = height;
 		this.bbox = new BBox();
@@ -365,20 +365,61 @@ class Mesh {
 }
 
 class Sprite extends Mesh {
-    constructor(offsetX, offsetY, width, height, image) {
+	constructor(offsetX, offsetY, width, height, image) {
 		super(width, height);
 		this.offsetX = offsetX;
-        this.offsetY = offsetY;
-        this.image = image;
-    }
+		this.offsetY = offsetY;
+		this.image = image;
+	}
 }
 
 // transformation entity
-class Trans{
-	constructor(posX = 0, posY = 0, rotation = 0){
+class Trans {
+	constructor(posX = 0, posY = 0, rotation = 0) {
 		this.posX = 0;
 		this.posY = 0;
 		this.rotation = 0;
+		this.rotationOffsetX = 0;
+		this.rotationOffsetY = 0;
+
+		this.absPosX = 0;
+		this.absPosY = 0;
+		this.absRotation = 0;
+	}
+
+	_updateTransform(owner, parent) {
+		
+		if (parent != null) {
+			let ownerMesh = owner.mesh;
+			let parentTrans = parent.trans;
+
+			this.absPosX = this.posX + parentTrans.absPosX;
+			this.absPosY = this.posY + parentTrans.absPosY;
+			this.absRotation = this.rotation + parent.trans.absRotation;
+
+			if (parentTrans.absRotation != 0) {
+				// rotate 
+				let unitSize = owner.scene.unitSize;
+				let parentOffsetX = parentTrans.rotationOffsetX;
+				let parentOffsetY = parentTrans.rotationOffsetY;
+				let ownerOffsetX = this.rotationOffsetX;
+				let ownerOffsetY = this.rotationOffsetY;
+	
+				let distX = (this.absPosX + ownerOffsetX - (parentTrans.absPosX + parentOffsetX));
+				let distY = (this.absPosY + ownerOffsetY - (parentTrans.absPosY + parentOffsetY));
+
+				let length = Math.sqrt(distX * distX + distY * distY);
+				let angle = parentTrans.absRotation + Math.atan2(distY, distX);
+				let rotPosX = length * Math.cos(angle);
+				let rotPosY = length * Math.sin(angle);
+				this.absPosX = parentTrans.absPosX + parentOffsetX + rotPosX - ownerOffsetX;
+				this.absPosY = parentTrans.absPosY + parentOffsetY + rotPosY - ownerOffsetY;
+			}
+		} else {
+			this.absPosX = this.posX;
+			this.absPosY = this.posY;
+			this.absRotation = this.rotation;
+		}
 	}
 }
 
@@ -392,7 +433,7 @@ class GameObject {
 		this.parent = null;
 		this.components = new Array();
 		this.zIndex = 0;
-		this.mesh = null;
+		this.mesh = new Mesh(0, 0);
 		this.scene = null;
 		this.trans = new Trans();
 		this.state = STATE_DRAWABLE | STATE_LISTENING | STATE_UPDATABLE;
@@ -509,6 +550,10 @@ class GameObject {
 	update(delta, absolute) {
 		if (this.state & STATE_UPDATABLE == STATE_UPDATABLE) {
 			this.submitChanges(false);
+
+			this.mesh.updateBoundingBox(this.trans);
+
+			this.trans._updateTransform(this, this.parent);
 
 			for (let component of this.components) {
 				component.update(delta, absolute);
