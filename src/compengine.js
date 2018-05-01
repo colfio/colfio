@@ -87,6 +87,13 @@ class Scene {
 		return null;
 	}
 
+	findObjectBySecondaryId(id){
+		if(this.gameObjectSecIds.has(id)){
+			return this.gameObjectSecIds.get(id);
+		}
+		return null;
+	}
+
 	findAllObjectsByFlag(flag) {
 		let result = new Array();
 		for (let [key, gameObject] of this.gameObjects) {
@@ -127,6 +134,9 @@ class Scene {
 		this.gameObjectTags = new Map();
 		// collection of all game objects, mapped by their ids
 		this.gameObjects = new Map();
+		// collection of all game object, mapped by their secondary ids
+		this.gameObjectSecIds = new Map();		
+
 		// game objects sorted by z-index, used for drawing
 		this.sortedObjects = new Array();
 
@@ -204,6 +214,7 @@ class Scene {
 
 		this.gameObjectTags.get(obj.tag).set(obj.id, obj);
 		this.gameObjects.set(obj.id, obj);
+		this.gameObjectSecIds.set(obj.secondaryId, obj);
 
 		// keep the third collection sorted by z-index
 		let fnd = this.sortedObjects.binaryFind(obj, (current, search) => {
@@ -224,6 +235,7 @@ class Scene {
 	// immediately removes a given game object
 	_removeGameObject(obj) {
 		this.gameObjectTags.get(obj.tag).delete(obj.id);
+		this.gameObjectSecIds.delete(obj.secondaryId);
 		this.gameObjects.delete(obj.id);
 
 		for (let i = 0; i < this.sortedObjects.length; i++) {
@@ -307,10 +319,10 @@ class Flags {
 
 		if (index <= 3) {
 			switch (index) {
-				case 0: if (set) (this.flags1 |= binary); else (this.flags1 ^= binary);
-				case 1: if (set) (this.flags2 |= binary); else (this.flags2 ^= binary);
-				case 2: if (set) (this.flags3 |= binary); else (this.flags3 ^= binary);
-				case 3: if (set) (this.flags4 |= binary); else (this.flags4 ^= binary);
+				case 0: if (set) (this.flags1 |= binary); else (this.flags1 &= ~binary);
+				case 1: if (set) (this.flags2 |= binary); else (this.flags2 &= ~binary);
+				case 2: if (set) (this.flags3 |= binary); else (this.flags3 &= ~binary);
+				case 3: if (set) (this.flags4 |= binary); else (this.flags4 &= ~binary);
 			}
 		} else {
 			throw Error("Flag values beyond 128 are not supported");
@@ -374,20 +386,35 @@ class Sprite extends Mesh {
 		this.offsetX = offsetX;
 		this.offsetY = offsetY;
 		this.image = image;
-		this.transform = null; // for some circumstances it can have a transformation entity
 	}
 }
 
-class MultiSprite extends Mesh {
+class MultiSprite extends Sprite {
+	constructor(id, trans, offsetX, offsetY, width, height, image) {
+		super(offsetX, offsetY, width, height, image);
+		this.id = id;
+		this.trans = trans;
+	}
+
+	_updateTransform(parentTrans){
+		super._updateTransform(parentTrans);
+		this.trans._updateTransform(parentTrans);
+	}
+}
+
+class MultiSpriteCollection extends Mesh {
 	constructor(atlas) {
 		super(1, 1);
 		this.atlas = atlas;
-		this.sprites = [];
+		this.sprites = new Map();
 	}
 
-	addSprite(sprite, transform) {
-		sprite.trans = transform; // assign a transformation entity
-		this.sprites.push(sprite);
+	addSprite(sprite) {
+		if(!sprite instanceof MultiSprite) {
+			throw Error("Sprite must be instance of MultiSprite class");
+		}
+
+		this.sprites.set(sprite.id, sprite);
 	}
 
 	_updateTransform(parentTrans) {
@@ -395,7 +422,17 @@ class MultiSprite extends Mesh {
 
 		for (let sprite of this.sprites) {
 			sprite.trans._updateTransform(parentTrans);
+
+			this.bbox.topLeftX = Math.min(this.bbox.topLeftX, sprite.bbox.topLeftX);
+			this.bbox.topLeftY = Math.min(this.bbox.topLeftY, sprite.bbox.topLeftY);
+			this.bbox.bottomRightX = Math.max(this.bbox.bottomRightX, sprite.bbox.bottomRightX);
+			this.bbox.bottomRightY = Math.max(this.bbox.bottomRightY, sprite.bbox.bottomRightY);
 		}
+
+		let size = this.bbox.getSize().width;
+		this.width = size.width;
+		this.height = size.height;
+
 	}
 }
 
@@ -411,6 +448,11 @@ class Trans {
 		this.absPosX = 0;
 		this.absPosY = 0;
 		this.absRotation = 0;
+	}
+
+	setPosition(posX, posY){
+		this.posX = posX;
+		this.posY = posY;
 	}
 
 	_updateTransform(parentTrans) {
@@ -450,8 +492,9 @@ class Trans {
 // Overall behavior of the game entity is defined by its components
 class GameObject {
 
-	constructor(tag) {
+	constructor(tag, secondaryId = -10000) {
 		this.id = GameObject.idCounter++;
+		this.secondaryId = secondaryId;
 		this.tag = tag;
 		this.parent = null;
 		this.components = new Array();
@@ -499,6 +542,18 @@ class GameObject {
 				val._removePendingGameObjects(true);
 			}
 		}
+	}
+
+	addState(state){
+		this.state |= state;
+	}
+
+	hasState(state){
+		return (this.state & state) == state; 
+	}
+
+	removeState(state){
+		this.state &= (1 << state/2); // todo fix this
 	}
 
 	hasFlag(flag) {
@@ -581,7 +636,7 @@ class GameObject {
 	}
 
 	update(delta, absolute) {
-		if (this.state & STATE_UPDATABLE == STATE_UPDATABLE) {
+		if (this.hasState(STATE_UPDATABLE)) {
 			this.submitChanges(false);
 
 			this.mesh._updateTransform(this.trans);
@@ -598,7 +653,7 @@ class GameObject {
 	}
 
 	draw(ctx) {
-		if (this.state & STATE_DRAWABLE == STATE_DRAWABLE) {
+		if (this.hasState(STATE_DRAWABLE)) {
 			for (let component of this.components) {
 				component.draw(ctx)
 			}
