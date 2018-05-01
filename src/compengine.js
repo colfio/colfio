@@ -328,12 +328,12 @@ class BBox {
 	}
 
 	getSize() {
-		return { "width": (this.bottomRightX - this.topLeftX), "height": (this.bottomRightY - this.topLeftY) };
+		return { width: (this.bottomRightX - this.topLeftX), height: (this.bottomRightY - this.topLeftY) };
 	}
 
 	getCenter() {
 		let size = this.getSize();
-		return { "posX": (this.topLeftX + size.width / 2), "posY": (this.topLeftY + size.height / 2) };
+		return { posX: (this.topLeftX + size.width / 2), posY: (this.topLeftY + size.height / 2) };
 	}
 
 	intersects(other) {
@@ -356,7 +356,11 @@ class Mesh {
 		this.bbox = new BBox();
 	}
 
-	updateBoundingBox(trans) {
+	_updateTransform(trans) {
+		this._updateBoundingBox(trans);
+	}
+
+	_updateBoundingBox(trans) {
 		this.bbox.topLeftX = trans.posX;
 		this.bbox.topLeftY = trans.posY;
 		this.bbox.bottomRightX = trans.posX + this.width;
@@ -370,6 +374,28 @@ class Sprite extends Mesh {
 		this.offsetX = offsetX;
 		this.offsetY = offsetY;
 		this.image = image;
+		this.transform = null; // for some circumstances it can have a transformation entity
+	}
+}
+
+class MultiSprite extends Mesh {
+	constructor(atlas) {
+		super(1, 1);
+		this.atlas = atlas;
+		this.sprites = [];
+	}
+
+	addSprite(sprite, transform) {
+		sprite.trans = transform; // assign a transformation entity
+		this.sprites.push(sprite);
+	}
+
+	_updateTransform(parentTrans) {
+		super._updateTransform(parentTrans);
+
+		for (let sprite of this.sprites) {
+			sprite.trans._updateTransform(parentTrans);
+		}
 	}
 }
 
@@ -387,24 +413,21 @@ class Trans {
 		this.absRotation = 0;
 	}
 
-	_updateTransform(owner, parent) {
-		
-		if (parent != null) {
-			let ownerMesh = owner.mesh;
-			let parentTrans = parent.trans;
+	_updateTransform(parentTrans) {
+
+		if (parentTrans != null) {
 
 			this.absPosX = this.posX + parentTrans.absPosX;
 			this.absPosY = this.posY + parentTrans.absPosY;
-			this.absRotation = this.rotation + parent.trans.absRotation;
+			this.absRotation = this.rotation + parentTrans.absRotation;
 
 			if (parentTrans.absRotation != 0) {
 				// rotate 
-				let unitSize = owner.scene.unitSize;
 				let parentOffsetX = parentTrans.rotationOffsetX;
 				let parentOffsetY = parentTrans.rotationOffsetY;
 				let ownerOffsetX = this.rotationOffsetX;
 				let ownerOffsetY = this.rotationOffsetY;
-	
+
 				let distX = (this.absPosX + ownerOffsetX - (parentTrans.absPosX + parentOffsetX));
 				let distY = (this.absPosY + ownerOffsetY - (parentTrans.absPosY + parentOffsetY));
 
@@ -452,12 +475,13 @@ class GameObject {
 	}
 
 	submitChanges(recursively = false) {
-		// start with game objects
+
 		this._addPendingGameObjects(!recursively);
 
+		// add game objects first 
 		if (recursively) {
 			for (let [key, val] of this.children) {
-				val.submitChanges(true);
+				val._addPendingGameObjects();
 			}
 		}
 
@@ -466,6 +490,15 @@ class GameObject {
 
 		this._removePendingComponents();
 		this._removePendingGameObjects(!recursively);
+
+		// update other collections
+		if (recursively) {
+			for (let [key, val] of this.children) {
+				val._addPendingComponents();
+				val._removePendingComponents();
+				val._removePendingGameObjects(true);
+			}
+		}
 	}
 
 	hasFlag(flag) {
@@ -551,9 +584,8 @@ class GameObject {
 		if (this.state & STATE_UPDATABLE == STATE_UPDATABLE) {
 			this.submitChanges(false);
 
-			this.mesh.updateBoundingBox(this.trans);
-
-			this.trans._updateTransform(this, this.parent);
+			this.mesh._updateTransform(this.trans);
+			this.trans._updateTransform(this.parent == null ? null : this.parent.trans);
 
 			for (let component of this.components) {
 				component.update(delta, absolute);
@@ -653,10 +685,11 @@ class Msg {
 // Component that defines functional behavior of the game object (or its part)
 class Component {
 
-	constructor() {
+	constructor() { 
 		this.id = Component.idCounter++;
 		this.owner = null;
 		this.scene = null;
+		this.onFinished = null; // onFinished event
 	}
 
 	// called whenever the component is added to the scene
@@ -697,6 +730,10 @@ class Component {
 	// finishes this component
 	finish() {
 		this.owner.removeComponent(this);
+		
+		if(this.onFinished != null) {
+			this.onFinished(this); // call the event
+		}
 	}
 }
 
