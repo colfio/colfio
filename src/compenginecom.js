@@ -1,46 +1,72 @@
-// Rendering component that can render a single sprite
-class SpriteRenderer extends Component {
+// Rendering component that can render any mesh
+class BasicRenderer extends Component {
 
-    oninit() {
-        this.spriteMgr = this.scene.getGlobalAttribute(ATTR_SPRITE_MGR);
+	draw(ctx) {
+		let mesh = this.owner.mesh;
+
+		if (mesh instanceof RectMesh) {
+			this._drawRectMesh(ctx,mesh);
+		} else if (mesh instanceof ImageMesh) {
+			this._drawImageMesh(ctx, mesh);
+		} else if (mesh instanceof SpriteMesh) {
+			this._drawSpriteMesh(ctx, mesh, this.owner.trans);
+		} else if (mesh instanceof MultiSprite) {
+			throw new Error("MultiSprite cannot be used directly. Put it into a MultiSpriteCollection instead");
+		} else if (mesh instanceof MultiSpriteCollection) {
+			this._drawMultiSpriteMesh(ctx, mesh);
+		} else {
+			throw new Error("Not supported mesh type");
+		}
 	}
-	
-	drawSprite(ctx, sprite, trans){
-        let posX = trans.absPosX * this.scene.unitSize;
-        let posY = trans.absPosY * this.scene.unitSize;
-        let originX = trans.rotationOffsetX * this.scene.unitSize;
-        let originY = trans.rotationOffsetY * this.scene.unitSize;
 
-        ctx.translate(posX + originX, posY + originY);
-        ctx.rotate(trans.absRotation);
-
-        ctx.drawImage(sprite.image, sprite.offsetX, sprite.offsetY,
-            sprite.width, sprite.height, -originX, -originY, sprite.width, sprite.height);
-        ctx.rotate(-trans.absRotation);
-        ctx.translate(-(posX + originX), -(posY + originY));
+	_drawRectMesh(ctx, mesh) {
+		let trans = this.owner.trans;
+		let posX = trans.absPosX * this.scene.unitSize;
+		let posY = trans.absPosY * this.scene.unitSize;
+		let originX = trans.rotationOffsetX * this.scene.unitSize;
+		let originY = trans.rotationOffsetY * this.scene.unitSize;
+		ctx.translate(posX + originX, posY + originY);
+		ctx.rotate(trans.absRotation);
+		let fillStyle = ctx.fillStyle;
+		ctx.fillStyle = mesh.fillStyle;
+		ctx.fillRect(-originX, -originY, mesh.width*this.scene.unitSize, mesh.height*this.scene.unitSize);
+		ctx.fillStyle = fillStyle;
+		ctx.rotate(-trans.absRotation);
+		ctx.translate(-(posX + originX), -(posY + originY));
 	}
 
-    draw(ctx) {
-        let sprite = this.owner.mesh;
-        this.drawSprite(ctx, sprite, this.owner.trans);
-    }
+	_drawImageMesh(ctx, mesh) {
+		let trans = this.owner.trans;
+		let posX = trans.absPosX * this.scene.unitSize;
+		let posY = trans.absPosY * this.scene.unitSize;
+		let originX = trans.rotationOffsetX * this.scene.unitSize;
+		let originY = trans.rotationOffsetY * this.scene.unitSize;
+		ctx.translate(posX + originX, posY + originY);
+		ctx.rotate(trans.absRotation);
+		ctx.drawImage(mesh.image, 0, 0, mesh.image.width, mesh.image.height, -originX, -originY, mesh.image.width, mesh.image.height);
+		ctx.rotate(-trans.absRotation);
+		ctx.translate(-(posX + originX), -(posY + originY));
+	}
+
+	_drawSpriteMesh(ctx, mesh, trans) {
+		let posX = trans.absPosX * this.scene.unitSize;
+		let posY = trans.absPosY * this.scene.unitSize;
+		let originX = trans.rotationOffsetX * this.scene.unitSize;
+		let originY = trans.rotationOffsetY * this.scene.unitSize;
+		ctx.translate(posX + originX, posY + originY);
+		ctx.rotate(trans.absRotation);
+		ctx.drawImage(mesh.image, mesh.offsetX, mesh.offsetY,
+			mesh.width, mesh.height, -originX, -originY, mesh.width, mesh.height);
+		ctx.rotate(-trans.absRotation);
+		ctx.translate(-(posX + originX), -(posY + originY));
+	}
+
+	_drawMultiSpriteMesh(ctx, mesh) {
+		for (let [id, sprite] of mesh.sprites) {
+			this.drawSpriteMesh(ctx, sprite, sprite.trans);
+		}
+	}
 }
-
-// Rendering component that can render a collection of sprites
-class MultiSpriteRenderer extends SpriteRenderer {
-    oninit() {
-        this.spriteMgr = this.scene.getGlobalAttribute(ATTR_SPRITE_MGR);
-    }
-
-    draw(ctx) {
-        let spriteCollection = this.owner.mesh;
-
-        for (let [id, sprite] of spriteCollection.sprites) {
-			this.drawSprite(ctx, sprite, sprite.trans);
-        }
-    }
-}
-
 
 
 const INPUT_TOUCH = 1;
