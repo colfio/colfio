@@ -5,7 +5,7 @@ class BasicRenderer extends Component {
 		let mesh = this.owner.mesh;
 
 		if (mesh instanceof RectMesh) {
-			this._drawRectMesh(ctx,mesh);
+			this._drawRectMesh(ctx, mesh);
 		} else if (mesh instanceof ImageMesh) {
 			this._drawImageMesh(ctx, mesh);
 		} else if (mesh instanceof SpriteMesh) {
@@ -29,7 +29,7 @@ class BasicRenderer extends Component {
 		ctx.rotate(trans.absRotation);
 		let fillStyle = ctx.fillStyle;
 		ctx.fillStyle = mesh.fillStyle;
-		ctx.fillRect(-originX, -originY, mesh.width*this.scene.unitSize, mesh.height*this.scene.unitSize);
+		ctx.fillRect(-originX, -originY, mesh.width * this.scene.unitSize, mesh.height * this.scene.unitSize);
 		ctx.fillStyle = fillStyle;
 		ctx.rotate(-trans.absRotation);
 		ctx.translate(-(posX + originX), -(posY + originY));
