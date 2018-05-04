@@ -20,9 +20,10 @@ class Scene {
 		if (Scene.scene) {
 			return Scene.scene;
 		}
+		this.unitSize = 1;
 
 		Scene.scene = this;
-		this.unitSize = 1;
+
 		this.canvas = canvas;
 		this.canvasCtx = canvas.getContext('2d');
 		this.clearScene();
@@ -389,10 +390,12 @@ class RectMesh extends Mesh {
 
 class ImageMesh extends Mesh {
 	constructor(image, scene) {
-		super(image.width / scene.unitSize, image.height / scene.unitSize);
+		super(image.width, image.height);
 		this.image = image;
 	}
 }
+
+// TODO width and height should be always divided by unitSize, otherwise the bounding boxes won't work! 
 
 class SpriteMesh extends Mesh {
 	constructor(offsetX, offsetY, width, height, image) {
@@ -452,12 +455,12 @@ class MultiSpriteCollection extends Mesh {
 
 // transformation entity
 class Trans {
-	constructor(posX = 0, posY = 0, rotation = 0) {
-		this.posX = 0;
-		this.posY = 0;
-		this.rotation = 0;
-		this.rotationOffsetX = 0;
-		this.rotationOffsetY = 0;
+	constructor(posX = 0, posY = 0, rotation = 0, rotationOffsetX = 0, rotationOffsetY = 0) {
+		this.posX = posX;
+		this.posY = posY;
+		this.rotation = rotation;
+		this.rotationOffsetX = rotationOffsetX;
+		this.rotationOffsetY = rotationOffsetY;
 
 		this.absPosX = 0;
 		this.absPosY = 0;
@@ -604,7 +607,7 @@ class GameObject {
 	}
 
 
-	addComponent(component, owner) {
+	addComponent(component) {
 		component.owner = this;
 		component.scene = this.scene;
 		this.componentsToAdd.push(component);

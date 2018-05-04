@@ -111,6 +111,7 @@ class InputManager extends Component {
 
 		if (this.mode |= INPUT_MOVE) {
 			canvas.addEventListener("mousemove", this.moveHandler, false);
+			canvas.addEventListener("touchmove", this.moveHandler, false);
 		}
 	}
 
@@ -121,13 +122,15 @@ class InputManager extends Component {
 		canvas.removeEventListener("mouseup", this.endHandler);
 
 		if (this.mode |= INPUT_MOVE) {
-			canvas.addEventListener("mousemove", this.moveHandler);
+			canvas.removeEventListener("mousemove", this.moveHandler);
+			canvas.removeEventListener("touchmove", this.moveHandler);
 		}
 	}
 
 	handleStart(evt) {
 		evt.preventDefault();
-		if (typeof (evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
+		let isTouch = typeof (evt.changedTouches) !== "undefined";
+		if (isTouch && evt.changedTouches.length == 1) {
 			// only single-touch
 			this.lastTouch = evt.changedTouches[0];
 		} else {
@@ -135,20 +138,22 @@ class InputManager extends Component {
 		}
 
 		if (this.mode |= MSG_DOWN) {
-			this.sendmsg(MSG_DOWN, this.getMousePos(this.scene.canvas, evt));
+			this.sendmsg(MSG_DOWN, { mousePos: this.getMousePos(this.scene.canvas, evt, isTouch), isTouch: isTouch });
 		}
 	}
 
 	handleMove(evt) {
 		evt.preventDefault();
-		this.sendmsg(MSG_MOVE, this.getMousePos(this.scene.canvas, evt));
+		let isTouch = typeof (evt.changedTouches) !== "undefined";
+		this.sendmsg(MSG_MOVE, { mousePos: this.getMousePos(this.scene.canvas, evt, isTouch), isTouch: isTouch });
 	}
 
 	handleEnd(evt) {
 		evt.preventDefault();
 		var posX, posY;
+		let isTouch = typeof (evt.changedTouches) !== "undefined";
 		if (this.lastTouch != null) {
-			if (typeof (evt.changedTouches) !== "undefined" && evt.changedTouches.length == 1) {
+			if (isTouch && evt.changedTouches.length == 1) {
 				posX = evt.changedTouches[0].pageX;
 				posY = evt.changedTouches[0].pageY;
 
@@ -162,17 +167,19 @@ class InputManager extends Component {
 			if (Math.abs(this.lastTouch.pageX - posX) < 10 &&
 				Math.abs(this.lastTouch.pageY - posY) < 10) {
 				// at last send the message to all subscribers about this event
-				this.sendmsg(MSG_TOUCH, this.getMousePos(this.scene.canvas, evt));
+				this.sendmsg(MSG_TOUCH, { mousePos: this.getMousePos(this.scene.canvas, evt, isTouch), isTouch: isTouch });
 			}
 		}
 	}
 
 	// Get the mouse position
-	getMousePos(canvas, e) {
+	getMousePos(canvas, e, isTouch) {
 		var rect = canvas.getBoundingClientRect();
+		let clientX = isTouch ? e.changedTouches[0].clientX : e.clientX;
+		let clientY = isTouch ? e.changedTouches[0].clientY : e.clientY;
 		return {
-			posX: Math.round((e.clientX - rect.left) / (rect.right - rect.left) * canvas.width),
-			posY: Math.round((e.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height)
+			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * canvas.width),
+			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * canvas.height)
 		};
 	}
 }
