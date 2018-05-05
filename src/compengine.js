@@ -21,10 +21,20 @@ class Scene {
 			return Scene.scene;
 		}
 		this.unitSize = 1;
+
 		Scene.scene = this;
 
+		/**
+         * Link to canvas
+         * @type {Canvas}
+         */
 		this.canvas = canvas;
+		/**
+         * Link to canvas rendering context
+         * @type {CanvasRenderingContext2D}
+         */
 		this.canvasCtx = canvas.getContext('2d');
+
 		this.clearScene();
 	}
 
@@ -338,9 +348,25 @@ class Flags {
 // simple bounding box
 class BBox {
 	constructor() {
+		/**
+         * TopLeft absolute coordinate on X axis
+         * @type {number}
+         */
 		this.topLeftX = 0;
+		/**
+         * TopLeft absolute coordinate on Y axis
+         * @type {number}
+         */
 		this.topLeftY = 0;
+		/**
+         * BottomRight coordinate on X axis
+         * @type {number}
+         */
 		this.bottomRightX = 0;
+		/**
+         * BottomRight coordinate on Y axis
+         * @type {number}
+         */
 		this.bottomRightY = 0;
 	}
 
@@ -368,8 +394,20 @@ class BBox {
 
 class Mesh {
 	constructor(width, height) {
+		/**
+         * Relative width of the mesh 
+         * @type {number}
+         */
 		this.width = width;
+		/**
+         * Relative height of the mesh
+         * @type {number}
+         */
 		this.height = height;
+		/**
+         * Bounding box
+         * @type {number}
+         */
 		this.bbox = new BBox();
 	}
 
@@ -460,14 +498,46 @@ class MultiSpriteCollection extends Mesh {
 // transformation entity
 class Trans {
 	constructor(posX = 0, posY = 0, rotation = 0, rotationOffsetX = 0, rotationOffsetY = 0) {
+		/**
+         * Relative position on X axis
+         * @type {number}
+         */
 		this.posX = posX;
+		/**
+         * Relative position on Y axis
+         * @type {number}
+         */
 		this.posY = posY;
+		/**
+         * Relative rotation
+         * @type {number}
+         */
 		this.rotation = rotation;
+		/**
+         * Rotation offset on X axis
+         * @type {number}
+         */
 		this.rotationOffsetX = rotationOffsetX;
+		/**
+         * Rotation offset on Y axis
+         * @type {number}
+         */
 		this.rotationOffsetY = rotationOffsetY;
 
+		/**
+         * Absolute position on X axis
+         * @type {number}
+         */
 		this.absPosX = 0;
+		/**
+         * Absolute position on Y axis
+         * @type {number}
+         */
 		this.absPosY = 0;
+		/**
+         * Absolute rotation
+         * @type {number}
+         */
 		this.absRotation = 0;
 	}
 
@@ -509,21 +579,67 @@ class Trans {
 	}
 }
 
-// Game object entity that aggregates generic attributes and components
-// Overall behavior of the game entity is defined by its components
+/**
+ * Game object entity that aggregates generic attributes and components
+ * Overall behavior of the game entity is defined by its components
+ */
 class GameObject {
 
 	constructor(tag, secondaryId = -10000) {
+		/**
+         * Primary identifier, set automatically
+         * @type {number}
+         */
 		this.id = GameObject.idCounter++;
+		/**
+         * Secondary identifier
+         * @type {number}
+         */
 		this.secondaryId = secondaryId;
+		/**
+         * Name
+         * @type {string}
+         */
 		this.tag = tag;
+		/**
+         * Parent game object
+         * @type {GameObject}
+         */
 		this.parent = null;
+		/**
+         * List of inner components
+         * @type {Array<Component>}
+         */
 		this.components = new Array();
+		/**
+         * Z-Index
+         * @type {number}
+         */
 		this.zIndex = 0;
+		/**
+         * Rendering entity
+         * @type {Mesh}
+         */
 		this.mesh = new Mesh(0, 0);
+		/**
+         * Game scene
+         * @type {Scene}
+         */
 		this.scene = null;
+		/**
+         * Transformation entity
+         * @type {Trans}
+         */
 		this.trans = new Trans();
+		/**
+         * Object states
+         * @type {number}
+         */
 		this.state = STATE_DRAWABLE | STATE_LISTENING | STATE_UPDATABLE;
+		/**
+         * List of attributes, mapped by their ids
+         * @type {Map<number, Any>}
+         */
 		this.attributes = new Map();
 
 		// temporary collection that keeps objects for removal -> objects should be removed
@@ -751,9 +867,25 @@ GameObject.idCounter = 0; // static idCounter
 // Message entity that keeps custom data, a source object and component
 class Msg {
 	constructor(action, component, gameObject, data) {
+		/**
+         * Action type identifier
+         * @type {any}
+         */
 		this.action = action;
+		/**
+         * Component that sent this message
+         * @type {Component}
+         */
 		this.component = component;
+		/**
+         * GameObject attached to this message
+         * @type {GameObject}
+         */
 		this.gameObject = gameObject;
+		/**
+         * Data payload
+         * @type {any}
+         */
 		this.data = data;
 	}
 }
@@ -762,9 +894,25 @@ class Msg {
 class Component {
 
 	constructor() {
+		/**
+         * Component identifier, set automatically
+         * @type {number}
+         */
 		this.id = Component.idCounter++;
+		/**
+         * Owner game object
+         * @type {GameObject}
+         */
 		this.owner = null;
+		/**
+         * Game scene
+         * @type {Scene}
+         */
 		this.scene = null;
+		/**
+         * A custom action invoked upon finish
+         * @type {action}
+         */
 		this.onFinished = null; // onFinished event
 	}
 
