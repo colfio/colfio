@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+
+</head>
+
+<body>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<!-- debugging window -->
+<div id="debugSect" style="height:900px;overflow:scroll;float:left; font-family:'Courier New', Courier, monospace"></div>
+<script src="../src/imageloader.js"></script>
+<script src="../src/compengine.js"></script>
+<script src="../src/compenginecom.js"></script>
+<script src="../src/utils.js"></script>
+<script src="../src/sortedarray.js"></script>
+<script src="../src/main.js"></script>
+
+<script type="text/javascript">
+
+// Start a new game
+function newGame() {
+	scene.clearScene();
+
+	// unit size is 100 px!
+	UNIT_SIZE = 100;
+
+	// debugging
+	scene.addGlobalComponent(new DebugComponent(true, document.getElementById("debugSect")));
+
+
+	let rect1 = new GameObject("rect1");
+	rect1.mesh = new RectMesh("rgb(255,0,0)", 1, 1); // 100x100 pixels
+	rect1.trans.setPosition(2, 2);
+	rect1.trans.rotationOffsetX = 0.5;
+	rect1.trans.rotationOffsetY = 0.5;
+	rect1.addComponent(new BasicRenderer());
+	rect1.addComponent(new RotationAnim());
+	scene.addGlobalGameObject(rect1);
+
+	let rect2 = new GameObject("rect2");
+	rect2.mesh = new RectMesh("rgb(0,255,0)", 1, 1); // 100x100 pixels
+	rect2.trans.setPosition(3.5, 2);
+	rect2.trans.rotationOffsetX = 0.5;
+	rect2.trans.rotationOffsetY = 0.5;
+	rect2.addComponent(new BasicRenderer());
+	rect2.addComponent(new RotationAnim());
+	scene.addGlobalGameObject(rect2);
+}
+
+class RotationAnim extends Component {
+	oninit() {
+		this.subscribe("STOP");
+	}
+
+	onmessage(msg) {
+		if (msg.action == "STOP") {
+			this.finish();
+		}
+	}
+
+	update(delta, absolute) {
+		this.owner.trans.rotation += delta;
+	}
+}
+</script>
+	
+</body>
+</html>
