@@ -1,25 +1,37 @@
 /**
- * @file Component-based micro-engine, partially implements ECS pattern (Entity-Component-System)
+ * @file Component-based micro-engine, implements ECS pattern (Entity-Component-System)
  * @author Adam Vesecky <vesecky.adam@gmail.com>
  */
 
-const MSG_OBJECT_ADDED = "OBJECT_ADDED";
-const MSG_OBJECT_REMOVED = "OBJECT_REMOVED";
-const MSG_ALL = "ALL"; // special message for global subscribers, usually for debugging
 
+// message that is sent when a new object is added
+const MSG_OBJECT_ADDED = "OBJECT_ADDED";
+// message that is sent when an existing object is removed
+const MSG_OBJECT_REMOVED = "OBJECT_REMOVED";
+// special message for global subscribers, usually for debugging
+const MSG_ALL = "ALL";
+
+// state for inactive components
 const STATE_INACTIVE = 0;
+// state for updatable components
 const STATE_UPDATABLE = 2 ^ 0;
+// state for drawable components
 const STATE_DRAWABLE = 2 ^ 1;
+// state for components that listen to some messages
 const STATE_LISTENING = 2 ^ 2;
 
 // unit size in px - all attributes are calculated against this size
 var UNIT_SIZE = 1;
 
-
-// Scene that keeps collection of all game
-// objects and calls draw and update upon them
+/**
+ * A scene that keeps a collection of all game objects
+ * and calls draw/update functions on them
+ */
 class Scene {
 
+	/**
+	 * @param {Canvas} canvas 
+	 */
 	constructor(canvas) {
 		if (Scene.scene) {
 			return Scene.scene;
@@ -73,7 +85,7 @@ class Scene {
 	/**
 	 * Adds a new function that will be invoked after given amount of time
 	 * @param {number} delay delay in seconds 
-	 * @param {action} action () => {} a function pointer with no arguments
+	 * @param {Function} action () => {} a function pointer with no arguments
 	 */
 	addPendingInvocation(delay, action) {
 		this.pendingInvocations.push({
@@ -83,33 +95,59 @@ class Scene {
 		});
 	}
 
+	/**
+	 * Adds a new global component
+	 * @param {Component} cmp 
+	 */
 	addGlobalComponent(cmp) {
 		this.root.addComponent(cmp);
 	}
 
+	/**
+	 * Removes an existing  global component
+	 * @param {Component} cmp 
+	 */
 	removeGlobalComponent(cmp) {
 		this.root.removeComponent(cmp);
 	}
 
+	/**
+	 * Adds a new game object
+	 * @param {GameObject} obj 
+	 */
 	addGlobalGameObject(obj) {
 		this.root.addGameObject(obj);
 	}
 
+	/**
+	 * Removes game object from the scene
+	 * @param {GameObject} obj 
+	 */
 	removeGlobalGameObject(obj) {
 		this.root.removeGameObject(obj);
 	}
 
-	// adds a new global attribute
+	/**
+	 * Adds a new global attribute
+	 * @param {string} key 
+	 * @param {any} val 
+	 */
 	addGlobalAttribute(key, val) {
 		this.root.addAttribute(key, val);
 	}
 
-	// gets a global attribute by its key
+	/**
+	 * Gets global attribute by its key
+	 * @param {string} key 
+	 */
 	getGlobalAttribute(key) {
 		return this.root.getAttribute(key);
 	}
 
-	// removes a global attribute by its key
+	/**
+	 * Removes global attribute by its key
+	 * @param {string} key 
+	 */
 	removeGlobalAttribute(key) {
 		this.root.removeAttribute(key);
 	}
@@ -144,6 +182,11 @@ class Scene {
 		return null;
 	}
 
+	/**
+	 * Finds game object by secondary id
+	 * @param {number} id 
+	 * @returns {GameObject}
+	 */
 	findObjectBySecondaryId(id) {
 		if (this.gameObjectSecIds.has(id)) {
 			return this.gameObjectSecIds.get(id);
@@ -151,6 +194,11 @@ class Scene {
 		return null;
 	}
 
+	/**
+	 * Finds all objects that have given flag set
+	 * @param {number} flag 
+	 * @returns {Array<GameObject>} 
+	 */
 	findAllObjectsByFlag(flag) {
 		let result = new Array();
 		for (let [key, gameObject] of this.gameObjects) {
@@ -161,6 +209,11 @@ class Scene {
 		return result;
 	}
 
+	/**
+	 * Finds the first object that has given flag set
+	 * @param {number} flag 
+	 * @returns 
+	 */
 	findFirstObjectByFlag(flag) {
 		for (let [key, gameObject] of this.gameObjects) {
 			if (gameObject.hasFlag(flag)) {
@@ -169,7 +222,9 @@ class Scene {
 		}
 	}
 
-	// clears the whole scene, all game objects, attributes and components
+	/**
+	 * Clears up the whole scene
+	 */
 	clearScene() {
 		if (this.gameObjects !== undefined) {
 			// call the finalization function
@@ -195,7 +250,6 @@ class Scene {
 		this.gameObjects = new Map();
 		// collection of all game object, mapped by their secondary ids
 		this.gameObjectSecIds = new Map();
-
 		// game objects sorted by z-index, used for drawing
 		this.sortedObjects = new Array();
 
@@ -219,7 +273,11 @@ class Scene {
 		this.root.mesh.height = height;
 	}
 
-	// executes the update cycle
+	/**
+	 * Executes the update cycle
+	 * @param {number} delta 
+	 * @param {number} absolute 
+	 */
 	update(delta, absolute) {
 		if (this.beforeUpdate != null) {
 			this.beforeUpdate(delta, absolute);
@@ -246,7 +304,9 @@ class Scene {
 		}
 	}
 
-	// executes the draw cycle
+	/**
+	 * Executes the drawing cycle
+	 */
 	draw() {
 		if (this.beforeDraw != null) {
 			this.beforeDraw();
@@ -262,9 +322,9 @@ class Scene {
 	}
 
 	/**
-	 * Finds a first object with a given tag
+	 * Sends a message
 	 * @param {string|number} action action key 
-	 * @param {data} data any data 
+	 * @param {any} data any data 
 	 */
 	sendmsg(action, data) {
 		this._sendmsg(new Msg(action, null, null, data));
@@ -310,6 +370,7 @@ class Scene {
 		this.subscribedMessages.get(component.id).push(msgKey);
 	}
 
+	// adds a new game object internally
 	_addGameObject(obj) {
 		// fill all collections
 		if (!this.gameObjectTags.has(obj.tag)) {
@@ -352,7 +413,7 @@ class Scene {
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
-
+	// removes a component and all subscribed links
 	_removeComponent(component) {
 		this.subscribedMessages.delete(component.id);
 
@@ -365,7 +426,9 @@ class Scene {
 	}
 }
 
-// bit array for flags
+/**
+ * Bit array of flags
+ */
 class Flags {
 	constructor() {
 		// flag array 0-128
@@ -375,6 +438,11 @@ class Flags {
 		this.flags4 = 0;
 	}
 
+	/**
+	 * Returns true, if a flag is set
+	 * @param {number} flag 
+	 * @returns {Boolean} 
+	 */
 	hasFlag(flag) {
 		let index = this._getFlagIndex(flag);
 		let offset = this._getFlagOffset(flag);
@@ -392,6 +460,11 @@ class Flags {
 		}
 	}
 
+	/**
+	 * Switches flag values
+	 * @param {number} flag1 
+	 * @param {number} flag2
+	 */
 	switchFlag(flag1, flag2) {
 		let hasFlag2 = this.hasFlag(flag2);
 
@@ -402,10 +475,18 @@ class Flags {
 		else this.resetFlag(flag1);
 	}
 
+	/**
+	 * Sets given flag
+	 * @param {number} flag 
+	 */
 	setFlag(flag) {
 		this._changeFlag(true, flag);
 	}
 
+	/**
+	 * Resets given flag to 0
+	 * @param {number} flag 
+	 */
 	resetFlag(flag) {
 		this._changeFlag(false, flag);
 	}
@@ -436,8 +517,17 @@ class Flags {
 	}
 }
 
-// Bounding box
+/**
+ * Bounding boxes
+ */
 class BBox {
+	
+	/**
+	 * @param {number} topLeftX 
+	 * @param {number} topLeftY 
+	 * @param {number} bottomRightX 
+	 * @param {number} bottomRightY 
+	 */
 	constructor(topLeftX = 0, topLeftY = 0, bottomRightX = 0, bottomRightY = 0) {
 		/**
          * TopLeft absolute coordinate on X axis
@@ -461,27 +551,56 @@ class BBox {
 		this.bottomRightY = bottomRightY;
 	}
 
+	/**
+	 * Gets size of the bounding box
+	 * @returns {number}
+	 */
 	getSize() {
 		return { width: (this.bottomRightX - this.topLeftX), height: (this.bottomRightY - this.topLeftY) };
 	}
 
+	/**
+	 * Gets center of the bounding box
+	 * @returns {{posX: number, posY: number}}
+	 */
 	getCenter() {
 		let size = this.getSize();
 		return { posX: (this.topLeftX + size.width / 2), posY: (this.topLeftY + size.height / 2) };
 	}
 
+	/**
+	 * Returns true, if the box intersects with another box
+	 * @param {BBox} other other bounding box 
+	 * @param {number} tolerance tolerance in number of units
+	 * @returns {Boolean}
+	 */
 	intersects(other, tolerance = 0) {
 		return this.horizontalIntersection(other) >= -tolerance && this.verticalIntersection(other) >= -tolerance;
 	}
 
+	/**
+	 * Calculates horizontal intersection with another bounding box
+	 * @param {BBox} other 
+	 * @returns {number}
+	 */
 	horizontalIntersection(other) {
 		return Math.min(other.bottomRightX, this.bottomRightX) - Math.max(other.topLeftX, this.topLeftX);
 	}
 
+	/**
+	 * Calculates vertical intersection with another bounding box
+	 * @param {BBox} other 
+	 * @returns {number}
+	 */
 	verticalIntersection(other) {
 		return Math.min(other.bottomRightY, this.bottomRightY) - Math.max(other.topLeftY, this.topLeftY);
 	}
 
+	/**
+	 * Updates the bounding box according to the transformation entity
+	 * @param {Trans} trans 
+	 * @param {Mesh} mesh 
+	 */
 	update(trans, mesh) {
 		if (trans.absRotation != 0) {
 			let boxWidth = mesh.width * Math.abs(Math.cos(trans.absRotation)) + mesh.height * Math.abs(Math.sin(trans.absRotation));
@@ -515,7 +634,14 @@ class BBox {
 	}
 }
 
+/**
+ * Base class for all meshes
+ */
 class Mesh {
+	/**
+	 * @param {number} width 
+	 * @param {number} height 
+	 */
 	constructor(width, height) {
 		/**
          * Alpha value 
@@ -539,6 +665,9 @@ class Mesh {
 	}
 }
 
+/**
+ * Mesh for rectangles
+ */
 class RectMesh extends Mesh {
 	constructor(fillStyle, width, height) {
 		super(width, height);
@@ -550,6 +679,9 @@ class RectMesh extends Mesh {
 	}
 }
 
+/**
+ * Mesh for texts
+ */
 class TextMesh extends Mesh {
 	constructor(text = "", font = "24px Verdana", fillStyle, width, height) {
 		super(width, height);
@@ -576,6 +708,9 @@ class TextMesh extends Mesh {
 	}
 }
 
+/**
+ * Mesh for images
+ */
 class ImageMesh extends Mesh {
 	constructor(image) {
 		super(image.width / UNIT_SIZE, image.height / UNIT_SIZE);
@@ -587,6 +722,9 @@ class ImageMesh extends Mesh {
 	}
 }
 
+/**
+ * Mesh for sprites
+ */
 class SpriteMesh extends Mesh {
 	constructor(offsetX, offsetY, width, height, image) {
 		super(width, height);
@@ -609,6 +747,9 @@ class SpriteMesh extends Mesh {
 	}
 }
 
+/**
+ * Mesh for sprites taken from atlases
+ */
 class MultiSprite extends SpriteMesh {
 	constructor(id, trans, offsetX, offsetY, width, height, image) {
 		super(offsetX, offsetY, width, height, image);
@@ -630,6 +771,9 @@ class MultiSprite extends SpriteMesh {
 	}
 }
 
+/**
+ * Mesh for a collection of sprites
+ */
 class MultiSpriteCollection extends Mesh {
 	constructor(atlas) {
 		super(1, 1);
@@ -652,27 +796,11 @@ class MultiSpriteCollection extends Mesh {
 
 		this.sprites.set(sprite.id, sprite);
 	}
-
-	/* TODO bbox was moved to the GameObject!!
-	_updateTransform(parentTrans) {
-		super._updateTransform(parentTrans);
-
-		for (let sprite of this.sprites) {
-			sprite.trans._updateTransform(parentTrans);
-
-			this.bbox.topLeftX = Math.min(this.bbox.topLeftX, sprite.bbox.topLeftX);
-			this.bbox.topLeftY = Math.min(this.bbox.topLeftY, sprite.bbox.topLeftY);
-			this.bbox.bottomRightX = Math.max(this.bbox.bottomRightX, sprite.bbox.bottomRightX);
-			this.bbox.bottomRightY = Math.max(this.bbox.bottomRightY, sprite.bbox.bottomRightY);
-		}
-
-		let size = this.bbox.getSize().width;
-		this.width = size.width;
-		this.height = size.height;
-	}*/
 }
 
-// transformation entity
+/**
+ * Transformation entity
+ */
 class Trans {
 	constructor(posX = 0, posY = 0, rotation = 0, rotationOffsetX = 0, rotationOffsetY = 0) {
 		/**
@@ -721,11 +849,19 @@ class Trans {
 		this.pendingAbsPosY = null;
 	}
 
+	/**
+	 * @param {number} posX 
+	 * @param {number} posY 
+	 */
 	setPosition(posX, posY) {
 		this.posX = posX;
 		this.posY = posY;
 	}
 
+	/**
+	 * @param {number} rotOffsetX 
+	 * @param {number} rotOffsetY 
+	 */
 	changeRotationOffset(rotOffsetX, rotOffsetY) {
 		// TODO this works only when rotation is 0 !
 		let deltaX = this.rotationOffsetX - rotOffsetX;
@@ -736,16 +872,13 @@ class Trans {
 		this.rotationOffsetY = rotOffsetY;
 	}
 
+	/**
+	 * Clones the entity
+	 * @returns {Trans}
+	 */
 	clone() {
-		let copy = new Trans(this.posX, this.posY, this.rotation, this.rotationOffsetX, this.rotationOffsetY);
-		return copy;
+		return new Trans(this.posX, this.posY, this.rotation, this.rotationOffsetX, this.rotationOffsetY);
 	}
-
-	/* TODO work in progress
-	setAbsPosition(posX, posY) {
-		this.pendingAbsPosX = posX;
-		this.pendingAbsPosY = posY;
-	}*/
 
 	_updateTransform(parentTrans) {
 
@@ -797,6 +930,10 @@ class Trans {
  */
 class GameObject {
 
+	/**
+	 * @param {string} tag name of the object (doesn't need to be unique) 
+	 * @param {number} secondaryId helping identifier
+	 */
 	constructor(tag, secondaryId = -10000) {
 		/**
          * Primary identifier, set automatically
@@ -868,13 +1005,16 @@ class GameObject {
 		// temporary collection that keeps objects for removal -> objects should be removed
 		// at the end of the update cycle since we are sure there aren't any running components
 		this._objectsToRemove = new Array();
-		this._componentsToRemove = new Array();
 		// temporary collection that keeps objects for adding -> objects should be added
 		// at the end of the update cycle since we are sure there aren't any running components
 		this._objectsToAdd = new Array();
 		this._componentsToAdd = new Array();
 	}
 
+	/**
+	 * Submits changes to the object
+	 * @param {Boolean} recursively if true, submits changes to children as well
+	 */
 	submitChanges(recursively = false) {
 
 		this.trans._updateTransform(this.parent == null ? null : this.parent.trans);
@@ -893,59 +1033,95 @@ class GameObject {
 		// components should be added after all game objects
 		this._addPendingComponents();
 
-		this._removePendingComponents();
 		this._removePendingGameObjects(!recursively);
 
 		// update other collections
 		if (recursively) {
 			for (let [key, val] of this.children) {
 				val._addPendingComponents();
-				val._removePendingComponents();
 				val._removePendingGameObjects(true);
 			}
 		}
 	}
 
+	/**
+	 * Adds a state by using bit-wise operation
+	 * @param {Number} state 
+	 */
 	addState(state) {
 		this.state |= state;
 	}
 
+	/**
+	 * Checks whether a state is set
+	 * @param {Number} state 
+	 * @returns {Boolean}
+	 */
 	hasState(state) {
 		return (this.state & state) == state;
 	}
 
+	/**
+	 * Removes numeric state
+	 * @param {Number} state 
+	 */
 	removeState(state) {
 		this.state &= (1 << state / 2); // todo fix this
 	}
 
+	/**
+	 * Returns true if given flag is set
+	 * @param {Number} flag 
+	 * @returns {Boolean}
+	 */
 	hasFlag(flag) {
 		return this.flags.hasflag(flag);
 	}
 
+	/**
+	 * Sets a flag
+	 * @param {Number} flag 
+	 */
 	setFlag(flag) {
 		this.flags.setFlag(flag);
 	}
 
+	/**
+	 * Resets a flag
+	 * @param {Number} flag 
+	 */
 	resetFlag(flag) {
 		this.flags.resetFlag(flag);
 	}
 
+	/**
+	 * Switches values of two flags
+	 * @param {Number} flag1 
+	 * @param {Number} flag2 
+	 */
 	switchFlag(flag1, flag2) {
 		this.flags.switchFlag(flag1, flag2);
 	}
 
+	/**
+	 * Removes itself from its parent
+	 */
 	remove() {
 		this.parent.removeGameObject(this);
 	}
 
-	// gets root object
+	/**
+	 * Gets the root object
+	 * @returns {GameObject}
+	 */
 	getRoot() {
 		return this.scene.root;
 	}
 
 	/**
 	 * Sends message to all components in the scope of this object
-	 * @param {Msg} msg message to sent 
+	 * @param {Msg} msg message to send
+	 * @param {boolean} applyToChildren if true, will send the message recursively 
 	 */
 	sendmsgToComponents(msg, applyToChildren = false) {
 		// todo optimize and send only to subscribers!
@@ -962,36 +1138,50 @@ class GameObject {
 		}
 	}
 
-	// adds a new game object into the scene
+	/**
+	 * Adds a new game object into the scene
+	 * @param {GameObject} obj 
+	 */
 	addGameObject(obj) {
 		obj.scene = this.scene;
 		obj.parent = this;
 		this._objectsToAdd.push(obj);
 	}
 
-	// removes given game object as soon as the update cycle finishes
+	/**
+	 * Removes given game object as soon as the update cycle ends
+	 * @param {GameObject} obj 
+	 */
 	removeGameObject(obj) {
 		obj.state = STATE_INACTIVE;
 		this._objectsToRemove.push(obj);
 	}
 
+	/**
+	 * Adds a new component and attaches it to the game object in the next loop
+	 * @param {Component} component 
+	 */
 	addComponent(component) {
 		component.owner = this;
 		component.scene = this.scene;
 		this._componentsToAdd.push(component);
 	}
 
-	removeComponent(component) {
-		this._componentsToRemove.push(obj);
-	}
 
+	/**
+	 * Instantly removes all components
+	 * @param {Component} component
+	 */
 	removeAllComponents() {
 		for (let cmp of this.components) {
 			this.removeComponent(cmp);
 		}
 	}
 
-	// removes an existing component
+	/**
+	 * Instantly removes a component
+	 * @param {Component}
+	 */
 	removeComponent(component) {
 		for (var i = 0; i < this.components.length; i++) {
 			if (this.components[i] == component) {
@@ -1005,6 +1195,11 @@ class GameObject {
 		return false;
 	}
 
+	/**
+	 * Finds a component by name
+	 * @param {string} name name of the component 
+	 * @returns {Component}
+	 */
 	findComponent(name) {
 		for (let cmp of this.components) {
 			if (cmp.constructor.name == name) return cmp;
@@ -1015,21 +1210,37 @@ class GameObject {
 		return null;
 	}
 
-	// adds a new attribute
+	/**
+	 * Adds a new attribute
+	 * @param {string} key attribute key 
+	 * @param {any} val any value
+	 */
 	addAttribute(key, val) {
 		this.attributes.set(key, val);
 	}
 
-	// gets attribute by key
+	/**
+	 * Gets an attribute by a key
+	 * @param {string} key 
+	 * @returns 
+	 */
 	getAttribute(key) {
 		return this.attributes.get(key);
 	}
 
-	// removes an existing attribute
+	/**
+	 * Removes an existing attribute
+	 * @param {string} key 
+	 */
 	removeAttribute(key) {
 		this.attributes.delete(key);
 	}
 
+	/**
+	 * Executes update loop
+	 * @param {number} delta delta time since the last tick 
+	 * @param {number} absolute absolute time since the start of the engine
+	 */
 	update(delta, absolute) {
 		if (this.hasState(STATE_UPDATABLE)) {
 			this.submitChanges(false);
@@ -1044,13 +1255,16 @@ class GameObject {
 		}
 	}
 
+	/**
+	 * Executes drawing process upon every component
+	 * @param {CanvasRenderingContext2D} ctx 
+	 */
 	draw(ctx) {
 		if (this.hasState(STATE_DRAWABLE)) {
 			for (let component of this.components) {
 				component.draw(ctx)
 			}
 		}
-		// children are drawn via scene
 	}
 
 	// adds pending objects
@@ -1071,7 +1285,7 @@ class GameObject {
 		this._objectsToAdd = [];
 	}
 
-	// removes pending objects;
+	// removes pending objects
 	_removePendingGameObjects(submitChanges = true) {
 		for (let obj of this._objectsToRemove) {
 			obj.removeAllComponents();
@@ -1100,27 +1314,20 @@ class GameObject {
 		this._componentsToAdd = [];
 	}
 
-	// removes all components that are to be removed
-	_removePendingComponents() {
-		for (let component of this._componentsToRemove) {
-			component.finalize();
-
-			for (var i = 0; i < this.components.length; i++) {
-				if (this.components[i] == component) {
-					this.components.splice(i, 1);
-					this.scene._removeComponent(component);
-					break;
-				}
-			}
-		}
-		this._componentsToRemove = [];
-	}
 }
 GameObject.idCounter = 0; // static idCounter
 
 
-// Message entity that keeps custom data, a source object and component
+/**
+ * Message entity that stores custom payload
+ */
 class Msg {
+	/**
+	 * @param {string} action key of an action
+	 * @param {Component} component sending component 
+	 * @param {GameObject} gameObject owner
+	 * @param {any} data any data
+	 */
 	constructor(action, component, gameObject, data) {
 		/**
          * Action type identifier
@@ -1128,7 +1335,7 @@ class Msg {
          */
 		this.action = action;
 		/**
-         * Component that sent this message
+         * Component that has sent this message
          * @type {Component}
          */
 		this.component = component;
@@ -1145,7 +1352,9 @@ class Msg {
 	}
 }
 
-// Component that defines functional behavior of the game object (or its part)
+/**
+ * Component that defines functional behavior of a game object to which it is attached
+ */
 class Component {
 
 	constructor() {
@@ -1196,8 +1405,8 @@ class Component {
 
 	/**
 	 * Invokes udpate cycle
-	 * @param {delta} delta number of seconds since last update
-	 * @param {absolute} absolute number of seconds since the game started 
+	 * @param {delta} delta number of seconds since the last update
+	 * @param {absolute} absolute number of seconds since the game has started 
 	 */
 	update(delta, absolute) {
 		// override
@@ -1225,7 +1434,9 @@ class Component {
 
 Component.idCounter = 0;
 
-
+/**
+ * Builder for game objects
+ */
 class GameObjectBuilder {
 	constructor(name) {
 		this.gameObj = new GameObject(name);

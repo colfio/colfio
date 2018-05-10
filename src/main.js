@@ -4,10 +4,18 @@
  */
 
 
-var gameTime = 0; // number of ms since the game started
+/**
+ * @typedef {typeof import('./compengine.js').Scene} Scene
+ */
 
+// number of ms since the game started
+var gameTime = 0;
+/** @type {Canvas} */
 var canvas;
+/** @type {CanvasRenderingContext2D} */
 var canvasCtx;
+/** @type {Scene} */
+var scene;
 
 window.onload = function () {
 	// get canvas
@@ -29,8 +37,6 @@ function initGame() {
 
 	// Call init to start the game
 	newGame();
-
-	return true;
 }
 
 // ========================= GAME LOOP =========================

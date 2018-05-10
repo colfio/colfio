@@ -1,9 +1,25 @@
-// Debugging component that renders the whole scene graph
+/**
+ * @file Set of basic components for ECS engine
+ * @author Adam Vesecky <vesecky.adam@gmail.com>
+ */
+
+/**
+ * @typedef {typeof import('./compengine.js').Mesh} Mesh
+ * @typedef {typeof import('./compengine.js').Component} Component
+ */
+
+/**
+ * Debugging component that renders the whole scene graph
+ */
 class DebugComponent extends Component {
 
+	/**
+	 * @param {Boolean} displayBBox if true, the component will also display bounding boxes 
+	 * @param {HTMLElement} targetHtmlElement target html element the debug component should render to
+	 */
 	constructor(displayBBox, targetHtmlElement) {
 		super();
-		this.targetHtmlElement = targetHtmlElement; // TODO add something more generic here
+		this.targetHtmlElement = targetHtmlElement;
 		this.strWrapper = { str: "" };
 		this.displayBBox = displayBBox;
 	}
@@ -13,20 +29,17 @@ class DebugComponent extends Component {
 			throw new Error("DebugComponent must be attached to the very root!");
 		}
 
-		let originalDraw = this.scene.draw;
-		var self = this;
-
 		// subscribe to all messages
 		this.subscribe(MSG_ALL);
 
 		if (this.displayBBox == true) {
 			this.scene.afterDraw = () => {
-				let strokeStyle = self.scene.canvasCtx.strokeStyle;
-				self.scene.canvasCtx.beginPath();
-				self.scene.canvasCtx.strokeStyle = "red";
-				self._drawBoundingBox(self.scene.canvasCtx, self.owner);
-				self.scene.canvasCtx.stroke();
-				self.scene.canvasCtx.strokeStyle = strokeStyle;
+				let strokeStyle = this.scene.canvasCtx.strokeStyle;
+				this.scene.canvasCtx.beginPath();
+				this.scene.canvasCtx.strokeStyle = "red";
+				this._drawBoundingBox(this.scene.canvasCtx, this.owner);
+				this.scene.canvasCtx.stroke();
+				this.scene.canvasCtx.strokeStyle = strokeStyle;
 			}
 		}
 	}
@@ -114,9 +127,14 @@ class DebugComponent extends Component {
 	}
 }
 
-// Rendering component that can render any mesh
+/**
+ * Rendering component for all basic meshes
+ */
 class BasicRenderer extends Component {
 
+	/**
+	 * @param {CanvasRenderingContext2D} ctx 
+	 */
 	draw(ctx) {
 		let mesh = this.owner.mesh;
 		let alpha = ctx.globalAlpha;
@@ -140,6 +158,10 @@ class BasicRenderer extends Component {
 		ctx.globalAlpha = alpha;
 	}
 
+	/**
+	 * @param {CanvasRenderingContext2D} ctx 
+	 * @param {Mesh} mesh 
+	 */
 	_drawRectMesh(ctx, mesh) {
 		let trans = this.owner.trans;
 		let posX = trans.absPosX * UNIT_SIZE;
@@ -156,6 +178,10 @@ class BasicRenderer extends Component {
 		ctx.translate(-(posX), -(posY));
 	}
 
+	/**
+	 * @param {CanvasRenderingContext2D} ctx 
+	 * @param {Mesh} mesh 
+	 */
 	_drawTextMesh(ctx, mesh) {
 		let trans = this.owner.trans;
 		let posX = trans.absPosX * UNIT_SIZE;
@@ -176,6 +202,10 @@ class BasicRenderer extends Component {
 		ctx.translate(-(posX), -(posY));
 	}
 
+	/**
+	 * @param {CanvasRenderingContext2D} ctx 
+	 * @param {Mesh} mesh 
+	 */
 	_drawImageMesh(ctx, mesh) {
 		let trans = this.owner.trans;
 		let posX = trans.absPosX * UNIT_SIZE;
@@ -189,6 +219,10 @@ class BasicRenderer extends Component {
 		ctx.translate(-(posX), -(posY));
 	}
 
+	/**
+	 * @param {CanvasRenderingContext2D} ctx 
+	 * @param {Mesh} mesh 
+	 */
 	_drawSpriteMesh(ctx, mesh, trans) {
 		let posX = trans.absPosX * UNIT_SIZE;
 		let posY = trans.absPosY * UNIT_SIZE;
@@ -202,6 +236,10 @@ class BasicRenderer extends Component {
 		ctx.translate(-posX, -posY);
 	}
 
+	/**
+	 * @param {CanvasRenderingContext2D} ctx 
+	 * @param {Mesh} mesh 
+	 */
 	_drawMultiSpriteMesh(ctx, mesh) {
 		for (let [id, sprite] of mesh.sprites) {
 			this.drawSpriteMesh(ctx, sprite, sprite.trans);
@@ -209,14 +247,37 @@ class BasicRenderer extends Component {
 	}
 }
 
-Interpolation = {};
-Interpolation.linear = (current, start, length) => Math.min(1, Math.max(0, (current - start) / length));
-Interpolation.easeinout = (current, start, length) => {
-	let pos = Interpolation.linear(current, start, length);
-	let posInt =  pos < 0.5 ? 2*pos*pos : -1+(4-2*pos)*pos;
-	return Math.min(1, Math.max(0, posInt));
-}
+/**
+ * Interpolation object
+ */
+Interpolation = {
+	/**
+	 * Calculates linear interpolation
+	 * @param {Number} current current value 
+	 * @param {Number} start starting value
+	 * @param {Number} length length of the interpolation
+	 * @returns {Number} calculated value
+	 */
+	linear: function(current, start, length) {
+		return Math.min(1, Math.max(0, (current - start) / length));
+	},
+	/**
+	 * Calculates easing interpolation
+	 * @param {Number} current current value 
+	 * @param {Number} start starting value
+	 * @param {Number} length length of the interpolation
+	 * @returns {Number} calculated value
+	 */
+	easeinout: function(current, start, length) {
+		let pos = Interpolation.linear(current, start, length);
+		let posInt =  pos < 0.5 ? 2*pos*pos : -1+(4-2*pos)*pos;
+		return Math.min(1, Math.max(0, posInt));	
+	}
+};
 
+/**
+ * Base class for animations
+ */
 class Animation extends Component {
 	// loops = 0 for infinite!
 	constructor(duration, goBack = false, loops = 1) {
@@ -267,10 +328,23 @@ class Animation extends Component {
 
 	_applyAnim(percent, inverted) {
 		// override in child classes
+		throw new Error('Abstract class Animation can\'t be instantiated directly!');
 	}
 }
 
+/**
+ * Translate animation component, moves an object between two points
+ */
 class TranslateAnimation extends Animation {
+	/**
+	 * @param {Number} srcPosX x-axis position of the source 
+	 * @param {Number} srcPosY y-axis position of the source
+	 * @param {Number} targetPosX x-axis position of the target
+	 * @param {Number} targetPosY y-axis position of the target
+	 * @param {Number} duration duration of the animation
+	 * @param {Boolean} goBack if true, the animation will play in reverse order as well
+	 * @param {Boolean} loops if true, the animation will loop
+	 */
 	constructor(srcPosX, srcPosY, targetPosX, targetPosY, duration, goBack = false, loops = 1) {
 		super(duration, goBack, loops);
 		this.srcPosX = srcPosX;
@@ -296,7 +370,17 @@ class TranslateAnimation extends Animation {
 	}
 }
 
+/**
+ * Rotation animation component
+ */
 class RotationAnimation extends Animation {
+	/**
+	 * @param {Number} srcRot source rotation value
+	 * @param {Number} targetRot target rotation value
+	 * @param {Number} duration duration of the animation
+	 * @param {Boolean} goBack if true, the animation will play in reverse order as well
+	 * @param {Boolean} loops if true, the animation will loop
+	 */
 	constructor(srcRot, targetRot, duration, goBack = false, loops = 1) {
 		super(duration, goBack, loops);
 		this.srcRot = srcRot;
@@ -317,20 +401,50 @@ class RotationAnimation extends Animation {
 	}
 }
 
+/**
+ * Flag for TOUCH events handling
+ */
 const INPUT_TOUCH = 1;
+/**
+ * Flag for MOUSE_DOWN events handling
+ */
 const INPUT_DOWN = 1 << 1;
+/**
+ * Flag for MOUSE_MOVE events handling
+ */
 const INPUT_MOVE = 1 << 2;
+/**
+ * Flag for MOUSE_RELEASE events handling
+ */
 const INPUT_UP = 1 << 3;
 
+/**
+ * Message code for touch event
+ */
 const MSG_TOUCH = 100;
+/**
+ * Message code for mouse_down event
+ */
 const MSG_DOWN = 101;
+/**
+ * Message code for mouse_move event
+ */
 const MSG_MOVE = 102;
+/**
+ * Message code for mouse_up event
+ */
 const MSG_UP = 103;
 
-// Component that handles touch and mouse events and transforms them into messages 
-// that can be subscribed by any other component
+/**
+ * Component that handles touch and mouse events and transforms them into messages 
+ * that can be subscribed by any other component
+ */
 class InputManager extends Component {
 
+	/**
+	 * Mode that will be captured
+	 * Possible values: INPUT_TOUCH, INPUT_DOWN, INPUT_MOVE, INPUT_MOVE and any bit-wise OR combination of them 
+	 */
 	constructor(mode = INPUT_TOUCH) {
 		super();
 		this.mode = mode;
