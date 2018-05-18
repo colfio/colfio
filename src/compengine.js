@@ -352,7 +352,11 @@ class Scene {
 		}
 	}
 
-	// subscribes given component for messaging system
+	/**
+	 * Subscribes given component for messaging system
+	 * @param {string} msgKey 
+	 * @param {Component} component 
+	 */
 	_subscribeComponent(msgKey, component) {
 		var subs = this.subscribers.get(msgKey);
 		if (subs === undefined) {
@@ -413,7 +417,22 @@ class Scene {
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
-	// removes a component and all subscribed links
+	/**
+	 * @param {Component} component 
+	 * @param {string} action 
+	 */
+	_unsubscribeComponent(component, action){
+        if (this.subscribedMessages.has(component.id)) {
+            this.subscribers.get(action).delete(component.id);
+            let allMsgKeys = this.subscribedMessages.get(component.id);
+            // todo remove msg key from the array
+        }
+    }
+
+	/**
+	 * Removes a component and all subscribed links
+	 * @param {Component} component 
+	 */
 	_removeComponent(component) {
 		this.subscribedMessages.delete(component.id);
 
@@ -423,6 +442,7 @@ class Scene {
 				this.subscribers.get(msgKey).delete(component.id);
 			}
 		}
+		this.subscribedMessages.delete(component.id);
 	}
 }
 
@@ -1378,6 +1398,10 @@ class Component {
          * @type {action}
          */
 		this.onFinished = null; // onFinished event
+		/**
+		 * @type {boolean}
+		 */
+		this.isFinished = false;
 	}
 
 	// called whenever the component is added to the scene
@@ -1385,12 +1409,27 @@ class Component {
 		// override
 	}
 
-	// subscribes itself as a listener for action with given key
+	/**
+	 * Subscribes itself as a listener for action with given key
+	 * @param {string} action 
+	 */
 	subscribe(action) {
 		this.scene._subscribeComponent(action, this);
 	}
 
-	// sends message to all subscribers
+	/**
+	 * Unsubscribes itself from an action
+	 * @param {string} action 
+	 */
+	unsubscribe(action) {
+		this.scene._unsubscribeComponent(action, this);
+	}
+
+	/**
+	 * Sends a message to all subscriber
+	 * @param {string} action 
+	 * @param {any} data 
+	 */
 	sendmsg(action, data) {
 		this.scene._sendmsg(new Msg(action, this, this.owner, data));
 	}
@@ -1429,6 +1468,7 @@ class Component {
 		if (this.onFinished != null) {
 			this.onFinished(this); // call the event
 		}
+		this.isFinished = true;
 	}
 }
 

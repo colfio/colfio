@@ -258,7 +258,7 @@ Interpolation = {
 	 * @param {Number} length length of the interpolation
 	 * @returns {Number} calculated value
 	 */
-	linear: function(current, start, length) {
+	linear: function (current, start, length) {
 		return Math.min(1, Math.max(0, (current - start) / length));
 	},
 	/**
@@ -268,10 +268,10 @@ Interpolation = {
 	 * @param {Number} length length of the interpolation
 	 * @returns {Number} calculated value
 	 */
-	easeinout: function(current, start, length) {
+	easeinout: function (current, start, length) {
 		let pos = Interpolation.linear(current, start, length);
-		let posInt =  pos < 0.5 ? 2*pos*pos : -1+(4-2*pos)*pos;
-		return Math.min(1, Math.max(0, posInt));	
+		let posInt = pos < 0.5 ? 2 * pos * pos : -1 + (4 - 2 * pos) * pos;
+		return Math.min(1, Math.max(0, posInt));
 	}
 };
 
@@ -517,7 +517,7 @@ class InputManager extends Component {
 		evt.preventDefault();
 		var posX, posY;
 		let isTouch = typeof (evt.changedTouches) !== "undefined";
-	
+
 		if (this.lastTouch != null) {
 			if (isTouch && evt.changedTouches.length == 1) {
 				posX = evt.changedTouches[0].pageX;
@@ -551,5 +551,510 @@ class InputManager extends Component {
 			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * canvas.width),
 			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * canvas.height)
 		};
+	}
+}
+
+const CMD_BEGIN_REPEAT = 1;
+const CMD_END_REPEAT = 2;
+const CMD_EXECUTE = 3;
+const CMD_BEGIN_WHILE = 4;
+const CMD_END_WHILE = 5;
+const CMD_BEGIN_INTERVAL = 6;
+const CMD_END_INTERVAL = 7;
+const CMD_BEGIN_IF = 8;
+const CMD_ELSE = 9;
+const CMD_END_IF = 10;
+const CMD_WAIT_TIME = 11;
+const CMD_ADD_COMPONENT = 12;
+const CMD_WAIT_FOR_FINISH = 13;
+const CMD_WAIT_UNTIL = 14;
+const CMD_WAIT_FRAMES = 15;
+const CMD_WAIT_FOR_MESSAGE = 16;
+const CMD_REMOVE_COMPONENT = 17;
+const CMD_REMOVE_GAME_OBJECT_BY_TAG = 18;
+const CMD_REMOVE_GAME_OBJECT = 19;
+
+
+/**
+ *  @typedef {{
+ * 	key: string,
+ * param1: any,
+ * param2: any,
+ * next: SNode
+ * }} SNode
+ */
+
+/**
+ * Simple stack
+ */
+class Stack {
+	constructor() {
+		this.top = null;
+		this.size = 0;
+	}
+
+	/**
+	 * Pushes a new node onto the stack
+	 * @param {SNode} node
+	 */
+	push(node) {
+		this.top = node;
+		this.size += 1;
+	}
+
+	/**
+	 * Pops the current node from the stack
+	 * @param {SNode} node
+	 */
+	pop() {
+		let temp = this.top;
+		this.top = this.top.previous;
+		this.size -= 1;
+		return temp;
+	}
+
+	/**
+	 * Returns the node on the top
+	 */
+	top() {
+		return this.top;
+	}
+}
+
+/**
+ * Component that executes a chain of commands during the update loop
+ */
+class ExecutorComponent extends Component {
+	constructor() {
+		super();
+		this.scopeStack = new Stack();
+		// linked list
+		this.current = null;
+		this.head = null;
+		this.tail = null;
+
+		// custom parameters
+		this.helpParam = null;
+		this.helpParam2 = null;
+	}
+
+	/**
+	 * Repeats the following part of the chain until endRepeat()
+	 * @param {Number} num number of repetitions
+	 * @returns {ExecutorComponent}
+	 */
+	beginRepeat(num) {
+		this._enqueue(CMD_BEGIN_REPEAT, num);
+		return this;
+	}
+
+	/**
+	 * Enclosing element for beginRepeat() command
+	 * @returns {ExecutorComponent}
+	 */
+	endRepeat() {
+		this._enqueue(CMD_END_REPEAT);
+		return this;
+	}
+
+	/**
+	 * Executes a closure
+	 * @param {action} func function to execute 
+	 * @returns {ExecutorComponent}
+	 */
+	execute(func) {
+		this._enqueue(CMD_EXECUTE, func);
+		return this;
+	}
+
+	/**
+	 * Repeats the following part of the chain up to the endWhile() 
+	 * till the func() keeps returning true 
+	 * @param {function} func function that returns either true or false
+	 * @returns {ExecutorComponent}
+	 */
+	beginWhile(func) {
+		this._enqueue(CMD_BEGIN_WHILE, func);
+		return this;
+	}
+
+	/**
+	 * Enclosing command for beginWhile()
+	 * @returns {ExecutorComponent}
+	 */
+	endWhile() {
+		this._enqueue(CMD_END_WHILE);
+		return this;
+	}
+
+	/**
+	 * Starts an infinite loop that will repeat every num second  
+	 * @param {number} num number of seconds to wait
+	 * @returns {ExecutorComponent}
+	 */
+	beginInterval(num) {
+		this._enqueue(CMD_BEGIN_INTERVAL, num);
+		return this;
+	}
+
+	/**
+	 * Enclosing command for beginInterval()
+	 * @returns {ExecutorComponent}
+	 */
+	endInterval() {
+		this._enqueue(CMD_END_INTERVAL);
+		return this;
+	}
+
+	/**
+	 * Checks an IF condition returned by 'func' and jumps to the next element,
+	 * behind the 'else' element or behind the 'endIf' element, if the condition is not met
+	 * @param {function} func function that returns either true or false 
+	 * @returns {ExecutorComponent}
+	 */
+	beginIf(func) {
+		this._enqueue(CMD_BEGIN_IF, func);
+		return this;
+	}
+
+	/**
+	 * Defines a set of commands that are to be executed if the condition of the current
+	 * beginIf() command is not met
+	 * @returns {ExecutorComponent}
+	 */
+	else() {
+		this._enqueue(CMD_ELSE);
+		return this;
+	}
+
+	/**
+	 * Enclosing command for beginIf()
+	 * @returns {ExecutorComponent}
+	 */
+	endIf() {
+		this._enqueue(CMD_END_IF);
+		return this;
+	}
+
+	/**
+	 * Adds a new component to given game object
+	 * @param {GameObject} gameObj 
+	 * @param {Component} component 
+	 * @returns {ExecutorComponent}
+	 */
+	addComponent(gameObj, component) {
+		this._enqueue(CMD_ADD_COMPONENT, gameObj, component);
+		return this;
+	}
+
+	/**
+	 * Waits given amount of seconds
+	 * @param {time} time number of seconds to wait 
+	 * @returns {ExecutorComponent}
+	 */
+	waitTime(time) {
+		this._enqueue(CMD_WAIT_TIME, time);
+		return this;
+	}
+
+	/**
+	 * Waits until given component isn't finished
+	 * @param {Component} component 
+	 * @returns {ExecutorComponent}
+	 */
+	waitForFinish(component) {
+		this._enqueue(CMD_WAIT_FOR_FINISH, component);
+		return this;
+	}
+
+	/**
+	 * Waits until given function keeps returning true
+	 * @param {Function} func 
+	 * @returns {ExecutorComponent}
+	 */
+	waitUntil(func) {
+		this._enqueue(CMD_WAIT_UNTIL, func);
+		return this;
+	}
+
+	/**
+	 * Waits given number of iterations of update loop
+	 * @param {number} num 
+	 * @returns {ExecutorComponent}
+	 */
+	waitFrames(num) {
+		this._enqueue(CMD_WAIT_FRAMES, num);
+		return this;
+	}
+
+	/**
+	 * Waits until a message with given key isn't sent
+	 * @param {String} action 
+	 * @returns {ExecutorComponent}
+	 */
+	waitForMessage(action) {
+		this._enqueue(CMD_WAIT_FOR_MESSAGE, action);
+		return this;
+	}
+
+	/**
+	 * Removes component from given game object
+	 * @param {GameObject} gameObj 
+	 * @param {Component} cmp 
+	 * @returns {ExecutorComponent}
+	 */
+	removeComponent(gameObj, cmp) {
+		this._enqueue(CMD_REMOVE_COMPONENT, gameObj, cmp);
+		return this;
+	}
+
+	/**
+	 * Removes a game object with given tag
+	 * @param {String} tag 
+	 * @returns {ExecutorComponent}
+	 */
+	removeGameObjectByTag(tag) {
+		this._enqueue(CMD_REMOVE_GAME_OBJECT_BY_TAG, tag);
+		return this;
+	}
+
+	/**
+	 * Removes given game object
+	 * @param {GameObject} obj 
+	 * @returns {ExecutorComponent}
+	 */
+	removeGameObject(obj) {
+		this._enqueue(CMD_REMOVE_GAME_OBJECT, obj);
+		return this;
+	}
+
+	onmessage(msg) {
+		this.helpParam2 = msg.action;
+	}
+
+	update(delta, absolute) {
+		if (this.current == null) {
+			this.current = this._dequeue();
+		}
+
+		if (this.current == null) {
+			this.finish();
+			return;
+		}
+
+		switch (this.current.key) {
+			case CMD_BEGIN_REPEAT:
+				this.scopeStack.push(this.current);
+				this._gotoNextImmediately(delta, absolute);
+				break;
+			case CMD_END_REPEAT:
+				let temp = this.scopeStack.pop();
+				if (temp.param2 === undefined) {
+					// save param1 (number of repetitions) into temp variable
+					// that will decrease over time
+					temp.param2 = temp.param1;
+				}
+
+				if (--temp.param2 > 0) {
+					// jump to the beginning
+					this.current = temp;
+					this.update(delta, absolute);
+				} else {
+					// restore the variable
+					temp.param2 = temp.param1;
+					this._gotoNextImmediately();
+				}
+				break;
+			case CMD_EXECUTE:
+				this.current.param1(this);
+				this._gotoNextImmediately();
+				break;
+			case CMD_BEGIN_WHILE:
+				this.scopeStack.push(this.current);
+				this._gotoNextImmediately();
+				break;
+			case CMD_END_WHILE:
+				let temp2 = this.scopeStack.pop();
+				if (temp2.param1()) {
+					this.current = temp2;
+					this.update(delta, absolute);
+				} else {
+					this._gotoNextImmediately();
+				}
+				break;
+			case CMD_BEGIN_INTERVAL:
+				if (this.helpParam == null) {
+					// save the beginning to a help variable and wait
+					this.helpParam = absolute;
+				} else if (absolute - this.helpParam >= this.current.param1) {
+					// proceed
+					this.helpParam = null;
+					this.scopeStack.push(this.current);
+					this._gotoNextImmediately();
+				}
+				break;
+			case CMD_END_INTERVAL:
+				this.current = this.scopeStack.pop();
+				this.update(delta, absolute);
+				break;
+			case CMD_BEGIN_IF:
+				if (this.current.param1()) {
+					// condition fulfilled 
+					this._gotoNextImmediately();
+					break;
+				}
+
+				// condition not fullfiled -> we need to jump to the next ELSE or END-IF node
+				let deepCounter = 1;
+				while (true) {
+					this.current = this._dequeue();
+					if (this.current.key == CMD_BEGIN_IF) {
+						deepCounter++;
+					}
+					if (this.current.key == CMD_END_IF) {
+						deepCounter--;
+					}
+					// we need to find the next ELSE of END of the current scope
+					// thus, we have to skip all inner IF-ELSE branches
+					if ((deepCounter == 1 && this.current.key == CMD_ELSE) ||
+						deepCounter == 0 && this.current.key == CMD_END_IF) {
+						this._gotoNext();
+						break;
+					}
+				}
+				this.update(delta, absolute);
+				break;
+			case CMD_ELSE:
+				// jump to the first END_IF block of the current branch
+				let deepCounter2 = 1;
+				while (true) {
+					this.current = this._dequeue();
+					if (this.current.key == CMD_BEGIN_IF) {
+						deepCounter2++;
+					}
+					if (this.current.key == CMD_END_IF) {
+						deepCounter2--;
+					}
+					if (deepCounter2 == 0 && this.current.key == CMD_END_IF) {
+						this._gotoNext();
+						break;
+					}
+				}
+				this.update(delta, absolute);
+				break;
+			case CMD_END_IF:
+				this._gotoNextImmediately();
+				break;
+			case CMD_WAIT_TIME:
+				if (this.helpParam == null) {
+					this.helpParam = absolute;
+				} else if (absolute - this.helpParam >= this.current.param1) {
+					this.helpParam = null;
+					this._gotoNextImmediately();
+				}
+				break;
+			case CMD_ADD_COMPONENT:
+				this.current.param1.addComponent(this.current.param2);
+				this._gotoNextImmediately();
+				break;
+			case CMD_WAIT_FOR_FINISH:
+				if (this.current.param1.isFinished) {
+					this._gotoNextImmediately();
+				}
+				break;
+			case CMD_WAIT_UNTIL:
+				if (!this.current.param1()) {
+					this._gotoNext();
+				}
+				break;
+			case CMD_WAIT_FRAMES:
+				if (this.helpParam == null) {
+					this.helpParam = 0;
+				} else if (++this.helpParam >= this.current.param1) {
+					this.helpParam = null;
+					this._gotoNext();
+				}
+				break;
+			case CMD_WAIT_FOR_MESSAGE:
+				// helpParam indicates that this component has already subscribed the message
+				if (this.helpParam == true) {
+					if (this.helpParam2 == this.current.param1) {
+						// got message -> unsubscribe and proceed
+						this.unsubscribe(this.current.param1);
+						this.helpParam = this.helpParam2 = null;
+						this._gotoNextImmediately();
+					}
+				} else {
+					// just subscribe and wait
+					this.helpParam = true;
+					this.helpParam2 = null;
+					this.subscribe(this.current.param1);
+				}
+				break;
+			case CMD_REMOVE_COMPONENT:
+				this.current.param1.removeComponentByName(this.current.param2);
+				this._gotoNextImmediately();
+				break;
+			case CMD_REMOVE_GAME_OBJECT_BY_TAG:
+				let obj = this.scene.findFirstGameObjectByTag(this.current.param1);
+				if (obj != null) {
+					obj.remove();
+				}
+				this._gotoNextImmediately();
+				break;
+			case CMD_REMOVE_GAME_OBJECT:
+				this.current.param1.remove();
+				this._gotoNextImmediately();
+				break;
+		}
+	}
+
+	_enqueue(key, param1, param2) {
+		var node = {
+			key,
+			param1,
+			param2,
+			next: null,
+		};
+
+		if (this.current != null && this.current != this.head) {
+			// already running -> append to the current node
+			let temp = this.current.next;
+			this.current.next = node;
+			node.next = temp;
+			node.previous = this.current;
+			temp.previous = node;
+		} else {
+			// not yet running -> append to the tail
+			if (this.head == null) {
+				this.head = this.tail = node;
+			} else {
+				this.tail.next = node;
+				node.previous = this.tail;
+				this.tail = node;
+			}
+
+			if (this.current == null) {
+				this.current = this.head;
+			}
+		}
+	}
+
+	_dequeue() {
+		if (this.current == null || this.current.next == null) {
+			return null;
+		} else {
+			this.current = this.current.next;
+		}
+		return this.current;
+	}
+
+	_gotoNext() {
+		this.current = this.current.next;
+	}
+
+	_gotoNextImmediately(delta, absolute) {
+		this.current = this.current.next;
+		this.update(delta, absolute);
 	}
 }
