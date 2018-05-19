@@ -40,35 +40,35 @@ class Scene {
 		Scene.scene = this;
 
 		/**
-         * Link to canvas
-         * @type {Canvas}
-         */
+		 * Link to canvas
+		 * @type {Canvas}
+		 */
 		this.canvas = canvas;
 		/**
-         * Link to canvas rendering context
-         * @type {CanvasRenderingContext2D}
-         */
+		 * Link to canvas rendering context
+		 * @type {CanvasRenderingContext2D}
+		 */
 		this.canvasCtx = canvas.getContext('2d');
 
 		/**
-         * Function is called before update
-         * @type {(number, number) => {}}
-         */
+		 * Function is called before update
+		 * @type {(number, number) => {}}
+		 */
 		this.beforeUpdate = null;
 		/**
-         * Function is called after update
-         * @type {(number, number) => {}}
-         */
+		 * Function is called after update
+		 * @type {(number, number) => {}}
+		 */
 		this.afterUpdate = null;
 		/**
-         * Function is called before draw
-         * @type {() => {}}
-         */
+		 * Function is called before draw
+		 * @type {() => {}}
+		 */
 		this.beforeDraw = null;
 		/**
-         * Function is called after draw
-         * @type {() => {}}
-         */
+		 * Function is called after draw
+		 * @type {() => {}}
+		 */
 		this.afterDraw = null;
 
 		this.clearScene();
@@ -421,13 +421,13 @@ class Scene {
 	 * @param {Component} component 
 	 * @param {string} action 
 	 */
-	_unsubscribeComponent(component, action){
-        if (this.subscribedMessages.has(component.id)) {
-            this.subscribers.get(action).delete(component.id);
-            let allMsgKeys = this.subscribedMessages.get(component.id);
-            // todo remove msg key from the array
-        }
-    }
+	_unsubscribeComponent(msgKey, component) {
+		var subs = this.subscribers.get(msgKey);
+		if (subs !== undefined) {
+			subs.delete(component.id);
+		}
+		this.subscribedMessages.delete(component.id);
+	}
 
 	/**
 	 * Removes a component and all subscribed links
@@ -541,7 +541,7 @@ class Flags {
  * Bounding boxes
  */
 class BBox {
-	
+
 	/**
 	 * @param {number} topLeftX 
 	 * @param {number} topLeftY 
@@ -550,24 +550,24 @@ class BBox {
 	 */
 	constructor(topLeftX = 0, topLeftY = 0, bottomRightX = 0, bottomRightY = 0) {
 		/**
-         * TopLeft absolute coordinate on X axis
-         * @type {number}
-         */
+		 * TopLeft absolute coordinate on X axis
+		 * @type {number}
+		 */
 		this.topLeftX = topLeftX;
 		/**
-         * TopLeft absolute coordinate on Y axis
-         * @type {number}
-         */
+		 * TopLeft absolute coordinate on Y axis
+		 * @type {number}
+		 */
 		this.topLeftY = topLeftY;
 		/**
-         * BottomRight coordinate on X axis
-         * @type {number}
-         */
+		 * BottomRight coordinate on X axis
+		 * @type {number}
+		 */
 		this.bottomRightX = bottomRightX;
 		/**
-         * BottomRight coordinate on Y axis
-         * @type {number}
-         */
+		 * BottomRight coordinate on Y axis
+		 * @type {number}
+		 */
 		this.bottomRightY = bottomRightY;
 	}
 
@@ -664,19 +664,19 @@ class Mesh {
 	 */
 	constructor(width, height) {
 		/**
-         * Alpha value 
-         * @type {number}
-         */
+		 * Alpha value 
+		 * @type {number}
+		 */
 		this.alpha = 1.0;
 		/**
-         * Relative width of the mesh 
-         * @type {number}
-         */
+		 * Relative width of the mesh 
+		 * @type {number}
+		 */
 		this.width = width;
 		/**
-         * Relative height of the mesh
-         * @type {number}
-         */
+		 * Relative height of the mesh
+		 * @type {number}
+		 */
 		this.height = height;
 	}
 
@@ -692,9 +692,9 @@ class RectMesh extends Mesh {
 	constructor(fillStyle, width, height) {
 		super(width, height);
 		/**
-         * HTML5-Canvas fillstyle
-         * @type {string}
-         */
+		 * HTML5-Canvas fillstyle
+		 * @type {string}
+		 */
 		this.fillStyle = fillStyle;
 	}
 }
@@ -706,24 +706,24 @@ class TextMesh extends Mesh {
 	constructor(text = "", font = "24px Verdana", fillStyle, width, height) {
 		super(width, height);
 		/**
-         * HTML5-Canvas fillstyle
-         * @type {string}
-         */
+		 * HTML5-Canvas fillstyle
+		 * @type {string}
+		 */
 		this.fillStyle = fillStyle;
 		/**
-         * HTML5-Canvas font
-         * @type {string}
-         */
+		 * HTML5-Canvas font
+		 * @type {string}
+		 */
 		this.font = font;
 		/**
-         * Text content
-         * @type {string}
-         */
+		 * Text content
+		 * @type {string}
+		 */
 		this.text = text;
 		/**
-         * Text alignment
-         * @type {string}
-         */
+		 * Text alignment
+		 * @type {string}
+		 */
 		this.textAlign = "left";
 	}
 }
@@ -735,9 +735,9 @@ class ImageMesh extends Mesh {
 	constructor(image) {
 		super(image.width / UNIT_SIZE, image.height / UNIT_SIZE);
 		/**
-         * Texture mage
-         * @type {HTML5ImageElement}
-         */
+		 * Texture mage
+		 * @type {HTML5ImageElement}
+		 */
 		this.image = image;
 	}
 }
@@ -750,19 +750,19 @@ class SpriteMesh extends Mesh {
 		super(width, height);
 
 		/**
-         * X axis offset of the sprite in the texture in PX
-         * @type {number}
-         */
+		 * X axis offset of the sprite in the texture in PX
+		 * @type {number}
+		 */
 		this.offsetX = offsetX;
 		/**
-         * Y axis offset of the sprite in the texture in PX
-         * @type {number}
-         */
+		 * Y axis offset of the sprite in the texture in PX
+		 * @type {number}
+		 */
 		this.offsetY = offsetY;
 		/**
-         * Sprite mage
-         * @type {HTML5ImageElement}
-         */
+		 * Sprite mage
+		 * @type {HTML5ImageElement}
+		 */
 		this.image = image;
 	}
 }
@@ -774,14 +774,14 @@ class MultiSprite extends SpriteMesh {
 	constructor(id, trans, offsetX, offsetY, width, height, image) {
 		super(offsetX, offsetY, width, height, image);
 		/**
-         * Identifier
-         * @type {number}
-         */
+		 * Identifier
+		 * @type {number}
+		 */
 		this.id = id;
 		/**
-         * Transformation entity
-         * @type {Trans}
-         */
+		 * Transformation entity
+		 * @type {Trans}
+		 */
 		this.trans = trans;
 	}
 
@@ -798,14 +798,14 @@ class MultiSpriteCollection extends Mesh {
 	constructor(atlas) {
 		super(1, 1);
 		/**
-         * Sprite atlas
-         * @type {HTML5ImageElement}
-         */
+		 * Sprite atlas
+		 * @type {HTML5ImageElement}
+		 */
 		this.atlas = atlas;
 		/**
-         * Collection of sprites
-         * @type {Map<number, MultiSprite>}
-         */
+		 * Collection of sprites
+		 * @type {Map<number, MultiSprite>}
+		 */
 		this.sprites = new Map();
 	}
 
@@ -824,45 +824,45 @@ class MultiSpriteCollection extends Mesh {
 class Trans {
 	constructor(posX = 0, posY = 0, rotation = 0, rotationOffsetX = 0, rotationOffsetY = 0) {
 		/**
-         * Relative position on X axis
-         * @type {number}
-         */
+		 * Relative position on X axis
+		 * @type {number}
+		 */
 		this.posX = posX;
 		/**
-         * Relative position on Y axis
-         * @type {number}
-         */
+		 * Relative position on Y axis
+		 * @type {number}
+		 */
 		this.posY = posY;
 		/**
-         * Relative rotation
-         * @type {number}
-         */
+		 * Relative rotation
+		 * @type {number}
+		 */
 		this.rotation = rotation;
 		/**
-         * Rotation offset on X axis
-         * @type {number}
-         */
+		 * Rotation offset on X axis
+		 * @type {number}
+		 */
 		this.rotationOffsetX = rotationOffsetX;
 		/**
-         * Rotation offset on Y axis
-         * @type {number}
-         */
+		 * Rotation offset on Y axis
+		 * @type {number}
+		 */
 		this.rotationOffsetY = rotationOffsetY;
 
 		/**
-         * Absolute position on X axis
-         * @type {number}
-         */
+		 * Absolute position on X axis
+		 * @type {number}
+		 */
 		this.absPosX = 0;
 		/**
-         * Absolute position on Y axis
-         * @type {number}
-         */
+		 * Absolute position on Y axis
+		 * @type {number}
+		 */
 		this.absPosY = 0;
 		/**
-         * Absolute rotation
-         * @type {number}
-         */
+		 * Absolute rotation
+		 * @type {number}
+		 */
 		this.absRotation = 0;
 
 		this.pendingAbsPosX = null;
@@ -956,70 +956,70 @@ class GameObject {
 	 */
 	constructor(tag, secondaryId = -10000) {
 		/**
-         * Primary identifier, set automatically
-         * @type {number}
-         */
+		 * Primary identifier, set automatically
+		 * @type {number}
+		 */
 		this.id = GameObject.idCounter++;
 		/**
-         * Secondary identifier
-         * @type {number}
-         */
+		 * Secondary identifier
+		 * @type {number}
+		 */
 		this.secondaryId = secondaryId;
 		/**
-         * Name
-         * @type {string}
-         */
+		 * Name
+		 * @type {string}
+		 */
 		this.tag = tag;
 		/**
-         * Parent game object
-         * @type {GameObject}
-         */
+		 * Parent game object
+		 * @type {GameObject}
+		 */
 		this.parent = null;
 		/**
-         * List of inner components
-         * @type {Array<Component>}
-         */
+		 * List of inner components
+		 * @type {Array<Component>}
+		 */
 		this.components = new Array();
 		/**
-         * Z-Index
-         * @type {number}
-         */
+		 * Z-Index
+		 * @type {number}
+		 */
 		this.zIndex = 0;
 		/**
-         * Rendering entity
-         * @type {Mesh}
-         */
+		 * Rendering entity
+		 * @type {Mesh}
+		 */
 		this.mesh = new Mesh(0, 0);
 		/**
-         * Bounding box
-         * @type {BBox}
-         */
+		 * Bounding box
+		 * @type {BBox}
+		 */
 		this.bbox = new BBox();
 		/**
-         * Game scene
-         * @type {Scene}
-         */
+		 * Game scene
+		 * @type {Scene}
+		 */
 		this.scene = null;
 		/**
-         * Transformation entity
-         * @type {Trans}
-         */
+		 * Transformation entity
+		 * @type {Trans}
+		 */
 		this.trans = new Trans();
 		/**
-         * Object states
-         * @type {number}
-         */
+		 * Object states
+		 * @type {number}
+		 */
 		this.state = STATE_DRAWABLE | STATE_LISTENING | STATE_UPDATABLE;
 		/**
-         * List of attributes, mapped by their ids
-         * @type {Map<number, Any>}
-         */
+		 * List of attributes, mapped by their ids
+		 * @type {Map<number, Any>}
+		 */
 		this.attributes = new Map();
 
 		/**
-         * Collection of children
-         * @type {Map<number, GameObject>}
-         */
+		 * Collection of children
+		 * @type {Map<number, GameObject>}
+		 */
 		this.children = new Map();
 
 		// temporary collection that keeps objects for removal -> objects should be removed
@@ -1187,6 +1187,29 @@ class GameObject {
 		this._componentsToAdd.push(component);
 	}
 
+	/**
+	 * Removes a component by name
+	 * @param {string} name 
+	 * @returns {Boolean} true if the component has been found
+	 */
+	removeComponentByName(name) {
+		for (let cmp of this.components) {
+			if (cmp.constructor.name == name) {
+				removeComponent(cmp);
+				return true;
+			}
+		}
+		// try also the pending collection
+		let cntr = 0;
+		for (let cmp of this._componentsToAdd) {
+			if (cmp.constructor.name == name) {
+				this._componentsToAdd.splice(cntr);
+				return true;
+			}
+			cntr++;
+		}
+		return false;
+	}
 
 	/**
 	 * Instantly removes all components
@@ -1350,24 +1373,24 @@ class Msg {
 	 */
 	constructor(action, component, gameObject, data) {
 		/**
-         * Action type identifier
-         * @type {any}
-         */
+		 * Action type identifier
+		 * @type {any}
+		 */
 		this.action = action;
 		/**
-         * Component that has sent this message
-         * @type {Component}
-         */
+		 * Component that has sent this message
+		 * @type {Component}
+		 */
 		this.component = component;
 		/**
-         * GameObject attached to this message
-         * @type {GameObject}
-         */
+		 * GameObject attached to this message
+		 * @type {GameObject}
+		 */
 		this.gameObject = gameObject;
 		/**
-         * Data payload
-         * @type {any}
-         */
+		 * Data payload
+		 * @type {any}
+		 */
 		this.data = data;
 	}
 }
@@ -1379,24 +1402,24 @@ class Component {
 
 	constructor() {
 		/**
-         * Component identifier, set automatically
-         * @type {number}
-         */
+		 * Component identifier, set automatically
+		 * @type {number}
+		 */
 		this.id = Component.idCounter++;
 		/**
-         * Owner game object
-         * @type {GameObject}
-         */
+		 * Owner game object
+		 * @type {GameObject}
+		 */
 		this.owner = null;
 		/**
-         * Game scene
-         * @type {Scene}
-         */
+		 * Game scene
+		 * @type {Scene}
+		 */
 		this.scene = null;
 		/**
-         * A custom action invoked upon finish
-         * @type {action}
-         */
+		 * A custom action invoked upon finish
+		 * @type {action}
+		 */
 		this.onFinished = null; // onFinished event
 		/**
 		 * @type {boolean}
