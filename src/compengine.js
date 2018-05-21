@@ -374,6 +374,19 @@ class Scene {
 		this.subscribedMessages.get(component.id).push(msgKey);
 	}
 
+	/**
+	 * @param {Component} component 
+	 * @param {string} action 
+	 */
+	_unsubscribeComponent(msgKey, component) {
+		var subs = this.subscribers.get(msgKey);
+		if (subs !== undefined) {
+			subs.delete(component.id);
+		}
+
+		this.subscribedMessages.delete(component.id);
+	}
+
 	// adds a new game object internally
 	_addGameObject(obj) {
 		// fill all collections
@@ -417,17 +430,6 @@ class Scene {
 		this._sendmsg(new Msg(MSG_OBJECT_REMOVED, null, obj));
 	}
 
-	/**
-	 * @param {Component} component 
-	 * @param {string} action 
-	 */
-	_unsubscribeComponent(msgKey, component) {
-		var subs = this.subscribers.get(msgKey);
-		if (subs !== undefined) {
-			subs.delete(component.id);
-		}
-		this.subscribedMessages.delete(component.id);
-	}
 
 	/**
 	 * Removes a component and all subscribed links
@@ -442,7 +444,6 @@ class Scene {
 				this.subscribers.get(msgKey).delete(component.id);
 			}
 		}
-		this.subscribedMessages.delete(component.id);
 	}
 }
 
@@ -1058,8 +1059,7 @@ class GameObject {
 		// update other collections
 		if (recursively) {
 			for (let [key, val] of this.children) {
-				val._addPendingComponents();
-				val._removePendingGameObjects(true);
+				val.submitChanges(true);
 			}
 		}
 	}
@@ -1195,7 +1195,7 @@ class GameObject {
 	removeComponentByName(name) {
 		for (let cmp of this.components) {
 			if (cmp.constructor.name == name) {
-				removeComponent(cmp);
+				this.removeComponent(cmp);
 				return true;
 			}
 		}
@@ -1565,7 +1565,7 @@ class GameObjectBuilder {
 	}
 
 	build(scene) {
-		if (this.isGlobal) {
+		if (this.isGlobal || this.parent == null) {
 			scene.addGlobalGameObject(this.gameObj);
 		} else {
 			this.parent.addGameObject(this.gameObj);
