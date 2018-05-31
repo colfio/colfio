@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+</head>
+
+<body>
+	<canvas id="gameCanvas" width="600" height="400"></canvas>
+	<script type="text/javascript">		
+		function newGame() {
+			loadImage('circle.png').then((img) => {
+				var gameObject = new GameObject('circle');
+				gameObject.mesh = new SpriteMesh(0, 0, img.width, img.height, img);
+				gameObject.addComponent(new BasicRenderer())
+				scene.root.addGameObject(gameObject);
+			});
+		}
+	</script>
+
+	<script src="../src/sortedarray.js"></script>
+	<script src="../src/imageloader.js"></script>
+	<script src="../src/compengine.js"></script>
+	<script src="../src/compenginecom.js"></script>
+	<script src="../src/utils.js"></script>
+	<script src="../src/main.js"></script>
+</body>
+
+</html>

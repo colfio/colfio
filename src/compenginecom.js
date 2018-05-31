@@ -482,7 +482,7 @@ class InputManager extends Component {
 		}
 	}
 
-	finalize() {
+	onFinished() {
 		let canvas = this.scene.canvas;
 		canvas.removeEventListener("touchstart", this.startHandler);
 		canvas.removeEventListener("touchend", this.endHandler);

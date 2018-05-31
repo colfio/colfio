@@ -230,7 +230,7 @@ class Scene {
 			// call the finalization function
 			for (let [key, gameObj] of this.gameObjects) {
 				for (let component of gameObj.components) {
-					component.finalize();
+					component.finish();
 				}
 			}
 		}
@@ -1417,11 +1417,6 @@ class Component {
 		 */
 		this.scene = null;
 		/**
-		 * A custom action invoked upon finish
-		 * @type {action}
-		 */
-		this.onFinished = null; // onFinished event
-		/**
 		 * @type {boolean}
 		 */
 		this.isFinished = false;
@@ -1480,7 +1475,7 @@ class Component {
 	}
 
 	// called whenever the component is to be removed
-	finalize() {
+	onFinished() {
 		// override
 	}
 
