@@ -40,7 +40,13 @@ class GameObject {
          * Rendering entity
          * @type {Mesh}
          */
-		this.mesh = new Mesh(0, 0);
+        this.mesh = new Mesh(0, 0);
+        
+        /**
+         * PIXIJs rendering entity
+         */
+        this.pixiMesh = null;
+
 		/**
          * Bounding box
          * @type {BBox}
@@ -276,8 +282,8 @@ class GameObject {
 			}
 		}
 		// children are drawn via scene
-	}
-
+    }
+    
 	// adds pending objects
 	_addPendingGameObjects(submitChanges = true) {
 		for (let obj of this._objectsToAdd) {
@@ -285,7 +291,13 @@ class GameObject {
 			// the parent might not had its scene assigned
 			obj.scene = this.scene;
 			obj.parent = this;
-			this.children.set(obj.id, obj);
+            this.children.set(obj.id, obj);
+            
+            if(this.scene.isPixi) {
+                // TODO check for errors -> this.pixiMesh must be a PIXI.Container 
+                this.pixiMesh.addChild(obj.pixiMesh);
+            }
+
 			this.scene._addGameObject(obj);
 
 			if (submitChanges) {

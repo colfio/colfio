@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Hello World</title>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <!-- debugging window -->
+    <div id="debugSect" style="height:900px;overflow:scroll;float:left; font-family:'Courier New', Courier, monospace"></div>
+
+    <script src="../lib/pixi.js" charset="utf-8"></script>
+	<script src="../src/engine/imageloader.js"></script>
+    <script src="../src/engine/utils.js"></script>
+    <script src="../src/engine/component.js"></script>
+    <script src="../src/engine/gameobject.js"></script>
+    <script src="../src/engine/gameobjectbuilder.js"></script>
+    <script src="../src/engine/constants.js"></script>
+    <script src="../src/engine/flags.js"></script>
+    <script src="../src/engine/mesh.js"></script>
+    <script src="../src/engine/msg.js"></script>
+    <script src="../src/engine/scene.js"></script>
+    <script src="../src/engine/trans.js"></script>
+    <script src="../src/engine/bbox.js"></script>
+    <script src="../src/engine/sortedarray.js"></script>
+
+    <script src="../src/components/animation.js"></script>
+    <script src="../src/components/basicrenderer.js"></script>
+    <script src="../src/components/debugcomponent.js"></script>
+    <script src="../src/components/executorcomponent.js"></script>
+    <script src="../src/components/inputmanager.js"></script>
+
+
+    <script type="text/javascript">
+        let canvas = document.getElementById('gameCanvas');
+
+        let app = new PIXI.Application({
+            width: canvas.width,
+            height: canvas.height,
+            antialias: true,
+            view: canvas,
+            resolution: 1 // resolution/device pixel ratio
+        });
+
+        let scene = new Scene(canvas, app);
+
+        // create a new Graphics object
+        var graphics = new PIXI.Graphics();
+        // center the graphics
+        graphics.x = 200;
+        graphics.y = 150;
+        // set a fill color and an opacity
+        graphics.beginFill(0xfff012, 1);
+        // draw a rectangle using the arguments as: x, y, width, height
+        graphics.drawRect(0, 0, 50, 50);
+        // center the pivot point
+        graphics.pivot.x = 25;
+        graphics.pivot.y = 25;
+
+        new GameObjectBuilder("mojo")
+            .withParent(scene.root)
+            .withPixiMesh(graphics)
+            .build(scene);
+
+        let ticker = PIXI.ticker.shared;
+        // stop the shared ticket and update it manually
+        ticker.autoStart = false;
+        ticker.stop();
+
+        let lastTime = 0;
+        let gameTime = 0;            
+        
+        function animate(time) {
+            // update
+            let dt = (time - lastTime) / 1000;
+            lastTime = time;
+            gameTime += dt;
+            scene.update(dt, gameTime);
+
+            // draw
+            ticker.update(gameTime);
+            requestAnimationFrame(animate);
+        }
+        animate(performance.now());
+    </script>
+</body>
+
+</html>

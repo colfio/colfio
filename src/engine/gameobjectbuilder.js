@@ -56,7 +56,12 @@ class GameObjectBuilder {
 	withMesh(mesh) {
 		this.gameObj.mesh = mesh;
 		return this;
-	}
+    }
+    
+    withPixiMesh(pixiMesh){
+        this.gameObj.pixiMesh = pixiMesh;
+        return this;
+    }
 
 	asGlobal() {
 		this.isGlobal = true;
