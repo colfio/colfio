@@ -4,18 +4,10 @@
  */
 
 
-/**
- * @typedef {typeof import('./compengine.js').Scene} Scene
- */
+var gameTime = 0; // number of ms since the game started
 
-// number of ms since the game started
-var gameTime = 0;
-/** @type {Canvas} */
 var canvas;
-/** @type {CanvasRenderingContext2D} */
 var canvasCtx;
-/** @type {Scene} */
-var scene;
 
 window.onload = function () {
 	// get canvas
@@ -37,6 +29,8 @@ function initGame() {
 
 	// Call init to start the game
 	newGame();
+
+	return true;
 }
 
 // ========================= GAME LOOP =========================
@@ -50,8 +44,8 @@ function gameLoop(tframe = 0) {
 
 	gameTime += dt;
 	scene.update(dt, gameTime);
-	// clear canvas and call update and render function upon the scene
-	canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-	scene.draw(canvasCtx);
+    // clear canvas and call update and render function upon the scene
+    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+	scene.draw();
 }
 // =============================================================

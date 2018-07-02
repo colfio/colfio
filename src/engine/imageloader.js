@@ -3,7 +3,6 @@
  * @author Adam Vesecky <vesecky.adam@gmail.com>
  */
 
-
 function loadImage(image) {
 	if (!image) {
 		return Promise.reject();

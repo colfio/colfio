@@ -47,11 +47,25 @@ This library is written solely in JavaScript ES6 and doesn't require any bundlin
     }
   </script>
   <!-- Include all other scripts in the following order -->
-  <script src="../src/sortedarray.js"></script>
-  <script src="../src/imageloader.js"></script>
-  <script src="../src/compengine.js"></script>
-  <script src="../src/compenginecom.js"></script>
-  <script src="../src/utils.js"></script>
+	<script src="../src/engine/imageloader.js"></script>
+    <script src="../src/engine/utils.js"></script>
+    <script src="../src/engine/component.js"></script>
+    <script src="../src/engine/gameobject.js"></script>
+    <script src="../src/engine/gameobjectbuilder.js"></script>
+    <script src="../src/engine/constants.js"></script>
+    <script src="../src/engine/flags.js"></script>
+    <script src="../src/engine/mesh.js"></script>
+    <script src="../src/engine/msg.js"></script>
+    <script src="../src/engine/scene.js"></script>
+    <script src="../src/engine/trans.js"></script>
+    <script src="../src/engine/bbox.js"></script>
+    <script src="../src/engine/sortedarray.js"></script>
+
+    <script src="../src/components/animation.js"></script>
+    <script src="../src/components/basicrenderer.js"></script>
+    <script src="../src/components/debugcomponent.js"></script>
+    <script src="../src/components/executorcomponent.js"></script>
+    <script src="../src/components/inputmanager.js"></script>
   <script src="../src/main.js"></script>
 </body>
 
