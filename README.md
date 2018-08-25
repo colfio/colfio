@@ -1,75 +1,67 @@
 # ECSLite
 
-ECSLite is an experimental Entity-Component-System library written in JavaScript with educational intentions, hence it should be very easy to learn for anyone who would like to get to understand how interactive games can be programmed.
+ECSLite is an experimental Entity-Component-System library written in JavaScript with educational intentions, hence it should be very easy to learn to make simple casual games.
 
 
 ## Features
-- Vanilla JavaScript
-- Focused on providing a simple but yet efficient API
-- Simple Canvas API
+- Built in TypeScript on top of [PixiJS](https://pixijs.com/) library
 - Scene Graph
 - Game Loop
 - Messaging system
 - Asynchronous components
 
 ## Goals
-The goal is for ECSLite to be a lightweight and simple library that could be used for educational purposes. Therefore, it doesn't aim to provide a complex features of HTML5 game engines. Instead, it should teach developers the basics of component-oriented programming
+The goal for ECSLite is to be a lightweight and simple library that could be used for educational purposes. Therefore, it doesn't aim to provide complex features of HTML5 game engines. Instead, it should teach developers the basics of component-oriented programming
 
 ## Examples
 - see the examples folder
-- example1.html - renders an image
-- example2.html - renders two squares and shows how DebugComponent works
-- example3.html - shows how ExecutorComponent works
-- example4.html - shows simple animations
-
+- executor.html - an example how **Executor** component works
+- executor2.html - another Executor example
+- rotation.html - rotation animation
 
 
 # Usage
+- this library uses PixiJS and Parcel Bundler
+- you need to have NodeJS 14+ version installed
+- installation: `npm install`
+- running: `npm start`
+- you can find all examples at `localhost:1234`, e.g., `localhost:1234/executor.html`
 
-This library is written solely in JavaScript ES6 and doesn't require any bundling or transpiling libraries. You just include the following files in your HTML page along with the canvas element and you are good to go!
+- here is an example of a HTML code that will run the engine
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta content="utf-8" http-equiv="encoding">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+
 </head>
 
 <body>
-  <!-- Initialize the canvas, name it "gameCanvas"-->
-  <canvas id="gameCanvas" width="600" height="400"></canvas>
-  <!-- Create a script that will contain a function newGame to initialize the game-->
-  <script type="text/javascript">		
-    function newGame() {
-      // ...
-    }
-  </script>
-  <!-- Include all other scripts in the following order -->
-	<script src="../src/engine/imageloader.js"></script>
-    <script src="../src/engine/utils.js"></script>
-    <script src="../src/engine/component.js"></script>
-    <script src="../src/engine/gameobject.js"></script>
-    <script src="../src/engine/gameobjectbuilder.js"></script>
-    <script src="../src/engine/constants.js"></script>
-    <script src="../src/engine/flags.js"></script>
-    <script src="../src/engine/mesh.js"></script>
-    <script src="../src/engine/msg.js"></script>
-    <script src="../src/engine/scene.js"></script>
-    <script src="../src/engine/trans.js"></script>
-    <script src="../src/engine/bbox.js"></script>
-    <script src="../src/engine/sortedarray.js"></script>
-
-    <script src="../src/components/animation.js"></script>
-    <script src="../src/components/basicrenderer.js"></script>
-    <script src="../src/components/debugcomponent.js"></script>
-    <script src="../src/components/executorcomponent.js"></script>
-    <script src="../src/components/inputmanager.js"></script>
-  <script src="../src/main.js"></script>
+	<canvas id="gameCanvas" width="600" height="400"></canvas>
+	<script src="./index.ts"></script>
 </body>
-
 </html>
+```
+
+- and `index.ts`
+
+```typescript
+import Component from '../ts/engine/Component';
+import GameObject from '../ts/engine/GameObject';
+import Scene from '../ts/engine/Scene';
+import GameObjectBuilder from '../ts/builders/GameObjectBuilder';
+import Executor from '../ts/components/Executor';
+
+let engine = import('../ts/engine/DodoEngine');
+engine.then((val) => newGame(val.default));
+
+// Start a new game
+function newGame(engine: DodoEngine) {
+    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement,100);
+}
 ```
 
 
@@ -81,7 +73,6 @@ This library is written solely in JavaScript ES6 and doesn't require any bundlin
   - `oninit` - initializes the component
   - `onmessage` - sends a message to all subscribed components
   - `update` - called during the game loop, updates the component state
-  - `draw` - called during the game loop, can use CanvasAPI to render stuff
   - `onFinished` - called whenever this component has finished its execution
 - if you want to add a new component to a game object, you have to call `addComponent` - it will add it to the queue of new components that will be added in the end of the loop
 - any component can be terminated via `finish()` function
@@ -91,14 +82,11 @@ This library is written solely in JavaScript ES6 and doesn't require any bundlin
 - example: creating a simple rectangle
 
 ```javascript
-let rect1 = new GameObject("rect1");
-// 100x100 pixels
-rect1.mesh = new RectMesh("rgb(255,0,0)", 100, 100);
-rect1.trans.setPosition(20, 20);
-// rendering component for all basic meshes
-rect1.addComponent(new BasicRenderer());
-rect1.addComponent(new RotationAnim());
-scene.addGlobalGameObject(rect1);
+  let rect2 = new GameObject("rect2", 0, rect2Gfx);
+  rect2.mesh.position.set(350, 200);
+  rect2.mesh.pivot.set(50, 50);
+  rect2.addComponent(new RotationAnim());
+  engine.scene.addGlobalGameObject(rect2);
 ```
 
 ### Game Objects
@@ -125,17 +113,6 @@ scene.addGlobalGameObject(rect1);
 ## API
 - this is a documentation of the most important parts. Since the engine is very small, you can investigate all functions on your own by taking a look at the codebase. Each function and property has a JSDoc
 
-### Unit Size
-- unit size in px - all attributes are calculated against this size
-- example:
-
-```javascript
-// each unit will have 100 pixels
-UNIT_SIZE = 100;
-let rect1 = new GameObject("rect1");
-// now, the rectangle will have the size of 100x100 pixels
-rect1.mesh = new RectMesh("rgb(255,0,0)", 1, 1);
-```
 
 ### Scene
 - `addPendingInvocation`
@@ -169,38 +146,6 @@ myObject.resetFlag(12);
 myObject.hasFlag(12); // false
 ```
 
-### BBox
-- each game object has a property `bbox` that represents a bounding box
-- the bounding box gets recalculated at the end of each game object's iteration
-- you can use it to verify if two objects intersect by calling `intersects()`
-
-### Mesh
-- `Mesh` is a base class for all renderable structures
-- if a game object contains a `BasicRenderer` component, the mesh will get rendered by using CanvasAPI
-- the following mesh classes are implemented:
-  - `RectMesh` - a simple rectangle
-  - `TextMesh` - a text
-  - `ImageMesh` - an image
-  - `SpriteMesh` - a sprite whose texture is taken from a sprite atlas at given offset
-  - `MultiSprite` - mesh that can render several sprites at once
-  - `MultiSpriteCollection`- a collection of multi-sprites
-
-```javascript
-// will render a green rectangle
-let rect2 = new GameObject("rect2");
-rect2.mesh = new RectMesh("rgb(0,255,0)", 100, 100);
-rect2.addComponent(new BasicRenderer());
-```
-
-### Trans
-- `trans` is a property of each game object that represents transformation data, such as:
-  - position, rotation, rotation offset, and absolute coordinates (calculated automatically)
-
-```javascript
-car.trans.posX = model.cameraPositionX;
-car.trans.posY = model.cameraPositionY;
-```
-
 ### GameObject
 - game objects are only shells for components and attributes
 - `state` is a numeric state you can use to implement a simple state machine
@@ -211,9 +156,9 @@ car.trans.posY = model.cameraPositionY;
 - messaging system uses a class `Msg` to store data
 - `action` - action key (string), used by the components to subscribe for a certain group of messages
   - special actions: 
-    - `ALL` that is sent to **each** component
-    - `OBJECT_ADDED` that is sent to inform subscribed components that a new game object has been added
-    - `OBJECT_REMOVED` that is sent to inform subscribed components that an existing game object has been removed
+    - `MSG_ALL` that is sent to **each** component
+    - `MSG_OBJECT_ADDED` that is sent to inform subscribed components that a new game object has been added
+    - `MSG_OBJECT_REMOVED` that is sent to inform subscribed components that an existing game object has been removed
 - `component` - a component that sent the message
 - `gameObject` - a game object to which the component that sent the message belongs
 - `data` - any custom payload
@@ -226,7 +171,6 @@ car.trans.posY = model.cameraPositionY;
 - `sendmsg` - sends a message
 - `onmessage` - called whenever the component receives a message
 - `update` - game loop, called each 16ms, used to update the component's state
-- `draw` - dedicated for rendering purposes
 - `onFinished` - called when the component is about to be finished and removed
 - `finish` - will terminate the component and remove it from the game object
 
@@ -244,8 +188,6 @@ car.trans.posY = model.cameraPositionY;
 
 ![Debug Component](./docs/debugcomponent.png)
 
-#### BasicRenderer
-- can be used for rendering of the `mesh` attribute
 
 #### Animation
 - TranslateAnimation - for translation
@@ -277,33 +219,36 @@ let rotateAnim = new RotationAnimation(
   - `MSG_UP` - pointer up event
   - `MSG_MOVE` - pointer move event
 
-#### ExecutorComponent
+#### Executor
 - this component is extremely powerful - you can use callbacks to implement a very complex behavior
-- see `example3.html` for more information
+- see `executor.html` for more information
 - example: rotation every second
 
 ```javascript
-myObj.addComponent(new ExecutorComponent()
+myObj.addComponent(new Executor()
   .beginInterval(1000)
   .execute((cmp) => cmp.owner.rotation += 0.1)
   .endInterval()
 );
 ```
 
-### Utils
-- `imageLoader` - used to load images
-- `sortedArray` - an extension for Array object for sorted arrays
-- `GameObjectBuilder` - used to simplify game object creation
+### GameObjectBuilder
+- used to simplify game object creation
 
 ```javascript
-let obj = new GameObjectBuilder("rect1")
-.withMesh(new RectMesh("rgb(255,0,0)", 1, 1))
-.withPosition(2,2)
-.withCenteredOrigin()
-.withComponent(new BasicRenderer())
-.asGlobal()
-.build(scene);
+  let obj = new GameObjectBuilder("rect1")
+  .withMesh(rectangleGfx)
+  .withPosition(2,2)
+  .withCenteredOrigin()
+  .withComponent(new Executor()
+      .beginRepeat(0)
+      .addComponentAndWait(() => new RotationAnimation(0,1,1)) 
+      .addComponentAndWait(() => new TranslateAnimation(1,1,2,2,1))
+      .endRepeat()
+  )
+  .asGlobal()
+      .build(engine.scene);
 ```
 
 ### Tests
-- to make this repo as tiny as possible, there is no jest/mocha etc. The tests can be run by simply opening the `tests/run.html` file in your browser
+- to make this repo as tiny as possible, there is no jest/mocha etc. The tests can be run by simply opening the `examples/tests.html` file in your browser

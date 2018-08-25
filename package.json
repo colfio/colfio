@@ -1,11 +1,16 @@
 {
   "scripts": {
-    "start": "parcel index.html --out-dir www --open"
+    "start": "parcel examples/*.html --out-dir www --open",
+    "start_no_map": "parcel examples/*.html --out-dir www --open --no-source-maps",
+    "deploy": "parcel build examples/*.html --no-source-maps",
+    "tests": "parcel examples/tests.html --out-dir www --open"
   },
   "devDependencies": {
     "parcel-bundler": "^1.8.1",
     "typescript": "^2.8.3",
     "@types/pixi.js": "^4.7.1",
     "pixi.js": "^4.7.3"
+  },
+  "dependencies": {
   }
 }
