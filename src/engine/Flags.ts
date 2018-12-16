@@ -1,14 +1,23 @@
-// bit array for flags
+
+/**
+ * Bit array for flags
+ */
 export default class Flags {
-    // flag array 0-128
+    // flag array 1-255
     flags1: number = 0;
     flags2: number = 0;
     flags3: number = 0;
     flags4: number = 0;
 
-    hasFlag(flag: number) {
-        let index = this._getFlagIndex(flag);
-        let offset = this._getFlagOffset(flag);
+    /**
+     * Returns true, if given flag is set
+     */
+    hasFlag(flag: number) : boolean {
+        if (flag < 1 || flag > 255) {
+            throw new Error("Only flag values between 1-255 are supported");
+        }
+        let index = this.getFlagIndex(flag);
+        let offset = this.getFlagOffset(flag);
         let binary = 1 << offset;
 
         if (index <= 3) {
@@ -19,10 +28,25 @@ export default class Flags {
                 case 3: return (this.flags4 & binary) == binary;
             }
         } else {
-            throw new Error("Flag values beyond 128 are not supported");
+            throw new Error("Flag at unsupported index");
+        }
+        return false;
+    }
+
+    /**
+     * Inverts given flag
+     */
+    invertFlag(flag: number) {
+        if (this.hasFlag(flag)) {
+            this.resetFlag(flag);
+        } else {
+            this.setFlag(flag);
         }
     }
 
+    /**
+     * Will switch two flags
+     */
     switchFlag(flag1: number, flag2: number) {
         let hasFlag2 = this.hasFlag(flag2);
 
@@ -33,25 +57,31 @@ export default class Flags {
         else this.resetFlag(flag1);
     }
 
+    /**
+     * Sets given flag to true
+     */
     setFlag(flag: number) {
-        this._changeFlag(true, flag);
+        this.changeFlag(true, flag);
     }
 
+    /**
+     * Sets given flag to false
+     */
     resetFlag(flag: number) {
-        this._changeFlag(false, flag);
+        this.changeFlag(false, flag);
     }
 
-    _getFlagIndex(flag: number) {
-        return Math.floor(flag / 32); // sizeof 32bit int
+    private getFlagIndex(flag: number) {
+        return Math.floor(flag / 64); // sizeof 64bit int
     }
 
-    _getFlagOffset(flag: number) {
-        return flag % 32; // sizeof 32bit int
+    private getFlagOffset(flag: number) {
+        return flag % 64; // sizeof 64bit int
     }
 
-    _changeFlag(set: boolean, flag: number) {
-        let index = this._getFlagIndex(flag);
-        let offset = this._getFlagOffset(flag);
+    private changeFlag(set: boolean, flag: number) {
+        let index = this.getFlagIndex(flag);
+        let offset = this.getFlagOffset(flag);
         let binary = 1 << offset;
 
         if (index <= 3) {
@@ -62,7 +92,7 @@ export default class Flags {
                 case 3: if (set) (this.flags4 |= binary); else (this.flags4 &= ~binary);
             }
         } else {
-            throw new Error("Flag values beyond 128 are not supported");
+            throw new Error("Flag at unsupported index");
         }
     }
 }

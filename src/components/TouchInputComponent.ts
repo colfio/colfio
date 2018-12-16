@@ -10,9 +10,11 @@ const MSG_DOWN = "DOWN";
 const MSG_MOVE = "MOVE";
 const MSG_UP = "UP";
 
-// Component that handles touch and mouse events and transforms them into messages 
-// that can be subscribed by any other component
-class InputManager extends Component {
+/**
+ * Component that handles touch and mouse events and transforms them into messages 
+ * that can be subscribed by any other component
+ */
+export class TouchInputComopnent extends Component {
     mode = INPUT_TOUCH
     startHandler : (evt: TouchEvent) => void = null;
     endHandler : (evt: TouchEvent) => void = null;
@@ -24,10 +26,10 @@ class InputManager extends Component {
         this.mode = mode;
     }
 
-    oninit() {
+    onInit() {
         this.lastTouch = null;
 
-        let canvas = this.scene.canvas;
+        let canvas = this.scene.app.view;
 
         // must be done this way, because we want to
         // remove these listeners while finalization
@@ -54,8 +56,8 @@ class InputManager extends Component {
         }
     }
 
-    finalize() {
-        let canvas = this.scene.canvas;
+    onFinish() {
+        let canvas = this.scene.app.view;
         canvas.removeEventListener("touchstart", this.startHandler);
         canvas.removeEventListener("touchend", this.endHandler);
         canvas.removeEventListener("mousedown", this.startHandler);
@@ -67,7 +69,7 @@ class InputManager extends Component {
         }
     }
 
-    handleStart(evt: TouchEvent | MouseEvent) {
+    protected handleStart(evt: TouchEvent | MouseEvent) {
         evt.preventDefault();
         let isTouch = evt instanceof TouchEvent;
         if (isTouch && (evt as TouchEvent).changedTouches.length == 1) {
@@ -78,23 +80,23 @@ class InputManager extends Component {
         }
 
         if (this.mode |= INPUT_DOWN) {
-            this.sendmsg(MSG_DOWN, {
-                mousePos: this.getMousePos(this.scene.canvas, evt, isTouch),
+            this.sendMessage(MSG_DOWN, {
+                mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
                 isTouch: isTouch
             });
         }
     }
 
-    handleMove(evt: TouchEvent) {
+    protected handleMove(evt: TouchEvent) {
         evt.preventDefault();
         let isTouch = typeof (evt.changedTouches) !== "undefined";
-        this.sendmsg(MSG_MOVE, {
-            mousePos: this.getMousePos(this.scene.canvas, evt, isTouch),
+        this.sendMessage(MSG_MOVE, {
+            mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
             isTouch: isTouch
         });
     }
 
-    handleEnd(evt: TouchEvent | MouseEvent) {
+    protected handleEnd(evt: TouchEvent | MouseEvent) {
         evt.preventDefault();
         var posX, posY;
         let isTouch = evt instanceof TouchEvent;
@@ -114,13 +116,13 @@ class InputManager extends Component {
                 Math.abs(this.lastTouch.pageY - posY) < 10) {
                 // at last send the message to all subscribers about this event
                 if (isTouch) {
-                    this.sendmsg(MSG_TOUCH, {
-                        mousePos: this.getMousePos(this.scene.canvas, evt, isTouch),
+                    this.sendMessage(MSG_TOUCH, {
+                        mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
                         isTouch: isTouch
                     });
                 } else {
-                    this.sendmsg(MSG_UP, {
-                        mousePos: this.getMousePos(this.scene.canvas, evt, isTouch),
+                    this.sendMessage(MSG_UP, {
+                        mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
                         isTouch: isTouch
                     });
                 }
@@ -129,7 +131,7 @@ class InputManager extends Component {
     }
 
     // Get the mouse position
-    getMousePos(canvas : HTMLCanvasElement, evt : TouchEvent | MouseEvent, isTouch: boolean) {
+    protected getMousePos(canvas : HTMLCanvasElement, evt : TouchEvent | MouseEvent, isTouch: boolean) {
         var rect = canvas.getBoundingClientRect();
         let clientX = isTouch ? (evt as TouchEvent).changedTouches[0].clientX : (evt as MouseEvent).clientX;
         let clientY = isTouch ? (evt as TouchEvent).changedTouches[0].clientY : (evt as MouseEvent).clientY;
