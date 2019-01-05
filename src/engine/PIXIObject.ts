@@ -14,6 +14,9 @@ export namespace PIXICmp {
      * PIXI object attached to the component architecture
      */
     export interface ComponentObject {
+        // state of the object
+        state: number;
+
         /**
          * Link to proxy object, <<<shouldn't be used from within any custom component>>>
          */
@@ -34,7 +37,7 @@ export namespace PIXICmp {
         /**
          * Adds a new component
          */
-        addComponent(component: Component) : void;
+        addComponent(component: Component): void;
         /**
          * Removes an existing component
          */
@@ -76,14 +79,7 @@ export namespace PIXICmp {
          * Inverts a flag at given index
          */
         invertFlag(flag: number): void;
-        /**
-         * Gets state of this object
-         */
-        getState(): number;
-        /**
-         * Sets state of this object
-         */
-        setState(state: number): void;
+
         /**
          * Removes itself from its parent
          */
@@ -198,11 +194,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        getState(): number {
-            return this.proxy.getState();
+        get state(): number {
+            return this.proxy.state;
         }
-        setState(state: number) {
-            this.proxy.setState(state);
+        set state(state: number) {
+            this.proxy.state = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -319,11 +315,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        getState(): number {
-            return this.proxy.getState();
+        get state(): number {
+            return this.proxy.state;
         }
-        setState(state: number) {
-            this.proxy.setState(state);
+        set state(state: number) {
+            this.proxy.state = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -440,11 +436,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        getState(): number {
-            return this.proxy.getState();
+        get state(): number {
+            return this.proxy.state;
         }
-        setState(state: number) {
-            this.proxy.setState(state);
+        set state(state: number) {
+            this.proxy.state = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -561,11 +557,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        getState(): number {
-            return this.proxy.getState();
+        get state(): number {
+            return this.proxy.state;
         }
-        setState(state: number) {
-            this.proxy.setState(state);
+        set state(state: number) {
+            this.proxy.state = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -683,11 +679,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        getState(): number {
-            return this.proxy.getState();
+        get state(): number {
+            return this.proxy.state;
         }
-        setState(state: number) {
-            this.proxy.setState(state);
+        set state(state: number) {
+            this.proxy.state = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -804,11 +800,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        getState(): number {
-            return this.proxy.getState();
+        get state(): number {
+            return this.proxy.state;
         }
-        setState(state: number) {
-            this.proxy.setState(state);
+        set state(state: number) {
+            this.proxy.state = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;

@@ -1,11 +1,14 @@
+import { TranslateAnimation, RotationAnimation } from '../src/components/Animation';
 import DebugComponent from '../src/components/DebugComponent';
-import Component from '../src/engine/Component';
-import { PixiRunner } from '../src/PixiRunner';
+import GameObjectBuilder from '../src/engine/PIXIObjectBuilder';
+import Executor from '../src/components/ChainingComponent';
+import PixiRunner from '../src/engine/PixiRunner';
 import { PIXICmp } from '../src/engine/PIXIObject';
+import Component from '../src/engine/Component';
 
 class RotationAnim extends Component {
     onUpdate(delta, absolute) {
-        this.owner.getPixiObj().rotation += delta;
+        this.owner.getPixiObj().rotation += delta * 0.01;
     }
 }
 

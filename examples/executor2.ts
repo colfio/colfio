@@ -1,8 +1,8 @@
-import { TranslateAnimation, RotationAnimation } from './../src/components/Animation';
+import { TranslateAnimation, RotationAnimation } from '../src/components/Animation';
 import DebugComponent from '../src/components/DebugComponent';
 import GameObjectBuilder from '../src/engine/PIXIObjectBuilder';
 import Executor from '../src/components/ChainingComponent';
-import { PixiRunner } from '../src/PixiRunner';
+import PixiRunner from '../src/engine/PixiRunner';
 import { PIXICmp } from '../src/engine/PIXIObject';
 
 newGame(new PixiRunner());
@@ -28,8 +28,8 @@ function newGame(engine: PixiRunner) {
 
     obj.addComponent(new Executor()
     .beginRepeat(0)
-    .addComponentAndWait(() => new RotationAnimation(0,1,1)) 
-    .addComponentAndWait(() => new TranslateAnimation(1,1,2,2,1))
+    .addComponentAndWait(() => new RotationAnimation(0,1,1000)) 
+    .addComponentAndWait(() => new TranslateAnimation(1,1,2,2,1000))
     .endRepeat()
     );
 }

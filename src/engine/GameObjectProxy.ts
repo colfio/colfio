@@ -24,7 +24,7 @@ export default class GameObjectProxy {
 	// bit-array of flags
 	flags = new Flags();
 	// state of this object
-	state = 0;
+	_state = 0;
 	// game object this proxy is attached to
 	pixiObj: PIXI.Container = null;
 	// set of all components, mapped by their id
@@ -146,16 +146,16 @@ export default class GameObjectProxy {
 	/**
 	 * Gets state of this object
 	 */
-	getState(): number {
-		return this.state;
+	get state(): number {
+		return this._state;
 	}
 
 	/**
 	 * Sets state of this object
 	 */
-	setState(state: number) {
-		let previous = this.state;
-		this.state = state;
+	set state(state: number) {
+		let previous = this._state;
+		this._state = state;
 		this.scene.sendMessage(new Msg(MSG_STATE_CHANGED, null, <PIXICmp.ComponentObject><any>this.pixiObj, [previous, state]));
 	}
 

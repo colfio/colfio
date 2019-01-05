@@ -1,10 +1,10 @@
-import * as PIXI from 'pixi.js'
-import Scene from './engine/Scene';
+import * as PIXI from 'pixi.js';
+import Scene from './Scene';
 
 /**
  * Entry point to the PIXIJS
  */
-export class PixiRunner {
+export default class PixiRunner {
     app: PIXI.Application = null;
     lastTime = 0;
     gameTime = 0;
@@ -30,7 +30,6 @@ export class PixiRunner {
     }
 
     private loop(time: number) {
-        time /= 1000;
         // update our component minilib
         let dt = (time - this.lastTime);
         this.lastTime = time;

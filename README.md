@@ -149,9 +149,12 @@ myObject.hasFlag(12); // false
 - messaging system uses a class `Msg` to store data
 - `action` - action key (string), used by the components to subscribe for a certain group of messages
   - special actions: 
-    - `MSG_ALL` that is sent to **each** component
-    - `MSG_OBJECT_ADDED` that is sent to inform subscribed components that a new game object has been added
-    - `MSG_OBJECT_REMOVED` that is sent to inform subscribed components that an existing game object has been removed
+    - `ANY` that is sent to **each** component
+    - `OBJECT_ADDED` that is sent to inform subscribed components that a new game object has been added
+    - `OBJECT_REMOVED` that is sent to inform subscribed components that an existing game object has been removed
+    - `STATE_CHANGED` - when a state of an object has changed
+    - `COMPONENT_ADDED` - component has been added
+    - `COMPONENT_REMOVED` - component has been removed 
 - `component` - a component that sent the message
 - `gameObject` - a game object to which the component that sent the message belongs
 - `data` - any custom payload
