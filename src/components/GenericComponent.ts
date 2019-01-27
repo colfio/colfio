@@ -1,4 +1,4 @@
-import Msg from '../engine/Msg';
+import { Msg } from '../engine/Msg';
 import Component from '../engine/Component';
 
 /**

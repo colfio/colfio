@@ -3,7 +3,7 @@ import Scene from '../engine/Scene';
 import ChainingComponent from '../components/ChainingComponent';
 import { tests, assert } from '../utils/tinytest';
 import {RotationAnim, MovingAnim} from './testcomponents';
-import Msg from '../engine/Msg';
+import { Msg } from '../engine/Msg';
 
 export default function runTests() {
 

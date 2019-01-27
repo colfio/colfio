@@ -1,7 +1,7 @@
 import Component from '../engine/Component';
 import { PIXICmp } from '../engine/PIXIObject';
-import Msg from '../engine/Msg';
-import { MSG_COMPONENT_REMOVED } from '../engine/Constants';
+import { Msg } from '../engine/Msg';
+import { Messages } from '../engine/Constants';
 
 /**
  * Component that consists of a list of inner components
@@ -24,7 +24,7 @@ export class ComposingComponent extends Component {
     }
 
     onInit() {
-        this.subscribe(MSG_COMPONENT_REMOVED);
+        this.subscribe(Messages.COMPONENT_REMOVED);
         for (let [key, cmp] of this.components) {
             cmp.onInit();
         }
@@ -32,7 +32,7 @@ export class ComposingComponent extends Component {
 
     onMessage(msg: Msg) {
         // remove component from the collection
-        if (msg.action == MSG_COMPONENT_REMOVED) {
+        if (msg.action === Messages.COMPONENT_REMOVED) {
             if (this.components.has(msg.component.id)) {
                 this.components.delete(msg.component.id);
             }

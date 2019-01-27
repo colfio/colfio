@@ -129,8 +129,8 @@ export default class PIXIObjectBuilder {
             object.setFlag(flag);
         }
 
-        if(this.state != null){
-            object.setState(this.state);
+        if(this.state != null) {
+            object.numState = this.state;
         }
 
         let pixiObj = object.getPixiObj();

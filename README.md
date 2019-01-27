@@ -49,11 +49,11 @@ The goal for ECSLite is to be a lightweight and simple library that could be use
 - and `index.ts`
 
 ```typescript
-import { PixiRunner } from '../src/PixiRunner';
+import GameLoop from '../src/engine/GameLoop';
 
-newGame(new PixiRunner());
+newGame(new GameLoop());
 // Start a new game
-function newGame(engine: PixiRunner) {
+function newGame(engine: GameLoop) {
 
 }
 
@@ -94,7 +94,7 @@ function newGame(engine: PixiRunner) {
   - `tag` - a string that identifies the object
   - `pixiObj` - attached object from PIXI library
   - `attributes` - list of attributes that can be accessed via string keys
-  - `state` - a numeric state
+  - `numState` - a numeric state
   - `flags` - a bit array of flags
 
 ![Game Objects Workflow](./docs/objects.png)
@@ -142,7 +142,7 @@ myObject.hasFlag(12); // false
 
 ### GameObject
 - game objects are only shells for components and attributes
-- `state` is a numeric state you can use to implement a simple state machine
+- `numState` is a numeric state you can use to implement a simple state machine
 - `flags` is a bit array described above
 
 ### Msg

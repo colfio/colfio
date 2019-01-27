@@ -1,8 +1,8 @@
 import GameObjectProxy from './GameObjectProxy';
-import Msg from './Msg';
+import { Msg } from './Msg';
 import Component from './Component';
 import * as PIXI from 'pixi.js'
-import { MSG_OBJECT_ADDED, MSG_OBJECT_REMOVED, MSG_ANY } from './Constants';
+import { Messages } from './Constants';
 import { PIXICmp } from './PIXIObject';
 
 
@@ -151,8 +151,8 @@ export default class Scene {
         }
 
         // check global subscribers
-        if (this.subscribers.has(MSG_ANY)) {
-            let globalSubs = this.subscribers.get(MSG_ANY);
+        if (this.subscribers.has(Messages.ANY)) {
+            let globalSubs = this.subscribers.get(Messages.ANY);
             for (let [key, component] of globalSubs) {
                 component.onMessage(msg);
             }
@@ -258,7 +258,7 @@ export default class Scene {
         // assign scene
         obj.scene = this;
         // notify listeners
-        this.sendMessage(new Msg(MSG_OBJECT_ADDED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
+        this.sendMessage(new Msg(Messages.OBJECT_ADDED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
     }
 
     // immediately removes given game object
@@ -266,7 +266,7 @@ export default class Scene {
         this.gameObjectTags.get(obj.tag).delete(obj.id);
         this.gameObjects.delete(obj.id);
         // notify listeners
-        this.sendMessage(new Msg(MSG_OBJECT_REMOVED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
+        this.sendMessage(new Msg(Messages.OBJECT_REMOVED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
     }
 
     // clears up everything that has something to do with given component

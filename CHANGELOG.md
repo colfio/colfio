@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+## [0.1.2] - 2019-01-27
+### Changed
+- Refactored components
+
+
 ## [0.1.1] - 2019-1-5
 ### Changed
 - Refactored typing structure

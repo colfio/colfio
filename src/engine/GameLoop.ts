@@ -4,12 +4,12 @@ import Scene from './Scene';
 /**
  * Entry point to the PIXIJS
  */
-export default class PixiRunner {
+export default class GameLoop {
     app: PIXI.Application = null;
     lastTime = 0;
     gameTime = 0;
     scene: Scene = null;
-    ticker: PIXI.ticker.Ticker = null;
+    ticker: PIXI.Ticker = null;
 
     init(canvas: HTMLCanvasElement, resolution: number = 1) {
         this.app = new PIXI.Application({

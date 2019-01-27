@@ -2,10 +2,10 @@ import { GenericComponent } from './../components/GenericComponent';
 import GameObjectProxy from './GameObjectProxy';
 import Component from './Component';
 import Scene from './Scene';
-import * as PIXI from 'pixi.js'
+import * as PIXI from 'pixi.js';
 
 /**
- * Namespace for all PIXI objects that are to be 
+ * Namespace for all PIXI objects that are to be
  * integrated with the component architecture
  */
 export namespace PIXICmp {
@@ -15,7 +15,7 @@ export namespace PIXICmp {
      */
     export interface ComponentObject {
         // state of the object
-        state: number;
+        numState: number;
 
         /**
          * Link to proxy object, <<<shouldn't be used from within any custom component>>>
@@ -63,6 +63,7 @@ export namespace PIXICmp {
          * Returns true if the attribute was successfully removed
          */
         removeAttribute(key: string): boolean;
+
         /**
         * Sets flag at given index
         */
@@ -103,16 +104,15 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        addChild<T extends PIXI.DisplayObject>(
-            child: T,
-            ...additionalChildren: T[]
-        ): T {
-            let newChild = super.addChild(child, ...additionalChildren);
+        addChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let newChild = super.addChild(...children);
             let cmbObj = <ComponentObject><any>newChild;
             this.proxy.onChildAdded(cmbObj.proxy);
 
-            for (let additional of additionalChildren) {
-                cmbObj = <ComponentObject><any>additional;
+            for (let child of children) {
+                cmbObj = <ComponentObject><any>child;
                 this.proxy.onChildAdded(cmbObj.proxy);
             }
 
@@ -128,8 +128,10 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject {
-            let removed = super.removeChild(child);
+        removeChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let removed = super.removeChild(...children);
             let cmpObj = <ComponentObject><any>removed;
             this.proxy.onChildRemoved(cmpObj.proxy);
             return removed;
@@ -194,11 +196,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        get state(): number {
-            return this.proxy.state;
+        get numState(): number {
+            return this.proxy.numState;
         }
-        set state(state: number) {
-            this.proxy.state = state;
+        set numState(state: number) {
+            this.proxy.numState = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -213,8 +215,8 @@ export namespace PIXICmp {
 
 
     /**
- * Wrapper for PIXI.Container
- */
+     * Wrapper for PIXI.Container
+     */
     export class Container extends PIXI.Container implements ComponentObject {
         proxy: GameObjectProxy;
 
@@ -224,16 +226,12 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        addChild<T extends PIXI.DisplayObject>(
-            child: T,
-            ...additionalChildren: T[]
-        ): T {
-            let newChild = super.addChild(child, ...additionalChildren);
-            let cmbObj = <ComponentObject><any>newChild;
-            this.proxy.onChildAdded(cmbObj.proxy);
-
-            for (let additional of additionalChildren) {
-                cmbObj = <ComponentObject><any>additional;
+        addChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let newChild = super.addChild(...children);
+            for(let child of children) {
+                let cmbObj = <ComponentObject><any>child;
                 this.proxy.onChildAdded(cmbObj.proxy);
             }
 
@@ -249,10 +247,15 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject {
-            let removed = super.removeChild(child);
-            let cmpObj = <ComponentObject><any>removed;
-            this.proxy.onChildRemoved(cmpObj.proxy);
+        removeChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let removed = super.removeChild(...children);
+            for(let child of children) {
+                let cmpObj = <ComponentObject><any>child;
+                this.proxy.onChildRemoved(cmpObj.proxy);
+            }
+
             return removed;
         }
 
@@ -315,11 +318,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        get state(): number {
-            return this.proxy.state;
+        get numState(): number {
+            return this.proxy.numState;
         }
-        set state(state: number) {
-            this.proxy.state = state;
+        set numState(state: number) {
+            this.proxy.numState = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -335,7 +338,7 @@ export namespace PIXICmp {
     /**
  * Wrapper for PIXI.ParticleContainer
  */
-    export class ParticleContainer extends PIXI.particles.ParticleContainer implements ComponentObject {
+    export class ParticleContainer extends PIXI.ParticleContainer implements ComponentObject {
         proxy: GameObjectProxy;
 
         constructor(tag: string = "") {
@@ -344,16 +347,12 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        addChild<T extends PIXI.DisplayObject>(
-            child: T,
-            ...additionalChildren: T[]
-        ): T {
-            let newChild = super.addChild(child, ...additionalChildren);
-            let cmbObj = <ComponentObject><any>newChild;
-            this.proxy.onChildAdded(cmbObj.proxy);
-
-            for (let additional of additionalChildren) {
-                cmbObj = <ComponentObject><any>additional;
+        addChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let newChild = super.addChild(...children);
+            for(let child of children) {
+                let cmbObj = <ComponentObject><any>child;
                 this.proxy.onChildAdded(cmbObj.proxy);
             }
 
@@ -369,10 +368,15 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject {
-            let removed = super.removeChild(child);
-            let cmpObj = <ComponentObject><any>removed;
-            this.proxy.onChildRemoved(cmpObj.proxy);
+        removeChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let removed = super.removeChild(...children);
+            for(let child of children) {
+                let cmpObj = <ComponentObject><any>child;
+                this.proxy.onChildRemoved(cmpObj.proxy);
+            }
+
             return removed;
         }
 
@@ -436,11 +440,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        get state(): number {
-            return this.proxy.state;
+        get numState(): number {
+            return this.proxy.numState;
         }
-        set state(state: number) {
-            this.proxy.state = state;
+        set numState(state: number) {
+            this.proxy.numState = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -466,16 +470,12 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        addChild<T extends PIXI.DisplayObject>(
-            child: T,
-            ...additionalChildren: T[]
-        ): T {
-            let newChild = super.addChild(child, ...additionalChildren);
-            let cmbObj = <ComponentObject><any>newChild;
-            this.proxy.onChildAdded(cmbObj.proxy);
-
-            for (let additional of additionalChildren) {
-                cmbObj = <ComponentObject><any>additional;
+        addChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let newChild = super.addChild(...children);
+            for(let child of children) {
+                let cmbObj = <ComponentObject><any>child;
                 this.proxy.onChildAdded(cmbObj.proxy);
             }
 
@@ -491,10 +491,15 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject {
-            let removed = super.removeChild(child);
-            let cmpObj = <ComponentObject><any>removed;
-            this.proxy.onChildRemoved(cmpObj.proxy);
+        removeChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let removed = super.removeChild(...children);
+            for(let child of children) {
+                let cmpObj = <ComponentObject><any>child;
+                this.proxy.onChildRemoved(cmpObj.proxy);
+            }
+
             return removed;
         }
 
@@ -557,11 +562,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        get state(): number {
-            return this.proxy.state;
+        get numState(): number {
+            return this.proxy.numState;
         }
-        set state(state: number) {
-            this.proxy.state = state;
+        set numState(state: number) {
+            this.proxy.numState = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -579,7 +584,7 @@ export namespace PIXICmp {
     /**
  * Wrapper for PIXI.Sprite
  */
-    export class TilingSprite extends PIXI.extras.TilingSprite implements ComponentObject {
+    export class TilingSprite extends PIXI.TilingSprite implements ComponentObject {
         proxy: GameObjectProxy;
 
         constructor(tag: string = "", texture?: PIXI.Texture, width?: number, height?: number) {
@@ -588,16 +593,12 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        addChild<T extends PIXI.DisplayObject>(
-            child: T,
-            ...additionalChildren: T[]
-        ): T {
-            let newChild = super.addChild(child, ...additionalChildren);
-            let cmbObj = <ComponentObject><any>newChild;
-            this.proxy.onChildAdded(cmbObj.proxy);
-
-            for (let additional of additionalChildren) {
-                cmbObj = <ComponentObject><any>additional;
+        addChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let newChild = super.addChild(...children);
+            for(let child of children) {
+                let cmbObj = <ComponentObject><any>child;
                 this.proxy.onChildAdded(cmbObj.proxy);
             }
 
@@ -613,10 +614,15 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject {
-            let removed = super.removeChild(child);
-            let cmpObj = <ComponentObject><any>removed;
-            this.proxy.onChildRemoved(cmpObj.proxy);
+        removeChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let removed = super.removeChild(...children);
+            for(let child of children) {
+                let cmpObj = <ComponentObject><any>child;
+                this.proxy.onChildRemoved(cmpObj.proxy);
+            }
+
             return removed;
         }
 
@@ -679,11 +685,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        get state(): number {
-            return this.proxy.state;
+        get numState(): number {
+            return this.proxy.numState;
         }
-        set state(state: number) {
-            this.proxy.state = state;
+        set numState(state: number) {
+            this.proxy.numState = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;
@@ -708,16 +714,12 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        addChild<T extends PIXI.DisplayObject>(
-            child: T,
-            ...additionalChildren: T[]
-        ): T {
-            let newChild = super.addChild(child, ...additionalChildren);
-            let cmbObj = <ComponentObject><any>newChild;
-            this.proxy.onChildAdded(cmbObj.proxy);
-
-            for (let additional of additionalChildren) {
-                cmbObj = <ComponentObject><any>additional;
+        addChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let newChild = super.addChild(...children);
+            for(let child of children) {
+                let cmbObj = <ComponentObject><any>child;
                 this.proxy.onChildAdded(cmbObj.proxy);
             }
 
@@ -733,10 +735,15 @@ export namespace PIXICmp {
         }
 
         // overrides pixijs function
-        removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject {
-            let removed = super.removeChild(child);
-            let cmpObj = <ComponentObject><any>removed;
-            this.proxy.onChildRemoved(cmpObj.proxy);
+        removeChild<T extends PIXI.DisplayObject[]>(
+            ...children: T
+        ): T[0] {
+            let removed = super.removeChild(...children);
+            for(let child of children) {
+                let cmpObj = <ComponentObject><any>child;
+                this.proxy.onChildRemoved(cmpObj.proxy);
+            }
+
             return removed;
         }
 
@@ -800,11 +807,11 @@ export namespace PIXICmp {
         invertFlag(flag: number) {
             this.proxy.invertFlag(flag);
         }
-        get state(): number {
-            return this.proxy.state;
+        get numState(): number {
+            return this.proxy.numState;
         }
-        set state(state: number) {
-            this.proxy.state = state;
+        set numState(state: number) {
+            this.proxy.numState = state;
         }
         getPixiObj(): PIXI.Container {
             return this.proxy.pixiObj;

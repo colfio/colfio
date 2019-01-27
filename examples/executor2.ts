@@ -2,14 +2,14 @@ import { TranslateAnimation, RotationAnimation } from '../src/components/Animati
 import DebugComponent from '../src/components/DebugComponent';
 import GameObjectBuilder from '../src/engine/PIXIObjectBuilder';
 import Executor from '../src/components/ChainingComponent';
-import PixiRunner from '../src/engine/PixiRunner';
+import GameLoop from '../src/engine/GameLoop';
 import { PIXICmp } from '../src/engine/PIXIObject';
 
-newGame(new PixiRunner());
+newGame(new GameLoop());
 
 
 // Start a new game
-function newGame(engine: PixiRunner) {
+function newGame(engine: GameLoop) {
     engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement,100);
 
     // debugging

@@ -1,4 +1,4 @@
-import Msg from '../engine/Msg';
+import { Msg } from '../engine/Msg';
 import Component from '../engine/Component';
 import { PIXICmp } from '../engine/PIXIObject';
 
@@ -184,8 +184,8 @@ export default class ChainingComponent extends Component {
     head: ExNode = null;
     tail: ExNode = null;
     // help parameters used for processing one node
-    helpParam: any = null;
-    helpParam2: any = null;
+    tmpParam: any = null;
+    tmpParam2: any = null;
 
     /**
      * Repeats the following part of the chain until endRepeat()
@@ -378,7 +378,7 @@ export default class ChainingComponent extends Component {
     }
 
     onMessage(msg: Msg) {
-        this.helpParam2 = msg.action;
+        this.tmpParam2 = msg.action;
     }
 
     onUpdate(delta: number, absolute: number) {
@@ -442,12 +442,12 @@ export default class ChainingComponent extends Component {
                 if (!this.current.cached) {
                     this.current.cacheParams();
                 }
-                if (this.helpParam == null) {
+                if (this.tmpParam == null) {
                     // save the time into a variable and wait to the next update cycle
-                    this.helpParam = absolute;
-                } else if ((absolute - this.helpParam) >= this.current.getParam1()) {
+                    this.tmpParam = absolute;
+                } else if ((absolute - this.tmpParam) >= this.current.getParam1()) {
                     // push context and go to the next ite
-                    this.helpParam = null;
+                    this.tmpParam = null;
                     this.current.resetCache();
                     this.scopeStack.push(this.current);
                     this.gotoNextImmediately(delta, absolute);
@@ -511,14 +511,14 @@ export default class ChainingComponent extends Component {
             case CMD_WAIT_TIME:
                 this.current.cacheParams();
 
-                if (this.helpParam == null) {
+                if (this.tmpParam == null) {
                     // save the current time to a variable
-                    this.helpParam = absolute;
+                    this.tmpParam = absolute;
                 }
 
-                if ((absolute - this.helpParam) > this.current.getParam1()) {
+                if ((absolute - this.tmpParam) > this.current.getParam1()) {
                     // it is time to go to the next item
-                    this.helpParam = null;
+                    this.tmpParam = null;
                     this.current.resetCache();
                     this.gotoNextImmediately(delta, absolute);
                 }
@@ -544,7 +544,7 @@ export default class ChainingComponent extends Component {
                         gameObj.removeComponentByClass(this.current.getParam1());
                     }
 
-                    this.helpParam = null;
+                    this.tmpParam = null;
                     this.current.resetCache();
                     this.gotoNextImmediately(delta, absolute);
                 }
@@ -566,28 +566,28 @@ export default class ChainingComponent extends Component {
                 break;
             case CMD_WAIT_FRAMES:
                 // wait given number of update cycles
-                if (this.helpParam == null) {
-                    this.helpParam = 0;
+                if (this.tmpParam == null) {
+                    this.tmpParam = 0;
                 }
 
-                if (++this.helpParam > this.current.param1) {
-                    this.helpParam = null;
+                if (++this.tmpParam > this.current.param1) {
+                    this.tmpParam = null;
                     this.gotoNextImmediately(delta, absolute);
                 }
                 break;
             case CMD_WAIT_FOR_MESSAGE:
-                // helpParam indicates that this component has already subscribed the message
-                if (this.helpParam == true) {
-                    if (this.helpParam2 == this.current.param1) {
+                // tmpParam indicates that this component has already subscribed the message
+                if (this.tmpParam == true) {
+                    if (this.tmpParam2 == this.current.param1) {
                         // got message -> unsubscribe and proceed
                         this.unsubscribe(this.current.param1);
-                        this.helpParam = this.helpParam2 = null;
+                        this.tmpParam = this.tmpParam2 = null;
                         this.gotoNextImmediately(delta, absolute);
                     }
                 } else {
                     // just subscribe and wait
-                    this.helpParam = true;
-                    this.helpParam2 = null;
+                    this.tmpParam = true;
+                    this.tmpParam2 = null;
                     this.subscribe(this.current.param1);
                 }
                 break;

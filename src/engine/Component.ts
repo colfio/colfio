@@ -1,7 +1,6 @@
-import Msg from './Msg';
+import { Msg } from './Msg';
 import Scene from './Scene';
 import { PIXICmp } from './PIXIObject';
-import GameObjectProxy from './GameObjectProxy';
 
 
 /**

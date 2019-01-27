@@ -1,4 +1,4 @@
-import * as PixiRunner from "./engine/PixiRunner";
+import * as GameLoop from "./engine/GameLoop";
 import * as Component from "./engine/Component";
 import * as Constants from "./engine/Constants";
 import * as Flags from "./engine/Flags";
@@ -19,8 +19,8 @@ import * as Dynamics from "./utils/Dynamics";
 import * as QuadTree from "./utils/QuadTree";
 import * as Vec2 from "./utils/Vec2";
 
-export {
-  PixiRunner,
+export default {
+  GameLoop,
   Component,
   Constants,
   Flags,

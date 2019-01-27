@@ -4,23 +4,23 @@ import { PIXICmp } from './PIXIObject';
 /**
  * Message that stores type of action, a relevant component, a relevant game object and custom data if needed
  */
-export default class Msg {
+export class Msg {
 
     /**
-    * Action type identifier
-    */
+     * Action type identifier
+     */
     _action: string = null;
 
-    /**
+   /**
     * Component that sent this message
     */
     _component: Component = null;
 
     /**
-    * GameObject attached to this message
-    */
+     * GameObject attached to this message
+     */
     _gameObject: PIXICmp.ComponentObject = null;
-    
+
     /**
      * Data payload
      */

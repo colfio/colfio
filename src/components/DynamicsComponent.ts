@@ -1,4 +1,4 @@
-import { ATTR_DYNAMICS } from './../engine/Constants';
+import { Attributes } from './../engine/Constants';
 import Dynamics from '../utils/Dynamics';
 import Component from '../engine/Component';
 
@@ -16,11 +16,11 @@ export class DynamicsComponent extends Component {
     }
 
     onInit() {
-        this.dynamics = this.owner.getAttribute(ATTR_DYNAMICS);
+        this.dynamics = this.owner.getAttribute(Attributes.DYNAMICS);
         if(this.dynamics == null){
             // add an initial one
             this.dynamics = new Dynamics();
-            this.owner.addAttribute(ATTR_DYNAMICS, this.dynamics);
+            this.owner.addAttribute(Attributes.DYNAMICS, this.dynamics);
         }
     }
 

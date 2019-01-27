@@ -2,7 +2,7 @@ import Component from '../engine/Component';
 import GameObjectProxy from '../engine/GameObjectProxy';
 import { Messages } from '../engine/Constants';
 import { PIXICmp } from '../engine/PIXIObject';
-import Msg from '../engine/Msg';
+import { Msg } from '../engine/Msg';
 
 /**
  * Debugging component that display a scene graph

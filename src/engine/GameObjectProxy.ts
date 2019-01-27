@@ -1,13 +1,10 @@
 import { GenericComponent } from './../components/GenericComponent';
 import Component from './Component';
 import Scene from './Scene'
-import Msg from './Msg';
+import { Msg } from './Msg';
 import { PIXICmp } from './PIXIObject';
 import Flags from './Flags';
-import {
-	MSG_OBJECT_ADDED, MSG_OBJECT_REMOVED, MSG_ANY, MSG_STATE_CHANGED,
-	MSG_COMPONENT_ADDED, MSG_COMPONENT_REMOVED
-} from './Constants';
+import { Messages } from './Constants';
 
 
 /**
@@ -24,7 +21,7 @@ export default class GameObjectProxy {
 	// bit-array of flags
 	flags = new Flags();
 	// state of this object
-	_state = 0;
+	_numState = 0;
 	// game object this proxy is attached to
 	pixiObj: PIXI.Container = null;
 	// set of all components, mapped by their id
@@ -57,7 +54,7 @@ export default class GameObjectProxy {
 		component.onRemove();
 		this.components.delete(component.id);
 		this.scene._removeComponentSubscription(component);
-		this.scene.sendMessage(new Msg(MSG_COMPONENT_REMOVED, component, <PIXICmp.ComponentObject><any>this.pixiObj));
+		this.scene.sendMessage(new Msg(Messages.COMPONENT_REMOVED, component, <PIXICmp.ComponentObject><any>this.pixiObj));
 	}
 
 	/**
@@ -146,17 +143,17 @@ export default class GameObjectProxy {
 	/**
 	 * Gets state of this object
 	 */
-	get state(): number {
-		return this._state;
+	get numState(): number {
+		return this._numState;
 	}
 
 	/**
 	 * Sets state of this object
 	 */
-	set state(state: number) {
-		let previous = this._state;
-		this._state = state;
-		this.scene.sendMessage(new Msg(MSG_STATE_CHANGED, null, <PIXICmp.ComponentObject><any>this.pixiObj, [previous, state]));
+	set numState(state: number) {
+		let previous = this._numState;
+		this._numState = state;
+		this.scene.sendMessage(new Msg(Messages.STATE_CHANGED, null, <PIXICmp.ComponentObject><any>this.pixiObj, [previous, state]));
 	}
 
 	/**
@@ -193,7 +190,7 @@ export default class GameObjectProxy {
 				component.scene = this.scene;
 				this.components.set(component.id, component);
 				component.onInit();
-				this.scene.sendMessage(new Msg(MSG_COMPONENT_ADDED, component, <PIXICmp.ComponentObject><any>this.pixiObj));
+				this.scene.sendMessage(new Msg(Messages.COMPONENT_ADDED, component, <PIXICmp.ComponentObject><any>this.pixiObj));
 			}
 
 			this.componentsToAdd = new Array<Component>();
