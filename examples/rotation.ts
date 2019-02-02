@@ -1,14 +1,14 @@
 import { TranslateAnimation, RotationAnimation } from '../src/components/Animation';
-import DebugComponent from '../src/components/DebugComponent';
-import GameObjectBuilder from '../src/engine/PIXIObjectBuilder';
-import Executor from '../src/components/ChainingComponent';
-import GameLoop from '../src/engine/GameLoop';
-import { PIXICmp } from '../src/engine/PIXIObject';
+import DebugComponent from '../src/components/debug-component';
+import GameObjectBuilder from '../src/engine/pixi-object-builder';
+import Executor from '../src/components/chaining-component';
+import GameLoop from '../src/engine/game-loop';
+import { PIXICmp } from '../src/engine/pixi-object';
 import Component from '../src/engine/Component';
 
 class RotationAnim extends Component {
     onUpdate(delta, absolute) {
-        this.owner.getPixiObj().rotation += delta * 0.01;
+        this.owner.pixiObj.rotation += delta * 0.01;
     }
 }
 
@@ -18,7 +18,7 @@ newGame(new GameLoop());
 // Start a new game
 function newGame(engine: GameLoop) {
     
-    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement);
+    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement, 800, 600, 1, false);
 
     // debugging
     engine.scene.addGlobalComponent(new DebugComponent(document.getElementById("debugSect")));
@@ -34,11 +34,11 @@ function newGame(engine: GameLoop) {
     rect1Gfx.position.set(200, 200);
     rect1Gfx.pivot.set(50,50);
     rect1Gfx.addComponent(new RotationAnim());
-    engine.scene.stage.getPixiObj().addChild(rect1Gfx);
+    engine.scene.stage.pixiObj.addChild(rect1Gfx);
 
     rect2Gfx.position.set(350, 200);
     rect2Gfx.pivot.set(50, 50);
     rect2Gfx.addComponent(new RotationAnim());
-    engine.scene.stage.getPixiObj().addChild(rect2Gfx);
+    engine.scene.stage.pixiObj.addChild(rect2Gfx);
 }
 

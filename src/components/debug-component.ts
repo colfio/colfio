@@ -1,19 +1,19 @@
-import Component from '../engine/Component';
-import GameObjectProxy from '../engine/GameObjectProxy';
-import { Messages } from '../engine/Constants';
-import { PIXICmp } from '../engine/PIXIObject';
-import { Msg } from '../engine/Msg';
+import Component from '../engine/component';
+import GameObjectProxy from '../engine/game-object-proxy';
+import { Messages } from '../engine/constants';
+import { PIXICmp } from '../engine/pixi-object';
+import { Message } from '../engine/message';
 
 /**
  * Debugging component that display a scene graph
  */
 export default class DebugComponent extends Component {
-    targetHtmlElement: HTMLElement = null;
-    strWrapper: any = null;
+    protected targetHtmlElement: HTMLElement = null;
+    protected strWrapper: any = null;
 
     /**
      * Constructor
-     * @param targetHtmlElement html element to which the debug info will be written (should be a div) 
+     * @param targetHtmlElement html element to which the debug info will be written (should be a div)
      */
     constructor(targetHtmlElement: HTMLElement) {
         super();
@@ -28,9 +28,9 @@ export default class DebugComponent extends Component {
         this.subscribe(Messages.ANY);
     }
 
-    onMessage(msg: Msg) {
+    onMessage(msg: Message) {
         if (msg.gameObject != null) {
-            console.log(msg.action + " >> " + msg.gameObject.getTag());
+            console.log(msg.action + " >> " + msg.gameObject.tag);
         }
     }
 
@@ -49,7 +49,7 @@ export default class DebugComponent extends Component {
         return otp;
     }
 
-    protected processNode(node: GameObjectProxy, strWrapper: any, padding = 0) {
+    protected processNode(node: GameObjectProxy, strWrapper: any, padding: number = 0) {
 
         // position
         strWrapper.str += "<strong><span style=\"color:red\">";
@@ -67,7 +67,7 @@ export default class DebugComponent extends Component {
         strWrapper.str += "</span></strong>";
 
         // attributes
-        for (let [key, attr] of node.attributes) {
+        for (let [key, attr] of node.rawAttributes) {
             strWrapper.str += "<strong><span style=\"color:red\">";
             strWrapper.str = strWrapper.str.concat(this.setPadding(padding + 2) +
                 `${key} => ${JSON.stringify(attr)}` +
@@ -76,7 +76,7 @@ export default class DebugComponent extends Component {
         }
 
         // components
-        for (let [key, cmp] of node.components) {
+        for (let [key, cmp] of node.rawComponents) {
             strWrapper.str += "<span style=\"color:blue\">";
             strWrapper.str = strWrapper.str.concat(this.setPadding(padding + 2) + cmp.constructor.name + "<br>");
             strWrapper.str += "</span>";

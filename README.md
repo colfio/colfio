@@ -54,7 +54,7 @@ import GameLoop from '../src/engine/GameLoop';
 newGame(new GameLoop());
 // Start a new game
 function newGame(engine: GameLoop) {
-
+    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement, 800, 600);
 }
 
 ```
@@ -101,7 +101,7 @@ function newGame(engine: GameLoop) {
 
 ### Packages
 - **Scene** - serves as a message bus and scene manager, contains global components, game objects, and attributes
-- **Component** - a basic unit of the ECS pattern. Components are attached to game objects, can subscribe to the messaging system via `subscribe()` and send messages to other components via `sendmsg`
+- **Component** - a basic unit of the ECS pattern. Components are attached to game objects, can subscribe to the messaging system via `subscribe()` and send messages to other components via `sendMessage`
 - **GameObject** - game objects are mere containers for components and attributes
 
 ![Packages](./docs/packages.png)
@@ -145,8 +145,8 @@ myObject.hasFlag(12); // false
 - `numState` is a numeric state you can use to implement a simple state machine
 - `flags` is a bit array described above
 
-### Msg
-- messaging system uses a class `Msg` to store data
+### Message
+- messaging system uses a class `Message` to store data
 - `action` - action key (string), used by the components to subscribe for a certain group of messages
   - special actions: 
     - `ANY` that is sent to **each** component

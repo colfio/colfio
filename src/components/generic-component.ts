@@ -1,16 +1,18 @@
-import { Msg } from '../engine/Msg';
-import Component from '../engine/Component';
+import { Message } from '../engine/message';
+import Component from '../engine/component';
 
 /**
  * Builder for generic components
  */
 export class GenericComponent extends Component {
-    name: string;
+    protected _name: string;
+
     private onInitFunc: (cmp: Component) => void = null;
-    private onMessageFuncs = new Map<string, (cmp: Component, msg: Msg) => void>();
+    private onMessageFuncs = new Map<string, (cmp: Component, msg: Message) => void>();
     private onUpdateFunc: (cmp: Component, delta: number, absolute: number) => void = null;
     private onRemoveFunc: (cmp: Component) => void = null;
     private onFinishFunc: (cmp: Component) => void = null;
+
 
     /**
      * Creates a new generic component
@@ -18,7 +20,11 @@ export class GenericComponent extends Component {
      */
     constructor(name: string) {
         super();
-        this.name = name;
+        this._name = name;
+    }
+
+    public get name() {
+        return this._name;
     }
 
     /**
@@ -32,7 +38,7 @@ export class GenericComponent extends Component {
     /**
      * Registers a function that will be invoked when a specific message arrives
      */
-    doOnMessage(action: string, handler: (cmp: Component, msg: Msg) => void): GenericComponent {
+    doOnMessage(action: string, handler: (cmp: Component, msg: Message) => void): GenericComponent {
         this.onMessageFuncs.set(action, handler);
         return this;
     }
@@ -72,7 +78,7 @@ export class GenericComponent extends Component {
         }
     }
 
-    onMessage(msg: Msg) {
+    onMessage(msg: Message) {
         if (this.onMessageFuncs.has(msg.action)) {
             this.onMessageFuncs.get(msg.action)(this, msg);
         }

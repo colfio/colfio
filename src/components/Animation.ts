@@ -1,4 +1,4 @@
-import Component from '../engine/Component'
+import Component from '../engine/component';
 
 class Interpolation {
     static linear: any = (current: number, start: number, length: number) => Math.min(1, Math.max(0, (current - start) / length));
@@ -8,21 +8,21 @@ class Interpolation {
         let posInt = pos < 0.5 ? 2 * pos * pos : -1 + (4 - 2 * pos) * pos;
         return Math.min(1, Math.max(0, posInt));
     }
-};
+}
 
 
 
 export class BaseAnimation extends Component {
-    duration = 0;
-    goBack = false;
-    goingBack = false;
-    loops = 0;
-    currentLoop = 0;
-    startTime = 0;
-    interpolation: any = null;
+    protected duration = 0;
+    protected goBack = false;
+    protected goingBack = false;
+    protected loops = 0;
+    protected currentLoop = 0;
+    protected startTime = 0;
+    protected interpolation: any = null;
 
     // loops = 0 for infinite!
-    constructor(duration: number, goBack = false, loops = 1) {
+    constructor(duration: number, goBack: boolean = false, loops: number = 1) {
         super();
         this.duration = duration;
         this.goBack = goBack;
@@ -31,7 +31,7 @@ export class BaseAnimation extends Component {
     }
 
     onUpdate(delta: number, absolute: number) {
-        if (this.startTime == 0) {
+        if (this.startTime === 0) {
             this.startTime = absolute;
         }
 
@@ -54,7 +54,7 @@ export class BaseAnimation extends Component {
             this.applyAnim(percent, true);
 
             if (percent >= 1) {
-                if (++this.currentLoop != this.loops) {
+                if (++this.currentLoop !== this.loops) {
                     this.goingBack = !this.goingBack;
                     this.startTime = absolute;
                 } else {
@@ -70,12 +70,12 @@ export class BaseAnimation extends Component {
 }
 
 export class TranslateAnimation extends BaseAnimation {
-    srcPosX = 0;
-    srcPosY = 0;
-    targetPosX = 0;
-    targetPosY = 0;
+    protected srcPosX = 0;
+    protected srcPosY = 0;
+    protected targetPosX = 0;
+    protected targetPosY = 0;
 
-    constructor(srcPosX: number, srcPosY: number, targetPosX: number, targetPosY: number, duration: number, goBack = false, loops = 1) {
+    constructor(srcPosX: number, srcPosY: number, targetPosX: number, targetPosY: number, duration: number, goBack: boolean = false, loops: number = 1) {
         super(duration, goBack, loops);
         this.srcPosX = srcPosX;
         this.srcPosY = srcPosY;
@@ -85,26 +85,26 @@ export class TranslateAnimation extends BaseAnimation {
 
     onInit() {
         super.onInit();
-        this.owner.getPixiObj().position.x = this.srcPosX;
-        this.owner.getPixiObj().position.y = this.srcPosY;
+        this.owner.pixiObj.position.x = this.srcPosX;
+        this.owner.pixiObj.position.y = this.srcPosY;
     }
 
     protected applyAnim(percent: number, inverted: boolean) {
         if (inverted) {
-            this.owner.getPixiObj().position.x = this.targetPosX + percent * (this.srcPosX - this.targetPosX);
-            this.owner.getPixiObj().position.y = this.targetPosY + percent * (this.srcPosY - this.targetPosY);
+            this.owner.pixiObj.position.x = this.targetPosX + percent * (this.srcPosX - this.targetPosX);
+            this.owner.pixiObj.position.y = this.targetPosY + percent * (this.srcPosY - this.targetPosY);
         } else {
-            this.owner.getPixiObj().position.x = this.srcPosX + percent * (this.targetPosX - this.srcPosX);
-            this.owner.getPixiObj().position.y = this.srcPosY + percent * (this.targetPosY - this.srcPosY);
+            this.owner.pixiObj.position.x = this.srcPosX + percent * (this.targetPosX - this.srcPosX);
+            this.owner.pixiObj.position.y = this.srcPosY + percent * (this.targetPosY - this.srcPosY);
         }
     }
 }
 
 export class RotationAnimation extends BaseAnimation {
-    srcRot = 0;
-    targetRot = 0;
+    protected srcRot = 0;
+    protected targetRot = 0;
 
-    constructor(srcRot: number, targetRot: number, duration: number, goBack = false, loops = 1) {
+    constructor(srcRot: number, targetRot: number, duration: number, goBack: boolean = false, loops: number = 1) {
         super(duration, goBack, loops);
         this.srcRot = srcRot;
         this.targetRot = targetRot;
@@ -112,14 +112,14 @@ export class RotationAnimation extends BaseAnimation {
 
     onInit() {
         super.onInit();
-        this.owner.getPixiObj().rotation = this.srcRot;
+        this.owner.pixiObj.rotation = this.srcRot;
     }
 
     protected applyAnim(percent: number, inverted: boolean) {
         if (inverted) {
-            this.owner.getPixiObj().rotation = this.targetRot + percent * (this.srcRot - this.targetRot);
+            this.owner.pixiObj.rotation = this.targetRot + percent * (this.srcRot - this.targetRot);
         } else {
-            this.owner.getPixiObj().rotation = this.srcRot + percent * (this.targetRot - this.srcRot);
+            this.owner.pixiObj.rotation = this.srcRot + percent * (this.targetRot - this.srcRot);
         }
     }
 }

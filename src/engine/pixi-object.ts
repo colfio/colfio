@@ -1,7 +1,7 @@
-import { GenericComponent } from './../components/GenericComponent';
-import GameObjectProxy from './GameObjectProxy';
-import Component from './Component';
-import Scene from './Scene';
+import { GenericComponent } from '../components/generic-component';
+import GameObjectProxy from './game-object-proxy';
+import Component from './component';
+import Scene from './scene';
 import * as PIXI from 'pixi.js';
 
 /**
@@ -16,24 +16,17 @@ export namespace PIXICmp {
     export interface ComponentObject {
         // state of the object
         numState: number;
-
-        /**
-         * Link to proxy object, <<<shouldn't be used from within any custom component>>>
-         */
+        // Link to proxy object, <<<shouldn't be used from within any custom component>>>
         proxy: GameObjectProxy;
+        // unique identifier
+        id: number;
+        // tag of this object
+        tag: string;
+        // wrapped pixi object
+        pixiObj: PIXI.Container;
+        // scene
+        scene: Scene;
 
-        /**
-         * Returns unique identifier
-         */
-        getId(): number;
-        /**
-         * Returns wrapped pixi object
-         */
-        getPixiObj(): PIXI.Container;
-        /**
-         * Returns tag of this object
-         */
-        getTag(): string;
         /**
          * Adds a new component
          */
@@ -64,7 +57,7 @@ export namespace PIXICmp {
          */
         removeAttribute(key: string): boolean;
 
-        /**
+       /**
         * Sets flag at given index
         */
         setFlag(flag: number): void;
@@ -85,22 +78,34 @@ export namespace PIXICmp {
          * Removes itself from its parent
          */
         remove(): void;
-        /**
-         * Gets link to a scene
-         */
-        getScene(): Scene;
     }
 
 
     /**
- * Wrapper for PIXI.Graphics
- */
+     * Wrapper for PIXI.Graphics
+     */
     export class Graphics extends PIXI.Graphics implements ComponentObject {
         proxy: GameObjectProxy;
 
         constructor(tag: string = "") {
             super();
             this.proxy = new GameObjectProxy(tag, this);
+        }
+
+        get id(): number {
+            return this.proxy.id;
+        }
+
+        get tag(): string {
+            return this.proxy.tag;
+        }
+
+        get pixiObj(): PIXI.Container {
+            return this.proxy.pixiObj;
+        }
+
+        get scene(): Scene {
+            return this.proxy.scene;
         }
 
         // overrides pixijs function
@@ -153,14 +158,6 @@ export namespace PIXICmp {
                 this.proxy.onChildRemoved(cmpObj.proxy);
             }
             return removed;
-        }
-
-        getId(): number {
-            return this.proxy.id;
-        }
-
-        getTag(): string {
-            return this.proxy.tag;
         }
 
         addComponent(component: Component) {
@@ -225,6 +222,22 @@ export namespace PIXICmp {
             this.proxy = new GameObjectProxy(tag, this);
         }
 
+        get id(): number {
+            return this.proxy.id;
+        }
+
+        get tag(): string {
+            return this.proxy.tag;
+        }
+
+        get pixiObj(): PIXI.Container {
+            return this.proxy.pixiObj;
+        }
+
+        get scene(): Scene {
+            return this.proxy.scene;
+        }
+
         // overrides pixijs function
         addChild<T extends PIXI.DisplayObject[]>(
             ...children: T
@@ -275,14 +288,6 @@ export namespace PIXICmp {
                 this.proxy.onChildRemoved(cmpObj.proxy);
             }
             return removed;
-        }
-
-        getId(): number {
-            return this.proxy.id;
-        }
-
-        getTag(): string {
-            return this.proxy.tag;
         }
 
         addComponent(component: Component) {
@@ -336,8 +341,8 @@ export namespace PIXICmp {
     }
 
     /**
- * Wrapper for PIXI.ParticleContainer
- */
+     * Wrapper for PIXI.ParticleContainer
+     */
     export class ParticleContainer extends PIXI.ParticleContainer implements ComponentObject {
         proxy: GameObjectProxy;
 
@@ -346,6 +351,22 @@ export namespace PIXICmp {
             this.proxy = new GameObjectProxy(tag, this);
         }
 
+        get id(): number {
+            return this.proxy.id;
+        }
+
+        get tag(): string {
+            return this.proxy.tag;
+        }
+
+        get pixiObj(): PIXI.Container {
+            return this.proxy.pixiObj;
+        }
+
+        get scene(): Scene {
+            return this.proxy.scene;
+        }
+
         // overrides pixijs function
         addChild<T extends PIXI.DisplayObject[]>(
             ...children: T
@@ -396,15 +417,6 @@ export namespace PIXICmp {
                 this.proxy.onChildRemoved(cmpObj.proxy);
             }
             return removed;
-        }
-
-        getId(): number {
-            return this.proxy.id;
-        }
-
-
-        getTag(): string {
-            return this.proxy.tag;
         }
 
         addComponent(component: Component) {
@@ -459,8 +471,8 @@ export namespace PIXICmp {
 
 
     /**
- * Wrapper for PIXI.Sprite
- */
+     * Wrapper for PIXI.Sprite
+     */
     export class Sprite extends PIXI.Sprite implements ComponentObject {
         proxy: GameObjectProxy;
 
@@ -469,6 +481,22 @@ export namespace PIXICmp {
             this.proxy = new GameObjectProxy(tag, this);
         }
 
+        get id(): number {
+            return this.proxy.id;
+        }
+
+        get tag(): string {
+            return this.proxy.tag;
+        }
+
+        get pixiObj(): PIXI.Container {
+            return this.proxy.pixiObj;
+        }
+
+        get scene(): Scene {
+            return this.proxy.scene;
+        }
+
         // overrides pixijs function
         addChild<T extends PIXI.DisplayObject[]>(
             ...children: T
@@ -519,14 +547,6 @@ export namespace PIXICmp {
                 this.proxy.onChildRemoved(cmpObj.proxy);
             }
             return removed;
-        }
-
-        getId(): number {
-            return this.proxy.id;
-        }
-
-        getTag(): string {
-            return this.proxy.tag;
         }
 
         addComponent(component: Component) {
@@ -582,14 +602,30 @@ export namespace PIXICmp {
 
 
     /**
- * Wrapper for PIXI.Sprite
- */
+     * Wrapper for PIXI.Sprite
+     */
     export class TilingSprite extends PIXI.TilingSprite implements ComponentObject {
         proxy: GameObjectProxy;
 
         constructor(tag: string = "", texture?: PIXI.Texture, width?: number, height?: number) {
             super(texture, width, height);
             this.proxy = new GameObjectProxy(tag, this);
+        }
+
+        get id(): number {
+            return this.proxy.id;
+        }
+
+        get tag(): string {
+            return this.proxy.tag;
+        }
+
+        get pixiObj(): PIXI.Container {
+            return this.proxy.pixiObj;
+        }
+
+        get scene(): Scene {
+            return this.proxy.scene;
         }
 
         // overrides pixijs function
@@ -642,14 +678,6 @@ export namespace PIXICmp {
                 this.proxy.onChildRemoved(cmpObj.proxy);
             }
             return removed;
-        }
-
-        getId(): number {
-            return this.proxy.id;
-        }
-
-        getTag(): string {
-            return this.proxy.tag;
         }
 
         addComponent(component: Component) {
@@ -713,6 +741,22 @@ export namespace PIXICmp {
             this.proxy = new GameObjectProxy(tag, this);
         }
 
+        get id(): number {
+            return this.proxy.id;
+        }
+
+        get tag(): string {
+            return this.proxy.tag;
+        }
+
+        get pixiObj(): PIXI.Container {
+            return this.proxy.pixiObj;
+        }
+
+        get scene(): Scene {
+            return this.proxy.scene;
+        }
+
         // overrides pixijs function
         addChild<T extends PIXI.DisplayObject[]>(
             ...children: T
@@ -763,15 +807,6 @@ export namespace PIXICmp {
                 this.proxy.onChildRemoved(cmpObj.proxy);
             }
             return removed;
-        }
-
-        getId(): number {
-            return this.proxy.id;
-        }
-
-
-        getTag(): string {
-            return this.proxy.tag;
         }
 
         addComponent(component: Component) {

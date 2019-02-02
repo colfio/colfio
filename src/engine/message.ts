@@ -1,10 +1,10 @@
-import Component from './Component';
-import { PIXICmp } from './PIXIObject';
+import Component from './component';
+import { PIXICmp } from './pixi-object';
 
 /**
  * Message that stores type of action, a relevant component, a relevant game object and custom data if needed
  */
-export class Msg {
+export class Message {
 
     /**
      * Action type identifier

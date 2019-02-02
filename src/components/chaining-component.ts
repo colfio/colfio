@@ -1,6 +1,6 @@
-import { Msg } from '../engine/Msg';
-import Component from '../engine/Component';
-import { PIXICmp } from '../engine/PIXIObject';
+import { Message } from '../engine/message';
+import Component from '../engine/component';
+import { PIXICmp } from '../engine/pixi-object';
 
 const CMD_BEGIN_REPEAT = 1;
 const CMD_END_REPEAT = 2;
@@ -39,8 +39,8 @@ interface Func<T, TResult> {
  * Simple stack
  */
 class Stack {
-    topNode: ExNode = null;
-    size = 0;
+    protected topNode: ExNode = null;
+    protected size = 0;
 
     constructor() {
         this.topNode = null;
@@ -109,15 +109,15 @@ class ExNode {
     cacheParams() {
         if (!this.cached) {
             if (this.param1 != null) {
-                this.param1A = typeof (this.param1) == "function" ? this.param1() : this.param1;
+                this.param1A = typeof (this.param1) === "function" ? this.param1() : this.param1;
             }
 
             if (this.param2 != null) {
-                this.param2A = typeof (this.param2) == "function" ? this.param2() : this.param2;
+                this.param2A = typeof (this.param2) === "function" ? this.param2() : this.param2;
             }
 
             if (this.param3 != null) {
-                this.param3A = typeof (this.param3) == "function" ? this.param3() : this.param3;
+                this.param3A = typeof (this.param3) === "function" ? this.param3() : this.param3;
             }
 
             this.cached = true;
@@ -134,7 +134,7 @@ class ExNode {
         return this.param1A;
     }
 
-    setParam1(val : any) {
+    setParam1(val: any) {
         this.param1A = val;
     }
 
@@ -177,22 +177,22 @@ class ExNode {
  */
 export default class ChainingComponent extends Component {
     // stack of current scope
-    scopeStack = new Stack();
+    protected scopeStack = new Stack();
     // current node
-    current: ExNode = null;
+    protected current: ExNode = null;
     // linked list
-    head: ExNode = null;
-    tail: ExNode = null;
+    protected head: ExNode = null;
+    protected tail: ExNode = null;
     // help parameters used for processing one node
-    tmpParam: any = null;
-    tmpParam2: any = null;
+    protected tmpParam: any = null;
+    protected tmpParam2: any = null;
 
     /**
      * Repeats the following part of the chain until endRepeat()
      * @param num number of repetitions, 0 for infinite loop; or function that returns that number
      */
     beginRepeat(param: number | Func<void, number>): ChainingComponent {
-        this.enqueue(CMD_BEGIN_REPEAT, param, param == 0);
+        this.enqueue(CMD_BEGIN_REPEAT, param, param === 0);
         return this;
     }
 
@@ -206,7 +206,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Executes a closure
-     * @param {action} func function to execute 
+     * @param {action} func function to execute
      */
     execute(func: Action<ChainingComponent>): ChainingComponent {
         this.enqueue(CMD_EXECUTE, func);
@@ -214,8 +214,8 @@ export default class ChainingComponent extends Component {
     }
 
     /**
-     * Repeats the following part of the chain up to the endWhile() 
-     * till the func() keeps returning true 
+     * Repeats the following part of the chain up to the endWhile()
+     * till the func() keeps returning true
      * @param func function that returns either true or false
      */
     beginWhile(func: Func<void, boolean>): ChainingComponent {
@@ -232,7 +232,7 @@ export default class ChainingComponent extends Component {
     }
 
     /**
-     * Starts an infinite loop that will repeat every num second  
+     * Starts an infinite loop that will repeat every num second
      * @param num number of seconds to wait or function that returns that number
      */
     beginInterval(num: number | Func<void, number>): ChainingComponent {
@@ -251,7 +251,7 @@ export default class ChainingComponent extends Component {
     /**
      * Checks an IF condition returned by 'func' and jumps to the next element,
      * behind the 'else' element or behind the 'endIf' element, if the condition is not met
-     * @param func function that returns either true or false 
+     * @param func function that returns either true or false
      */
     beginIf(func: Func<void, boolean>): ChainingComponent {
         this.enqueue(CMD_BEGIN_IF, func);
@@ -278,7 +278,7 @@ export default class ChainingComponent extends Component {
     /**
      * Adds a new component to a given game object (or to an owner if not specified)
      * @param component component or function that returns a component
-     * @param gameObj game object or function that returns a game object 
+     * @param gameObj game object or function that returns a game object
      */
     addComponent(component: Component | Func<void, Component>, gameObj: PIXICmp.ComponentObject | Func<void, PIXICmp.ComponentObject> = null): ChainingComponent {
         this.enqueue(CMD_ADD_COMPONENT, component, gameObj);
@@ -286,10 +286,10 @@ export default class ChainingComponent extends Component {
     }
 
     /**
-     * Adds a new component to a given game object (or to an owner if not specified) 
+     * Adds a new component to a given game object (or to an owner if not specified)
      * and waits until its finished
-     * @param component component or function that returns a component 
-     * @param gameObj game object or function that returns a game object 
+     * @param component component or function that returns a component
+     * @param gameObj game object or function that returns a game object
      */
     addComponentAndWait(component: Component | Func<void, Component>, gameObj: PIXICmp.ComponentObject | Func<void, PIXICmp.ComponentObject> = null, removeWhenFinished: boolean = false): ChainingComponent {
         this.enqueue(CMD_ADD_COMPONENT_AND_WAIT, component, gameObj, removeWhenFinished);
@@ -298,7 +298,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Waits given amount of seconds
-     * @param time number of seconds to wait; or function that returns this number 
+     * @param time number of seconds to wait; or function that returns this number
      */
     waitTime(time: number | Func<void, number>): ChainingComponent {
         this.enqueue(CMD_WAIT_TIME, time);
@@ -307,7 +307,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Waits until given component isn't finished
-     * @param component or function that returns this component 
+     * @param component or function that returns this component
      */
     waitForFinish(component: Component | Func<void, Component>): ChainingComponent {
         this.enqueue(CMD_WAIT_FOR_FINISH, component);
@@ -316,7 +316,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Waits until given function keeps returning true
-     * @param func 
+     * @param func
      */
     waitUntil(func: Func<void, boolean>): ChainingComponent {
         this.enqueue(CMD_WAIT_UNTIL, func);
@@ -325,7 +325,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Waits given number of iterations of update loop
-     * @param num number of frames 
+     * @param num number of frames
      */
     waitFrames(num: number): ChainingComponent {
         this.enqueue(CMD_WAIT_FRAMES, num);
@@ -334,7 +334,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Waits until a message with given key isn't sent
-     * @param msg message key 
+     * @param msg message key
      */
     waitForMessage(msg: string): ChainingComponent {
         this.enqueue(CMD_WAIT_FOR_MESSAGE, msg);
@@ -344,7 +344,7 @@ export default class ChainingComponent extends Component {
     /**
      * Removes component from given game object (or the owner if null)
      * @param cmp name of the component or the component itself
-     * @param gameObj 
+     * @param gameObj
      */
     removeComponent(cmp: string, gameObj: PIXICmp.ComponentObject = null): ChainingComponent {
         this.enqueue(CMD_REMOVE_COMPONENT, cmp, gameObj);
@@ -353,7 +353,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Removes a game object with given tag
-     * @param tag 
+     * @param tag
      */
     removeGameObjectByTag(tag: string): ChainingComponent {
         this.enqueue(CMD_REMOVE_GAME_OBJECT_BY_TAG, tag);
@@ -362,7 +362,7 @@ export default class ChainingComponent extends Component {
 
     /**
      * Removes given game object
-     * @param obj 
+     * @param obj
      */
     removeGameObject(obj: PIXICmp.ComponentObject): ChainingComponent {
         this.enqueue(CMD_REMOVE_GAME_OBJECT, obj);
@@ -377,7 +377,7 @@ export default class ChainingComponent extends Component {
         return this;
     }
 
-    onMessage(msg: Msg) {
+    onMessage(msg: Message) {
         this.tmpParam2 = msg.action;
     }
 
@@ -405,7 +405,7 @@ export default class ChainingComponent extends Component {
                 let temp = this.scopeStack.pop();
 
                 temp.setParam1(temp.getParam1() - 1); // decrement number of repetitions
-                if (temp.getParam2() == true || // infinite loop
+                if (temp.getParam2() === true || // infinite loop
                     temp.getParam1() > 0) {
                     // jump to the beginning
                     this.current = temp;
@@ -460,7 +460,7 @@ export default class ChainingComponent extends Component {
                 break;
             case CMD_BEGIN_IF:
                 if (this.current.param1()) {
-                    // condition met -> go to then ext item 
+                    // condition met -> go to then ext item
                     this.gotoNextImmediately(delta, absolute);
                     break;
                 }
@@ -470,16 +470,16 @@ export default class ChainingComponent extends Component {
                 while (true) {
                     // search for the next node we might jump into
                     this.current = this.dequeue();
-                    if (this.current.key == CMD_BEGIN_IF) {
+                    if (this.current.key === CMD_BEGIN_IF) {
                         deepCounter++;
                     }
-                    if (this.current.key == CMD_END_IF) {
+                    if (this.current.key === CMD_END_IF) {
                         deepCounter--;
                     }
                     // we need to find the next ELSE of END of the current scope
                     // thus, we have to skip all inner IF-ELSE branches
-                    if ((deepCounter == 1 && this.current.key == CMD_ELSE) ||
-                        deepCounter == 0 && this.current.key == CMD_END_IF) {
+                    if ((deepCounter === 1 && this.current.key === CMD_ELSE) ||
+                        deepCounter === 0 && this.current.key === CMD_END_IF) {
                         this.gotoNext();
                         break;
                     }
@@ -491,13 +491,13 @@ export default class ChainingComponent extends Component {
                 let deepCounter2 = 1;
                 while (true) {
                     this.current = this.dequeue();
-                    if (this.current.key == CMD_BEGIN_IF) {
+                    if (this.current.key === CMD_BEGIN_IF) {
                         deepCounter2++;
                     }
-                    if (this.current.key == CMD_END_IF) {
+                    if (this.current.key === CMD_END_IF) {
                         deepCounter2--;
                     }
-                    if (deepCounter2 == 0 && this.current.key == CMD_END_IF) {
+                    if (deepCounter2 === 0 && this.current.key === CMD_END_IF) {
                         this.gotoNext();
                         break;
                     }
@@ -538,7 +538,7 @@ export default class ChainingComponent extends Component {
                 }
                 // wait for finish
                 if (!this.current.getParam1().isRunning()) {
-                    if (this.current.getParam3() == true) {
+                    if (this.current.getParam3() === true) {
                         let gameObj = this.current.param2A != null ? this.current.param2A : this.owner;
                         // remove when finished
                         gameObj.removeComponentByClass(this.current.getParam1());
@@ -577,8 +577,8 @@ export default class ChainingComponent extends Component {
                 break;
             case CMD_WAIT_FOR_MESSAGE:
                 // tmpParam indicates that this component has already subscribed the message
-                if (this.tmpParam == true) {
-                    if (this.tmpParam2 == this.current.param1) {
+                if (this.tmpParam === true) {
+                    if (this.tmpParam2 === this.current.param1) {
                         // got message -> unsubscribe and proceed
                         this.unsubscribe(this.current.param1);
                         this.tmpParam = this.tmpParam2 = null;
@@ -622,9 +622,9 @@ export default class ChainingComponent extends Component {
     }
 
     protected enqueue(key: number, param1: any = null, param2: any = null, param3: any = null) {
-        var node = new ExNode(key, param1, param2, param3);
+        let node = new ExNode(key, param1, param2, param3);
 
-        if (this.current != null && this.current != this.head) {
+        if (this.current != null && this.current !== this.head) {
             // already running -> append to the current node
             let temp = this.current.next;
             this.current.next = node;

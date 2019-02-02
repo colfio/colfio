@@ -1,4 +1,4 @@
-import Component from '../engine/Component';
+import Component from '../engine/component';
 
 const INPUT_TOUCH = 1;
 const INPUT_DOWN = 1 << 1;
@@ -15,13 +15,13 @@ const MSG_UP = "UP";
  * that can be subscribed by any other component
  */
 export class TouchInputComopnent extends Component {
-    mode = INPUT_TOUCH
-    startHandler : (evt: TouchEvent) => void = null;
-    endHandler : (evt: TouchEvent) => void = null;
-    moveHandler : (evt: TouchEvent) => void = null;
+    protected mode: number = INPUT_TOUCH;
+    startHandler: (evt: TouchEvent) => void = null;
+    endHandler: (evt: TouchEvent) => void = null;
+    moveHandler: (evt: TouchEvent) => void = null;
     lastTouch: Touch | MouseEvent = null;
 
-    constructor(mode = INPUT_TOUCH) {
+    constructor(mode: number = INPUT_TOUCH) {
         super();
         this.mode = mode;
     }
@@ -131,7 +131,7 @@ export class TouchInputComopnent extends Component {
     }
 
     // Get the mouse position
-    protected getMousePos(canvas : HTMLCanvasElement, evt : TouchEvent | MouseEvent, isTouch: boolean) {
+    protected getMousePos(canvas: HTMLCanvasElement, evt: TouchEvent | MouseEvent, isTouch: boolean) {
         var rect = canvas.getBoundingClientRect();
         let clientX = isTouch ? (evt as TouchEvent).changedTouches[0].clientX : (evt as MouseEvent).clientX;
         let clientY = isTouch ? (evt as TouchEvent).changedTouches[0].clientY : (evt as MouseEvent).clientY;

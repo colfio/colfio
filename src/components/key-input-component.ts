@@ -1,4 +1,4 @@
-import Component from '../engine/Component';
+import Component from '../engine/component';
 
 export const KEY_LEFT = 37;
 export const KEY_UP = 38;

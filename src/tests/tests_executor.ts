@@ -1,9 +1,9 @@
-import { PIXICmp } from '../engine/PIXIObject';
+import { PIXICmp } from '../engine/pixi-object';
 import Scene from '../engine/Scene';
-import ChainingComponent from '../components/ChainingComponent';
+import ChainingComponent from '../components/chaining-component';
 import { tests, assert } from '../utils/tinytest';
 import {RotationAnim, MovingAnim} from './testcomponents';
-import { Msg } from '../engine/Msg';
+import { Message } from '../engine/message';
 
 export default function runTests() {
 
@@ -14,7 +14,7 @@ export default function runTests() {
         'ChainingComponent execute': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let param = 0;
 
             let executor = new ChainingComponent()
@@ -32,7 +32,7 @@ export default function runTests() {
         'ChainingComponent repeat test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let repeatCounter1 = 0;
             let repeatCounter2 = 0;
 
@@ -58,7 +58,7 @@ export default function runTests() {
         'ChainingComponent while test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let param = 3;
             let execCounter = 0;
 
@@ -82,7 +82,7 @@ export default function runTests() {
         'ChainingComponent interval by literal test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let intervalCntr = 0;
             let counter = 0;
 
@@ -113,7 +113,7 @@ export default function runTests() {
         'ChainingComponent interval by function test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let currentInterval = 4;
             let intervalCntr = 0;
             let counter = 0;
@@ -156,7 +156,7 @@ export default function runTests() {
 
             let rot = new RotationAnim();
             let obj = new PIXICmp.Container("gameObj");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let prom = 0;
             let prom2 = 0;
             let prom3 = 0;
@@ -224,7 +224,7 @@ export default function runTests() {
         'ChainingComponent add component test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let counter = 0;
 
             let executor = new ChainingComponent()
@@ -245,7 +245,7 @@ export default function runTests() {
         'ChainingComponent add component and wait test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
 
             let anim = new RotationAnim();
             let anim2 = new MovingAnim();
@@ -271,7 +271,7 @@ export default function runTests() {
         'Wait time test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
 
             let prom = 0;
 
@@ -299,7 +299,7 @@ export default function runTests() {
         'Wait for finish test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let anim = new RotationAnim();
             let prom = 0;
             let executor = new ChainingComponent()
@@ -325,7 +325,7 @@ export default function runTests() {
         'Wait until test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let anim = new RotationAnim();
             let prom = 0;
             let executor = new ChainingComponent()
@@ -349,7 +349,7 @@ export default function runTests() {
         'Wait frames test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let prom = 0;
             let executor = new ChainingComponent()
                 .waitFrames(5)
@@ -376,7 +376,7 @@ export default function runTests() {
         'ChainingComponent wait for message test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let counter = 0;
             let prom = 0;
 
@@ -391,13 +391,13 @@ export default function runTests() {
             scene._update(1, 1);
             assert(prom == 0, "Variable prom should be 0 as it shouldn't have been incremented yet");
             scene._update(1, 2);
-            scene.sendMessage(new Msg('MOJO'));
+            scene.sendMessage(new Message('MOJO'));
             assert(prom == 0, "Variable prom should be 0 as the message has been sent but the scene hasn't been updated yet");
             scene._update(1, 3);
             assert(prom == 1, "Variable prom should be now 1");
             scene._update(1, 4);
             assert(prom == 1, "Variable prom should be 1 as it shouldn't have been incremented yet");
-            scene.sendMessage(new Msg('DOJO'));
+            scene.sendMessage(new Message('DOJO'));
             scene._update(1, 5);
             assert(prom == 2, "Variable prom should be 2 as the message has been already sent");
         },
@@ -405,7 +405,7 @@ export default function runTests() {
         'ChainingComponent remove component test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let counter = 0;
 
             let executor = new ChainingComponent()
@@ -427,8 +427,8 @@ export default function runTests() {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
             let obj2 = new PIXICmp.Container("testObject2");
-            scene.stage.getPixiObj().addChild(obj);
-            scene.stage.getPixiObj().addChild(obj2);
+            scene.stage.pixiObj.addChild(obj);
+            scene.stage.pixiObj.addChild(obj2);
             let counter = 0;
 
             let executor = new ChainingComponent()
@@ -449,8 +449,8 @@ export default function runTests() {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
             let obj2 = new PIXICmp.Container("testObject2");
-            scene.stage.getPixiObj().addChild(obj);
-            scene.stage.getPixiObj().addChild(obj2);
+            scene.stage.pixiObj.addChild(obj);
+            scene.stage.pixiObj.addChild(obj2);
             let counter = 0;
 
             let executor = new ChainingComponent()
@@ -470,7 +470,7 @@ export default function runTests() {
         'ChainingComponent remove previous test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let counter = 0;
             let prom = 0;
             let executor = new ChainingComponent()
@@ -495,7 +495,7 @@ export default function runTests() {
         'ChainingComponent instant test': function () {
             scene.clearScene();
             let obj = new PIXICmp.Container("testObject");
-            scene.stage.getPixiObj().addChild(obj);
+            scene.stage.pixiObj.addChild(obj);
             let prom = 0;
 
             let executor = new ChainingComponent()

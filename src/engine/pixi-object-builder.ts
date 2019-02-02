@@ -1,6 +1,6 @@
-import Scene from './Scene';
-import { PIXICmp } from '../engine/PIXIObject';
-import Component from './Component';
+import Scene from './scene';
+import { PIXICmp } from './pixi-object';
+import Component from './component';
 
 /**
  * Builder for PIXI objects from given attributes
@@ -90,22 +90,22 @@ export default class PIXIObjectBuilder {
         return this;
     }
 
-    withAttribute(key: string, val: any) : PIXIObjectBuilder {
+    withAttribute(key: string, val: any): PIXIObjectBuilder {
         this.attributes.set(key, val);
         return this;
     }
 
-    withComponent(cmp: Component) : PIXIObjectBuilder {
+    withComponent(cmp: Component): PIXIObjectBuilder {
         this.components.push(cmp);
         return this;
     }
 
-    withFlag(index: number) : PIXIObjectBuilder {
+    withFlag(index: number): PIXIObjectBuilder {
         this.flags.push(index);
         return this;
     }
 
-    withState(state: number) : PIXIObjectBuilder {
+    withState(state: number): PIXIObjectBuilder {
         this.state = state;
         return this;
     }
@@ -125,7 +125,7 @@ export default class PIXIObjectBuilder {
             parent.getPixiObj().addChild(object.getPixiObj());
         }
 
-        for(let flag of this.flags){
+        for(let flag of this.flags) {
             object.setFlag(flag);
         }
 
@@ -155,28 +155,36 @@ export default class PIXIObjectBuilder {
             let point = new PIXI.Point();
             point.x = this.relPosX * this.scene.app.screen.width;
             pixiObj.position.x = pixiObj.toLocal(point).x;
-            if (this.scaleX != null) pixiObj.position.x *= this.scaleX;
+            if (this.scaleX != null) {
+                pixiObj.position.x *= this.scaleX;
+            }
         }
 
         if (this.relPosY != null) {
             let point = new PIXI.Point();
             point.y = this.relPosY * this.scene.app.screen.height;
             pixiObj.position.y = pixiObj.toLocal(point).y;
-            if (this.scaleY != null) pixiObj.position.y *= this.scaleY;
+            if (this.scaleY != null) {
+                pixiObj.position.y *= this.scaleY;
+            }
         }
 
         if (this.absPosX != null) {
             let point = new PIXI.Point();
             point.x = this.absPosX;
             pixiObj.position.x = pixiObj.toLocal(point, this.scene.stage.getPixiObj()).x;
-            if (this.scaleX != null) pixiObj.position.x *= this.scaleX;
+            if (this.scaleX != null) {
+                pixiObj.position.x *= this.scaleX;
+            }
         }
 
         if (this.absPosY != null) {
             let point = new PIXI.Point();
             point.y = this.absPosY;
             pixiObj.position.y = pixiObj.toLocal(point, this.scene.stage.getPixiObj()).y;
-            if (this.scaleY != null) pixiObj.position.y *= this.scaleY;
+            if (this.scaleY != null) {
+                pixiObj.position.y *= this.scaleY;
+            }
         }
 
         if (this.anchorX != null) {

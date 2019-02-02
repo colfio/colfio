@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
-import Scene from './Scene';
+import Scene from './scene';
+import { resizeContainer } from '../utils/functions';
 
 /**
  * Entry point to the PIXIJS
@@ -10,16 +11,24 @@ export default class GameLoop {
     gameTime = 0;
     scene: Scene = null;
     ticker: PIXI.Ticker = null;
+    width: number;
+    height: number;
 
-    init(canvas: HTMLCanvasElement, resolution: number = 1) {
+    init(canvas: HTMLCanvasElement, width: number, height: number, resolution: number = 1, autoResize = true) {
+        this.width = width;
+        this.height = height;
+
         this.app = new PIXI.Application({
-            width: canvas.width / resolution,
-            height: canvas.height / resolution,
+            width: width / resolution,
+            height: height / resolution,
             antialias: true,
             view: canvas,
             resolution: resolution // resolution/device pixel ratio
         });
 
+        if(autoResize) {
+            this.initResizeHandler();
+        }
         this.scene = new Scene(this.app);
         this.ticker = PIXI.ticker.shared;
         // stop the shared ticket and update it manually
@@ -40,4 +49,11 @@ export default class GameLoop {
         this.ticker.update(this.gameTime);
         requestAnimationFrame((time) => this.loop(time));
     }
+
+    private initResizeHandler() {
+        let virtualWidth = this.app.screen.width;
+        let virtualHeight = this.app.screen.height;
+        resizeContainer(this.app.view, virtualWidth, virtualHeight);
+        window.addEventListener('resize', (evt) => resizeContainer(this.app.view, this.width, this.height));
+      }
 }

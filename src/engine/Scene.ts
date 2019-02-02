@@ -1,9 +1,9 @@
-import GameObjectProxy from './GameObjectProxy';
-import { Msg } from './Msg';
-import Component from './Component';
+import GameObjectProxy from './game-object-proxy';
+import { Message } from './message';
+import Component from './component';
 import * as PIXI from 'pixi.js'
-import { Messages } from './Constants';
-import { PIXICmp } from './PIXIObject';
+import { Messages } from './constants';
+import { PIXICmp } from './pixi-object';
 
 
 /**
@@ -140,7 +140,7 @@ export default class Scene {
     /**
      * Sends message to all subscribers
      */
-    sendMessage(msg: Msg) {
+    sendMessage(msg: Message) {
         if (this.subscribers.has(msg.action)) {
             // get all subscribed components
             let subscribedComponents = this.subscribers.get(msg.action);
@@ -166,7 +166,7 @@ export default class Scene {
         if (this.gameObjects != null) {
             // call the finalization function of all components
             for (let [key, gameObj] of this.gameObjects) {
-                for (let [key, component] of gameObj.components) {
+                for (let [key, component] of gameObj.rawComponents) {
                     component.onFinish();
                     component.onRemove();
                 }
@@ -251,14 +251,14 @@ export default class Scene {
         this.gameObjects.set(obj.id, obj);
 
         // assign scene to all components (must be done for the case when components were added beforehand
-        for (let [key, component] of obj.components) {
+        for (let [key, component] of obj.rawComponents) {
             component.scene = this;
         }
 
         // assign scene
         obj.scene = this;
         // notify listeners
-        this.sendMessage(new Msg(Messages.OBJECT_ADDED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
+        this.sendMessage(new Message(Messages.OBJECT_ADDED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
     }
 
     // immediately removes given game object
@@ -266,7 +266,7 @@ export default class Scene {
         this.gameObjectTags.get(obj.tag).delete(obj.id);
         this.gameObjects.delete(obj.id);
         // notify listeners
-        this.sendMessage(new Msg(Messages.OBJECT_REMOVED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
+        this.sendMessage(new Message(Messages.OBJECT_REMOVED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
     }
 
     // clears up everything that has something to do with given component
@@ -274,8 +274,8 @@ export default class Scene {
         this.subscribedMessages.delete(component.id);
 
         if (this.subscribedMessages.has(component.id)) {
-            let allMsgKeys = this.subscribedMessages.get(component.id);
-            for (let msgKey of allMsgKeys) {
+            let allMessageKeys = this.subscribedMessages.get(component.id);
+            for (let msgKey of allMessageKeys) {
                 this.subscribers.get(msgKey).delete(component.id);
             }
         }

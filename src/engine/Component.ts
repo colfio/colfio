@@ -1,97 +1,116 @@
-import { Msg } from './Msg';
-import Scene from './Scene';
-import { PIXICmp } from './PIXIObject';
-
+import { Message } from './message';
+import Scene from './scene';
+import { PIXICmp } from './pixi-object';
 
 /**
  * Component that defines a functional behavior of an entity which is attached to
  */
 export default class Component {
-	private static idCounter = 0;
-	private isFinished = false;
+    private static idCounter = 0;
+    private isFinished = false;
 
-	// auto-incremented id
-	id = 0;
-	// owner object of this component
-	owner: PIXICmp.ComponentObject = null;
-	// link to scene
-	scene: Scene = null;
+    // auto-incremented id
+    protected _id = 0;
+    // owner object of this component
+    protected _owner: PIXICmp.ComponentObject = null;
+    // link to scene
+    protected _scene: Scene = null;
 
-	constructor() {
-		this.id = Component.idCounter++;
-	}
+    constructor() {
+        this._id = Component.idCounter++;
+    }
 
-	/**
-	 * Called when the component is being added to the scene
-	 */
-	onInit() {
-		// override
-	}
+    public get id() {
+        return this._id;
+    }
 
-	/**
-	 * Handles incoming message
-	 */
-	onMessage(msg: Msg) {
-		// override
-	}
+    public get owner() {
+        return this._owner;
+    }
 
-	/**
-	 * Handles update loop
-	 */
-	onUpdate(delta: number, absolute: number) {
-		// override
-	}
+    public set owner(owner: PIXICmp.ComponentObject) {
+        this._owner = owner;
+    }
 
-	/**
-	 * Called before removal from scene
-	 */
-	onRemove() {
-		// override
-	}
+    public get scene() {
+        return this._scene;
+    }
 
-	/**
-	 * Called after finish()
-	 */
-	onFinish() {
-		// override
-	}
+    public set scene(scene: Scene) {
+        this._scene = scene;
+    }
 
-	/**
-	 * Subscribes itself as a listener for action with given key
-	 */
-	subscribe(action: string, ...actions: string[]) {
-		this.scene._subscribeComponent(action, this);
-		for (let action of actions) {
-			this.scene._subscribeComponent(action, this);
-		}
-	}
+    /**
+     * Called when the component is being added to the scene
+     */
+    onInit() {
+        // override
+    }
 
-	/**
-	 * Unsubscribes itself
-	 */
-	unsubscribe(action: string) {
-		this.scene._unsubscribeComponent(action, this);
-	}
+    /**
+     * Handles incoming message
+     */
+    onMessage(msg: Message) {
+        // override
+    }
 
-	/**
-	 * Sends a message to all subscribers
-	 */
-	sendMessage(action: string, data: any = null) {
-		this.scene.sendMessage(new Msg(action, this, this.owner, data));
-	}
+    /**
+     * Handles update loop
+     */
+    onUpdate(delta: number, absolute: number) {
+        // override
+    }
 
-	/**
-	 * Detaches component from scene
-	 */
-	finish() {
-		this.owner.removeComponent(this);
-		this.onFinish();
-		this.isFinished = true;
-	}
+    /**
+     * Called before removal from scene
+     */
+    onRemove() {
+        // override
+    }
 
-	isRunning() {
-		return !this.isFinished;
-	}
+    /**
+     * Called after finish()
+     */
+    onFinish() {
+        // override
+    }
+
+    /**
+     * Subscribes itself as a listener for action with given key
+     */
+    subscribe(action: string, ...actions: string[]) {
+        this.scene._subscribeComponent(action, this);
+        for (let action of actions) {
+            this.scene._subscribeComponent(action, this);
+        }
+    }
+
+    /**
+     * Unsubscribes itself
+     */
+    unsubscribe(action: string) {
+        this.scene._unsubscribeComponent(action, this);
+    }
+
+    /**
+     * Sends a message to all subscribers
+     */
+    sendMessage(action: string, data: any = null) {
+        this.scene.sendMessage(new Message(action, this, this.owner, data));
+    }
+
+    /**
+     * Detaches component from scene
+     */
+    finish() {
+        this.owner.removeComponent(this);
+        this.onFinish();
+        this.isFinished = true;
+    }
+
+    isRunning() {
+        return !this.isFinished;
+    }
 }
 
 
