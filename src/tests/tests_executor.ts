@@ -3,7 +3,7 @@ import Scene from '../engine/Scene';
 import ChainingComponent from '../components/chaining-component';
 import { tests, assert } from '../utils/tinytest';
 import {RotationAnim, MovingAnim} from './testcomponents';
-import { Message } from '../engine/message';
+import Message from '../engine/message';
 
 export default function runTests() {
 
@@ -24,7 +24,7 @@ export default function runTests() {
             obj.addComponent(executor);
 
             let counter = 0;
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
@@ -49,7 +49,7 @@ export default function runTests() {
             obj.addComponent(executor);
 
             let counter = 0;
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
@@ -73,7 +73,7 @@ export default function runTests() {
             obj.addComponent(executor);
 
             let counter = 0;
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
@@ -104,7 +104,7 @@ export default function runTests() {
             obj.addComponent(executor);
 
 
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
@@ -146,7 +146,7 @@ export default function runTests() {
             obj.addComponent(executor);
 
 
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
@@ -211,7 +211,7 @@ export default function runTests() {
             obj.addComponent(executor);
 
             let counter = 0;
-            while (executor.isRunning()) {
+            while (executor.isRunning) {
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
@@ -233,13 +233,13 @@ export default function runTests() {
 
             obj.addComponent(executor);
 
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }
 
-            assert(obj.findComponentByClass("RotationAnim") != null, "Rotation anim is missing");
-            assert(obj.findComponentByClass("MovingAnim") != null, "Moving anim is missing");
+            assert(obj.findComponentByName("RotationAnim") != null, "Rotation anim is missing");
+            assert(obj.findComponentByName("MovingAnim") != null, "Moving anim is missing");
         },
 
         'ChainingComponent add component and wait test': function () {
@@ -259,12 +259,12 @@ export default function runTests() {
             scene._update(0.1, 0.1);
             anim.finish();
             scene._update(0.1, 0.2);
-            assert(obj.findComponentByClass(RotationAnim.constructor.name) == null, "Rotation anim should have been deleted");
+            assert(obj.findComponentByName(RotationAnim.constructor.name) == null, "Rotation anim should have been deleted");
             anim2.finish();
             scene._update(0.1, 0.2);
-            assert(obj.findComponentByClass(MovingAnim.constructor.name) == null, "MovingAnim should have been deleted");
+            assert(obj.findComponentByName(MovingAnim.constructor.name) == null, "MovingAnim should have been deleted");
             scene._update(0.1, 0.2);
-            assert(obj.findComponentByClass(ChainingComponent.constructor.name) == null, "ChainingComponentComponent should have been deleted");
+            assert(obj.findComponentByName(ChainingComponent.constructor.name) == null, "ChainingComponentComponent should have been deleted");
 
         },
 
@@ -319,7 +319,7 @@ export default function runTests() {
             anim.finish();
             scene._update(1, 4);
             assert(prom == 1, "Variable prom should be 1 as the animation already ended");
-            assert(executor.isRunning() !== true, "ChainingComponent should have already finished");
+            assert(executor.isRunning !== true, "ChainingComponent should have already finished");
         },
 
         'Wait until test': function () {
@@ -330,7 +330,7 @@ export default function runTests() {
             let prom = 0;
             let executor = new ChainingComponent()
                 .addComponent(anim)
-                .waitUntil(() => anim.isRunning())
+                .waitUntil(() => anim.isRunning)
                 .execute(() => prom++);
 
 
@@ -343,7 +343,7 @@ export default function runTests() {
             anim.finish();
             scene._update(1, 3);
             assert(prom == 1, "Variable prom should be 1 as the animation already ended");
-            assert(executor.isRunning() !== true, "ChainingComponent should have already finished");
+            assert(executor.isRunning !== true, "ChainingComponent should have already finished");
         },
 
         'Wait frames test': function () {
@@ -417,10 +417,10 @@ export default function runTests() {
 
             scene._update(1, 1);
             scene._update(1, 1);
-            assert(obj.findComponentByClass("RotationAnim") != null, "Rotation anim is missing");
+            assert(obj.findComponentByName("RotationAnim") != null, "Rotation anim is missing");
             scene._update(1, 2); // will be added into a collection for removal
             scene._update(1, 3); // will be removed
-            assert(obj.findComponentByClass("RotationAnim") == null, "Rotation anim should be deleted");
+            assert(obj.findComponentByName("RotationAnim") == null, "Rotation anim should be deleted");
         },
 
         'ChainingComponent remove game object by tag test': function () {
@@ -433,16 +433,16 @@ export default function runTests() {
 
             let executor = new ChainingComponent()
                 .waitTime(1)
-                .removeGameObjectByTag("testObject2");
+                .removeGameObjectByName("testObject2");
 
             obj.addComponent(executor);
 
             scene._update(1, 1); // will add executor to the game, but will not execut it yet
-            assert(scene.findFirstObjectByTag("testObject2") != null, "The object shouldn't be deleted yet");
+            assert(scene.findObjectByName("testObject2") != null, "The object shouldn't be deleted yet");
             scene._update(1.5, 2.5); // will add the object into a collection for removal
-            assert(scene.findFirstObjectByTag("testObject2") != null, "The object shouldn't be deleted yet");
+            assert(scene.findObjectByName("testObject2") != null, "The object shouldn't be deleted yet");
             scene._update(2, 4); // will remove the object
-            assert(scene.findFirstObjectByTag("testObject2") == null, "The object should have been already deleted");
+            assert(scene.findObjectByName("testObject2") == null, "The object should have been already deleted");
         },
 
         'ChainingComponent remove game object test': function () {
@@ -460,11 +460,11 @@ export default function runTests() {
             obj.addComponent(executor);
 
             scene._update(1, 1); // will add executor to the game
-            assert(scene.findFirstObjectByTag("testObject2") != null, "The object shouldn't be deleted yet");
+            assert(scene.findObjectByName("testObject2") != null, "The object shouldn't be deleted yet");
             scene._update(1.5, 2.5); // will add the object into a collection for removal
-            assert(scene.findFirstObjectByTag("testObject2") != null, "The object shouldn't be deleted yet");
+            assert(scene.findObjectByName("testObject2") != null, "The object shouldn't be deleted yet");
             scene._update(2, 4); // will remove the object
-            assert(scene.findFirstObjectByTag("testObject2") == null, "The object should have been already deleted");
+            assert(scene.findObjectByName("testObject2") == null, "The object should have been already deleted");
         },
 
         'ChainingComponent remove previous test': function () {
@@ -484,7 +484,7 @@ export default function runTests() {
 
             obj.addComponent(executor);
 
-            while (executor.isRunning()) { // simulate game loop
+            while (executor.isRunning) { // simulate game loop
                 scene._update(0.1, counter);
                 counter += 0.1;
             }

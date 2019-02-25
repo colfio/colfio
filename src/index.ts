@@ -1,43 +1,45 @@
-import * as GameLoop from "./engine/game-loop";
-import * as Component from "./engine/component";
-import * as Constants from "./engine/constants";
-import * as Flags from "./engine/flags";
-import * as GameObjectProxy from "./engine/game-object-proxy";
-import *  as Msg from "./engine/message";
-import * as PIXIObject from "./engine/pixi-object";
-import * as PIXIObjectBuilder from "./engine/pixi-object-builder";
-import * as Scene from "./engine/scene";
-import * as Animation from "./components/animation";
-import * as ChainingComponent from "./components/chainingComponent";
-import * as ComposingComponent from "./components/composing-component";
-import * as DebugComponent from "./components/debug-component";
-import * as DynamicsComponent from "./components/dynamics-component";
-import * as GenericComponent from "./components/generic-component";
-import * as KeyInputComponent from "./components/key-input-component";
-import * as TouchInputComponent from "./components/touch-input-component";
-import * as Dynamics from "./utils/dynamics";
-import * as QuadTree from "./utils/quad-tree";
-import * as Vec2 from "./utils/vector";
+import GameLoop from './engine/game-loop';
+import Component from './engine/component';
+import { Messages, Attributes } from './engine/constants';
+import Flags from './engine/flags';
+import GameObjectProxy from './engine/game-object-proxy';
+import Message from './engine/message';
+import { PIXICmp } from './engine/pixi-object';
+import PIXIObjectBuilder from './engine/pixi-object-builder';
+import Scene from './engine/scene';
+import { BaseAnimation, TranslateAnimation, RotationAnimation } from './components/animation';
+import ChainingComponent from './components/chaining-component';
+import ComposingComponent from './components/composing-component';
+import DebugComponent from './components/debug-component';
+import DynamicsComponent from './components/dynamics-component';
+import GenericComponent from './components/generic-component';
+import { KeyInputComponent, Keys } from './components/key-input-component';
+import TouchInputComponent from './components/touch-input-component';
+import Dynamics from './utils/dynamics';
+import { checkTime } from './utils/functions';
+import { QuadTreeItem, QuadTree } from './utils/quad-tree';
+import Vector from './utils/vector';
 
-export default {
+export {
   GameLoop,
   Component,
-  Constants,
+  Messages, Attributes,
   Flags,
   GameObjectProxy,
-  Msg,
-  PIXIObject,
+  Message,
+  PIXICmp,
   PIXIObjectBuilder,
   Scene,
-  Animation,
+  BaseAnimation, TranslateAnimation, RotationAnimation,
   ChainingComponent,
   ComposingComponent,
   DebugComponent,
   DynamicsComponent,
   GenericComponent,
-  KeyInputComponent,
+  KeyInputComponent, Keys,
   TouchInputComponent,
   Dynamics,
-  QuadTree,
-  Vec2
+  checkTime,
+  QuadTree, QuadTreeItem,
+  Vector
 };

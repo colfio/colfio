@@ -4,44 +4,57 @@ import { PIXICmp } from './pixi-object';
 /**
  * Message that stores type of action, a relevant component, a relevant game object and custom data if needed
  */
-export class Message {
+export default class Message {
 
-    /**
-     * Action type identifier
-     */
-    _action: string = null;
+  /**
+   * Data payload
+   */
+  data: any = null;
 
-   /**
-    * Component that sent this message
-    */
-    _component: Component = null;
+  /**
+   * Action type identifier
+   */
+  private _action: string = null;
 
-    /**
-     * GameObject attached to this message
-     */
-    _gameObject: PIXICmp.ComponentObject = null;
+  /**
+   * Component that sent this message
+   */
+  private _component: Component = null;
 
-    /**
-     * Data payload
-     */
-    data: any = null;
+  /**
+   * GameObject attached to this message
+   */
+  private _gameObject: PIXICmp.GameObject = null;
 
-    constructor(action: string, component: Component, gameObject: PIXICmp.ComponentObject, data: any = null) {
-        this._action = action;
-        this._component = component;
-        this._gameObject = gameObject;
-        this.data = data;
-    }
+  /*
+   * If any handler sets this flag to true, the message will no longer be handled
+   */
+  private _expired: boolean = false;
 
-    get action() {
-        return this._action;
-    }
+  constructor(action: string, component: Component, gameObject: PIXICmp.GameObject, data: any = null) {
+    this._action = action;
+    this._component = component;
+    this._gameObject = gameObject;
+    this.data = data;
+  }
 
-    get component() {
-        return this._component;
-    }
+  get expired() {
+    return this._expired;
+  }
 
-    get gameObject() {
-        return this._gameObject;
-    }
+  expire() {
+    this._expired = true;
+  }
+
+  get action() {
+    return this._action;
+  }
+
+  get component() {
+    return this._component;
+  }
+
+  get gameObject() {
+    return this._gameObject;
+  }
 }

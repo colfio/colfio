@@ -2,95 +2,150 @@ import Component from '../engine/component';
 import GameObjectProxy from '../engine/game-object-proxy';
 import { Messages } from '../engine/constants';
 import { PIXICmp } from '../engine/pixi-object';
-import { Message } from '../engine/message';
+import Message from '../engine/message';
 
 /**
  * Debugging component that display a scene graph
  */
 export default class DebugComponent extends Component {
-    protected targetHtmlElement: HTMLElement = null;
-    protected strWrapper: any = null;
+  protected debugElement: HTMLElement = null;
+  protected msgElement: HTMLElement = null;
 
-    /**
-     * Constructor
-     * @param targetHtmlElement html element to which the debug info will be written (should be a div)
-     */
-    constructor(targetHtmlElement: HTMLElement) {
-        super();
-        this.targetHtmlElement = targetHtmlElement;
-        this.strWrapper = {
-            str: ""
-        };
+  onInit() {
+    this.initDebugWindow();
+    // subscribe to all messages
+    this.subscribe(Messages.ANY);
+  }
+
+  onMessage(msg: Message) {
+
+    // discared common messages from the log
+    if([Messages.COMPONENT_ADDED, Messages.COMPONENT_REMOVED, Messages.OBJECT_ADDED, Messages.OBJECT_REMOVED]
+      .indexOf(msg.action as any) === -1) {
+        let row = document.createElement('tr');
+        let cell1 = document.createElement('td');
+        let cell2 = document.createElement('td');
+        let cell3 = document.createElement('td');
+        let cell4 = document.createElement('td');
+        cell1.style.color = 'black';
+        cell2.style.color = 'red';
+        cell3.style.color = 'blue';
+        cell4.style.color = 'green';
+        cell1.innerText = (this.scene.currentAbsolute / 1000).toFixed(2);
+        cell2.innerText = msg.action;
+        cell3.innerText = msg.component.name;
+        cell4.innerText = msg.gameObject.name;
+        row.appendChild(cell1);
+        row.appendChild(cell2);
+        row.appendChild(cell3);
+        row.appendChild(cell4);
+        this.msgElement.appendChild(row);
     }
 
-    onInit() {
-        // subscribe to all messages
-        this.subscribe(Messages.ANY);
+    if(msg.action === Messages.OBJECT_ADDED) {
+      this.addGameObject(msg.gameObject);
+    } else if(msg.action === Messages.COMPONENT_ADDED) {
+      this.addComponent(msg.component, msg.gameObject);
+    } else if(msg.action === Messages.COMPONENT_REMOVED) {
+      this.removeComponent(msg.component, msg.gameObject);
+    } else if(msg.action === Messages.OBJECT_REMOVED) {
+      document.getElementById('node_'+msg.gameObject.id).remove();
+    }
+  }
+
+  onUpdate(delta: number, absolute: number) {
+  }
+
+  protected addGameObject(obj: PIXICmp.GameObject) {
+    let item = document.createElement('li');
+    item.id = this.getObjectId(obj);
+
+    let content = document.createElement('span');
+    content.style.color = 'red';
+    content.innerText = obj.id + ':' + obj.name;
+    item.appendChild(content);
+
+    for(let key of ['components']) {
+      let ul = document.createElement('ul');
+      ul.id = this.getObjectId(obj) + '_' + key;
+      item.appendChild(ul);
     }
 
-    onMessage(msg: Message) {
-        if (msg.gameObject != null) {
-            console.log(msg.action + " >> " + msg.gameObject.tag);
-        }
+    this.debugElement.appendChild(item);
+  }
+
+  protected removeGameObject(obj: PIXICmp.GameObject) {
+    document.getElementById(this.getObjectId(obj)).remove();
+  }
+
+  protected addComponent(cmp: Component, obj: PIXICmp.GameObject) {
+    if(document.getElementById(this.getObjectId(obj)) === null) {
+      this.addGameObject(obj);
     }
+    let cmpSection = document.getElementById(this.getComponentSectionId(obj));
+    let cmpList = document.createElement('li');
+    let compNode = document.createElement('span');
+    compNode.style.color = 'blue';
+    cmpList.id = this.getComponentId(cmp);
+    cmpSection.appendChild(cmpList);
+    cmpList.appendChild(compNode);
+    compNode.innerText = cmp.name;
+  }
 
-    onUpdate(delta: number, absolute: number) {
-        this.strWrapper.str = "";
-        this.processNode(this.owner.proxy, this.strWrapper);
-        this.targetHtmlElement.innerHTML = this.strWrapper.str;
+  protected removeComponent(cmp: Component, obj: PIXICmp.GameObject) {
+    document.getElementById(this.getComponentId(cmp)).remove();
+  }
+
+  protected getObjectId(obj: PIXICmp.GameObject) {
+    return `node_` + obj.id;
+  }
+
+  protected getObjectInfoSectionId(obj: PIXICmp.GameObject) {
+    return 'node_' + obj.id + '_info';
+  }
+
+  protected getComponentSectionId(obj: PIXICmp.GameObject) {
+    return 'node_' + obj.id + '_components';
+  }
+
+  protected getComponentId(cmp: Component) {
+    return 'cmp_' + cmp.id;
+  }
+
+
+  private initDebugWindow() {
+    let debugElem = document.getElementById('debug');
+    if(!debugElem) {
+      debugElem = document.createElement('div');
+      debugElem.id = 'debug';
+      debugElem.style.width = '600px';
+      debugElem.style.height = '900px';
+      debugElem.style.overflow = 'scroll';
+      debugElem.style.cssFloat = 'left';
+      debugElem.style.backgroundColor = '#FFF';
+      debugElem.style.fontFamily = '\'Courier New\', monospace';
+      document.getElementsByTagName('body')[0].appendChild(debugElem);
     }
+    debugElem.innerHTML = '';
+    let list = document.createElement('ul');
+    debugElem.appendChild(list);
 
+    let messageElem = document.getElementById('debug_msg');
 
-    protected setPadding(padding: number) {
-        let otp = "";
-        for (let i = 0; i < padding; i++) {
-            otp = otp.concat("&nbsp");
-        }
-        return otp;
+    if(!messageElem) {
+      messageElem = document.createElement('div');
+      messageElem.id = 'debug_msg';
+      messageElem.style.width = '300px';
+      messageElem.style.height = '600px';
+      messageElem.style.overflow = 'scroll';
+      messageElem.style.cssFloat = 'left';
+      messageElem.style.backgroundColor = '#FFF';
+      messageElem.style.fontFamily = '\'Courier New\', monospace';
+      let table = document.createElement('table');
+      messageElem.appendChild(table);
+      document.getElementsByTagName('body')[0].appendChild(messageElem);
     }
-
-    protected processNode(node: GameObjectProxy, strWrapper: any, padding: number = 0) {
-
-        // position
-        strWrapper.str += "<strong><span style=\"color:red\">";
-        let bounds = node.pixiObj.toGlobal(new PIXI.Point(0, 0));
-        strWrapper.str = strWrapper.str.concat(this.setPadding(padding + 2) +
-            `rel:[${node.pixiObj.position.x.toFixed(2)},${node.pixiObj.position.y.toFixed(2)}]|abs:[${bounds.x.toFixed(2)},${bounds.y.toFixed(2)}]|rot: ${node.pixiObj.rotation.toFixed(2)}` +
-            "<br>");
-        strWrapper.str += "</span></strong>";
-
-        // size
-        strWrapper.str += "<strong><span style=\"color:purple\">";
-        strWrapper.str = strWrapper.str.concat(this.setPadding(padding + 2) +
-            `size:[${node.pixiObj.width.toFixed(2)} x ${node.pixiObj.height.toFixed(2)}]` +
-            "<br>");
-        strWrapper.str += "</span></strong>";
-
-        // attributes
-        for (let [key, attr] of node.rawAttributes) {
-            strWrapper.str += "<strong><span style=\"color:red\">";
-            strWrapper.str = strWrapper.str.concat(this.setPadding(padding + 2) +
-                `${key} => ${JSON.stringify(attr)}` +
-                "<br>");
-            strWrapper.str += "</span></strong>";
-        }
-
-        // components
-        for (let [key, cmp] of node.rawComponents) {
-            strWrapper.str += "<span style=\"color:blue\">";
-            strWrapper.str = strWrapper.str.concat(this.setPadding(padding + 2) + cmp.constructor.name + "<br>");
-            strWrapper.str += "</span>";
-        }
-
-        // children
-        for (let child of node.pixiObj.children) {
-            let cmpChild = <PIXICmp.ComponentObject><any>child;
-
-            strWrapper.str += "<span style=\"color:green\">";
-            strWrapper.str = strWrapper.str.concat(this.setPadding(padding) +
-                `${cmpChild.proxy.id}:${cmpChild.proxy.tag}` + "<br>");
-            this.processNode(cmpChild.proxy, strWrapper, padding + 4);
-            strWrapper.str += "</span>";
-        }
-    }
+    this.debugElement = debugElem;
+    this.msgElement = messageElem.children[0] as HTMLElement;
+  }
 }

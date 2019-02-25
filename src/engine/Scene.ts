@@ -1,283 +1,405 @@
 import GameObjectProxy from './game-object-proxy';
-import { Message } from './message';
+import Message from './message';
 import Component from './component';
-import * as PIXI from 'pixi.js'
+import * as PIXI from 'pixi.js';
 import { Messages } from './constants';
 import { PIXICmp } from './pixi-object';
+import { LookupMap } from '../utils/lookup-map';
+import DebugComponent from '../components/debug-component';
 
 
 /**
  * Class for action that is to be executed with certain delay
  */
 class Invocation {
-    delay = 0; // time of invocation 
-    time = 0; // time of creation
-    action: () => void = null; // action to execute
+  delay = 0; // time of invocation
+  time = 0; // time of creation
+  action: () => void = null; // action to execute
+}
+
+/**
+ * Scene features
+ * Note that every optimization consumes some memory as the data needs to be stored in maps and sets
+ */
+export interface SceneConfig {
+  // enables searching by object flags
+  flagsSearchEnabled?: boolean;
+  // enables searching by object states
+  statesSearchEnabled?: boolean;
+  // enables searching by object tags
+  tagsSearchEnabled?: boolean;
+  // enables searching by object names
+  namesSearchEnabled?: boolean;
+  debugEnabled?: boolean;
 }
 
 /**
  * Scene that keeps collection of all game objects and component listeners
  */
 export default class Scene {
-    app: PIXI.Application;
+  app: PIXI.Application;
 
-    // PIXI stage object 
-    stage: PIXICmp.ComponentObject = null;
-    // collection of actions that should be invoked with a delay
-    private pendingInvocations: Array<any>;
-    // message action keys and all subscribers that listens to all these actions
-    private subscribers: Map<string, Map<number, Component>>;
-    // component ids and list of all actions they are listening to
-    private subscribedMessages: Map<number, Array<string>>;
-    // collection of all game objects, mapped by their tag and then by their ids (for faster search)
-    private gameObjectTags: Map<string, Map<number, GameObjectProxy>>;
-    // collection of all game objects, mapped by their ids
-    private gameObjects: Map<number, GameObjectProxy>;
+  // PIXI stage object
+  stage: PIXICmp.GameObject = null;
+  // collection of actions that should be invoked with a delay
+  private pendingInvocations: Invocation[];
+  // message action keys and all subscribers that listens to all these actions
+  private subscribers: LookupMap<string, Component>;
+  // game objects mapped by their flags
+  private gameObjectFlags: LookupMap<number, PIXICmp.GameObject>;
+  // game objects mapped by their state
+  private gameObjectStates: LookupMap<number, PIXICmp.GameObject>;
+  // game objects mapped by their tags
+  private gameObjectTags: LookupMap<string, PIXICmp.GameObject>;
+  // game objects mapped by their names
+  private gameObjectNames: LookupMap<string, PIXICmp.GameObject>;
+  // collection of ALL game objects, mapped by their ids
+  private gameObjects: Map<number, GameObjectProxy>;
 
-    constructor(app: PIXI.Application) {
-        this.app = app;
-        this.clearScene();
+  protected _currentDelta: number;
+  protected _currentAbsolute: number;
+
+  protected config: SceneConfig;
+
+  constructor(app: PIXI.Application, config?: SceneConfig) {
+    this.config = {
+      flagsSearchEnabled: config && config.flagsSearchEnabled,
+      namesSearchEnabled: config && config.namesSearchEnabled !== undefined ? config.namesSearchEnabled : true,
+      tagsSearchEnabled: config && config.tagsSearchEnabled !== undefined ? config.tagsSearchEnabled : true,
+      statesSearchEnabled: config && config.statesSearchEnabled,
+      debugEnabled: config && config.debugEnabled
+    };
+
+
+    this.app = app;
+    this.clearScene();
+  }
+
+  public get currentDelta() {
+    return this._currentDelta;
+  }
+
+  public get currentAbsolute() {
+    return this._currentAbsolute;
+  }
+
+  /**
+   * Adds a new function that will be invoked after a given amount of time
+   * @param delay delay in miliseconds
+   * @param aaction function pointer with no arguments
+   */
+  invokeWithDelay(delay: number, action: () => void) {
+    this.pendingInvocations.push({
+      delay: delay,
+      time: 0,
+      action: action
+    });
+  }
+
+  /**
+   * Adds a component to the stage object
+   */
+  addGlobalComponent(cmp: Component, runInstantly: boolean = false) {
+    this.stage.addComponent(cmp, runInstantly);
+  }
+
+  /**
+   * Tries to find a global component by its class
+   */
+  findGlobalComponentByName(className: string): Component {
+    return this.stage.findComponentByName(className);
+  }
+
+  /**
+   * Removes a component from a stage object
+   */
+  removeGlobalComponent(cmp: Component) {
+    this.stage.removeComponent(cmp);
+  }
+
+  /**
+   * Inserts a global attribute
+   */
+  addGlobalAttribute(key: string, val: any) {
+    this.stage.addAttribute(key, val);
+  }
+
+  /**
+   * Gets a global attribute by its id
+   */
+  getGlobalAttribute<T>(key: string): T {
+    return this.stage.getAttribute<T>(key);
+  }
+
+  /**
+   * Removes a global attribute by its key
+   */
+  removeGlobalAttribute(key: string): boolean {
+    return this.stage.removeAttribute(key);
+  }
+
+  /**
+   * Finds all game objects by their name
+   */
+  findObjectsByName(name: string): Array<PIXICmp.GameObject> {
+    if(!this.config.namesSearchEnabled) {
+      throw new Error('Searching by name is not enabled. See SceneConfig');
     }
+    return this.gameObjectNames.findAll(name);
+  }
 
-    /**
-     * Adds a new function that will be invoked after a given amount of time
-     * @param delay delay in miliseconds 
-     * @param aaction function pointer with no arguments
-     */
-    invokeWithDelay(delay: number, action: () => void) {
-        this.pendingInvocations.push({
-            delay: delay,
-            time: 0,
-            action: action
-        });
+  /**
+   * Finds a first object with a given name
+   */
+  findObjectByName(name: string): PIXICmp.GameObject {
+    if(!this.config.namesSearchEnabled) {
+      throw new Error('Searching by name is not enabled. See SceneConfig');
     }
+    return this.gameObjectNames.findFirst(name);
+  }
 
-    /**
-     * Adds a component to the stage object
-     */
-    addGlobalComponent(cmp: Component) {
-        this.stage.addComponent(cmp);
+  /**
+   * Finds all game objects by their tag
+   */
+  findObjectsByTag(tag: string): Array<PIXICmp.GameObject> {
+    if(!this.config.tagsSearchEnabled) {
+      throw new Error('Searching by tag is not enabled. See SceneConfig');
     }
+    return this.gameObjectTags.findAll(tag);
+  }
 
-    /**
-    * Tries to find a global component by its class
-    */
-    findGlobalComponentByClass(className: string): Component {
-        return this.stage.findComponentByClass(className);
+  /**
+   * Finds a first object with a given tag
+   */
+  findObjectByTag(tag: string): PIXICmp.GameObject {
+    if(!this.config.tagsSearchEnabled) {
+      throw new Error('Searching by tag is not enabled. See SceneConfig');
     }
+    return this.gameObjectTags.findFirst(tag);
+  }
 
-    /**
-     * Removes a component from a stage object
-     */
-    removeGlobalComponent(cmp: Component) {
-        this.stage.removeComponent(cmp);
+  /**
+   * Finds all game objects by their flag
+   */
+  findObjectsByFlag(flag: number): Array<PIXICmp.GameObject> {
+    if(!this.config.flagsSearchEnabled) {
+      throw new Error('Searching by flags is not enabled. See SceneConfig');
     }
+    return this.gameObjectFlags.findAll(flag);
+  }
 
-    /**
-     * Inserts a global attribute
-     */
-    addGlobalAttribute(key: string, val: any) {
-        this.stage.addAttribute(key, val);
+  /**
+   * Finds a first object with a given flag
+   */
+  findObjectByFlag(flag: number): PIXICmp.GameObject {
+    if(!this.config.flagsSearchEnabled) {
+      throw new Error('Searching by flags is not enabled. See SceneConfig');
     }
+    return this.gameObjectFlags.findFirst(flag);
+  }
 
-    /**
-     * Gets a global attribute by its id
-     */
-    getGlobalAttribute<T>(key: string): T {
-        return this.stage.getAttribute<T>(key);
+  /**
+   * Finds all game objects by their state
+   */
+  findObjectsByState(state: number): Array<PIXICmp.GameObject> {
+    if(!this.config.statesSearchEnabled) {
+      throw new Error('Searching by states is not enabled. See SceneConfig');
     }
+    return this.gameObjectStates.findAll(state);
+  }
 
-    /**
-     * Removes a global attribute by its key 
-     */
-    removeGlobalAttribute(key: string): boolean {
-        return this.stage.removeAttribute(key);
+  /**
+   * Finds a first object with a given state
+   */
+  findObjectByState(state: number): PIXICmp.GameObject {
+    if(!this.config.statesSearchEnabled) {
+      throw new Error('Searching by states is not enabled. See SceneConfig');
     }
+    return this.gameObjectStates.findFirst(state);
+  }
 
-    /**
-     * Finds all game objects by their tag
-     */
-    findAllObjectsByTag(tag: string): Array<PIXICmp.ComponentObject> {
-        let result = new Array<PIXICmp.ComponentObject>();
-        if (this.gameObjectTags.has(tag)) {
-            let gameObjects = this.gameObjectTags.get(tag);
-            for (let [key, proxyObject] of gameObjects) {
-                // cast to ComponentObject
-                result.push(<PIXICmp.ComponentObject><any>proxyObject.pixiObj);
-            }
+
+  /**
+   * Sends message to all subscribers
+   */
+  sendMessage(msg: Message) {
+    this.subscribers.findAll(msg.action).forEach(ent => {
+      if(!msg.expired) {
+        ent.onMessage(msg);
+      }
+    });
+
+    // check global subscribers (expiration doesn't take place)
+    this.subscribers.findAll(Messages.ANY).forEach(ent => ent.onMessage(msg));
+  }
+
+  /**
+   * Removes all objects from scene
+   */
+  clearScene() {
+    if (this.gameObjects != null) {
+      // call the finalization function of all components
+      for (let [, gameObj] of this.gameObjects) {
+        for (let [, component] of gameObj.rawComponents) {
+          component.onFinish();
+          component.onRemove();
         }
-
-        return result;
+      }
     }
 
-    /**
-     * Finds all game objects that have set given flag
-     */
-    findAllObjectsByFlag(flag: number): Array<PIXICmp.ComponentObject> {
-        let result = new Array<PIXICmp.ComponentObject>();
-        // no optimization here
-        for (let [key, gameObject] of this.gameObjects) {
-            if (gameObject.hasFlag(flag)) {
-                let cmpObject = <PIXICmp.ComponentObject><any>gameObject.pixiObj;
-                result.push(cmpObject);
-            }
-        }
-        return result;
+    // reinitialize everything
+    this.subscribers = new LookupMap();
+    if(this.config.namesSearchEnabled) {
+      this.gameObjectNames = new LookupMap();
+    }
+    if(this.config.statesSearchEnabled) {
+      this.gameObjectStates = new LookupMap();
+    }
+    if(this.config.tagsSearchEnabled) {
+      this.gameObjectTags = new LookupMap();
+    }
+    if(this.config.flagsSearchEnabled) {
+      this.gameObjectFlags = new LookupMap();
     }
 
-    /**
-     * Finds a first object with a given tag
-     */
-    findFirstObjectByTag(tag: string): PIXICmp.ComponentObject {
-        if (this.gameObjectTags.has(tag)) {
-            for (let [key, proxyObject] of this.gameObjectTags.get(tag)) {
-                return <PIXICmp.ComponentObject><any>proxyObject.pixiObj;
-            }
-        }
-        return null;
+    this.gameObjects = new Map<number, GameObjectProxy>();
+    this.pendingInvocations = [];
+    this._currentDelta = this._currentAbsolute = 0;
+
+    let newStage = new PIXICmp.Container();
+    this.app.stage = newStage; // reassign the default stage with our custom one (we need objects from PIXICmp namespace only)
+    newStage._proxy.scene = this; // assign a scene
+    this.stage = newStage;
+    this._addGameObject(newStage._proxy);
+
+    if(this.config.debugEnabled) {
+      this.addGlobalComponent(new DebugComponent(), true);
+    }
+  }
+
+  // ======================================================================================
+  // methods that are supposed to be private but PIXICmp objects can invoke them internally
+  // ======================================================================================
+
+  // executes the update cycle
+  _update(delta: number, absolute: number) {
+    this._currentDelta = delta;
+    this._currentAbsolute = absolute;
+
+    // execute pending invocations
+    let i = this.pendingInvocations.length;
+    while (i--) {
+      let invocation = this.pendingInvocations[i];
+      invocation.time += delta;
+
+      if (invocation.time >= invocation.delay) {
+        // call the function and remove it from the collection
+        this.pendingInvocations.splice(i, 1);
+        invocation.action();
+      }
     }
 
-    /**
-     * Sends message to all subscribers
-     */
-    sendMessage(msg: Message) {
-        if (this.subscribers.has(msg.action)) {
-            // get all subscribed components
-            let subscribedComponents = this.subscribers.get(msg.action);
-            for (let [key, component] of subscribedComponents) {
-                // send message
-                component.onMessage(msg);
-            }
-        }
+    // update root object and all other objects recursively
+    this.stage._proxy.update(delta, absolute);
+  }
 
-        // check global subscribers
-        if (this.subscribers.has(Messages.ANY)) {
-            let globalSubs = this.subscribers.get(Messages.ANY);
-            for (let [key, component] of globalSubs) {
-                component.onMessage(msg);
-            }
-        }
+
+  // subscribes given component for messaging system
+  _subscribeComponent(msgKey: string, component: Component) {
+    this.subscribers.insert(msgKey, component);
+  }
+
+  // unsubscribes given component
+  _unsubscribeComponent(msgKey: string, component: Component) {
+    this.subscribers.remove(msgKey, component);
+  }
+
+  _addGameObject(obj: GameObjectProxy) {
+    let pixiObj = obj.cmpObj;
+    // fill all collections
+    if(this.config.namesSearchEnabled) {
+      this.gameObjectNames.insert(pixiObj.name, pixiObj);
     }
 
-    /**
-     * Removes all objects from scene
-     */
-    clearScene() {
-        if (this.gameObjects != null) {
-            // call the finalization function of all components
-            for (let [key, gameObj] of this.gameObjects) {
-                for (let [key, component] of gameObj.rawComponents) {
-                    component.onFinish();
-                    component.onRemove();
-                }
-            }
-        }
+    this.gameObjects.set(obj.id, obj);
 
-        // reinitialize everything
-        this.subscribers = new Map<string, Map<number, Component>>();
-        this.subscribedMessages = new Map<number, Array<string>>();
-        this.gameObjectTags = new Map<string, Map<number, GameObjectProxy>>();
-        this.gameObjects = new Map<number, GameObjectProxy>();
-        this.pendingInvocations = new Array<Invocation>();
-
-        let newStage = new PIXICmp.Container();
-        this.app.stage = newStage; // reassign the default stage with our custom one (we need objects from PIXICmp namespace only)
-        newStage.proxy.scene = this; // assign a scene
-        this.stage = newStage;
-        this._addGameObject(newStage.proxy);
-        this.app.stage.removeChildren(); // clear the stage
-
+    // assign scene to all components (must be done for the case when components were added beforehand
+    for (let [, component] of obj.rawComponents) {
+      component.scene = this;
     }
 
-    // executes the update cycle
-    _update(delta: number, absolute: number) {
-        // execute pending invocations
-        var i = this.pendingInvocations.length;
-        while (i--) {
-            let invocation = this.pendingInvocations[i];
-            invocation.time += delta;
+    // assign scene
+    obj.scene = this;
+    // notify listeners
+    this.sendMessage(new Message(Messages.OBJECT_ADDED, null, pixiObj));
+  }
 
-            if (invocation.time >= invocation.delay) {
-                // call the function and remove it from the collection
-                this.pendingInvocations.splice(i, 1);
-                invocation.action();
-            }
-        }
+  // immediately removes given game object
+  _removeGameObject(obj: GameObjectProxy) {
+    obj.removeAllComponents();
+    let gameObj = obj.cmpObj;
 
-        // update root object and all other objects recursively
-        this.stage.proxy.update(delta, absolute);
+    if(this.config.namesSearchEnabled) {
+      this.gameObjectNames.remove(gameObj.name, gameObj);
     }
 
-
-    // subscribes given component for messaging system
-    _subscribeComponent(msgKey: string, component: Component) {
-        var subs = this.subscribers.get(msgKey);
-        if (subs === undefined) {
-            subs = new Map();
-            this.subscribers.set(msgKey, subs);
-        }
-
-        if (subs.has(component.id)) {
-            // this component has been already subscribed!
-            return;
-        }
-
-        subs.set(component.id, component);
-
-        // save into the second collection as well
-        if (!this.subscribedMessages.has(component.id)) {
-            this.subscribedMessages.set(component.id, new Array());
-        }
-        this.subscribedMessages.get(component.id).push(msgKey);
+    if(this.config.flagsSearchEnabled) {
+      this.gameObjectFlags.removeItem(gameObj);
     }
 
-    // unsubscribes given component
-    _unsubscribeComponent(msgKey: string, component: Component) {
-        var subs = this.subscribers.get(msgKey);
-        if (subs !== undefined) {
-            subs.delete(component.id);
-        }
-
-        this.subscribedMessages.delete(component.id);
+    if(this.config.statesSearchEnabled) {
+      this.gameObjectStates.removeItem(gameObj);
     }
 
-    _addGameObject(obj: GameObjectProxy) {
-        // fill all collections
-        if (!this.gameObjectTags.has(obj.tag)) {
-            this.gameObjectTags.set(obj.tag, new Map());
-        }
-
-        this.gameObjectTags.get(obj.tag).set(obj.id, obj);
-        this.gameObjects.set(obj.id, obj);
-
-        // assign scene to all components (must be done for the case when components were added beforehand
-        for (let [key, component] of obj.rawComponents) {
-            component.scene = this;
-        }
-
-        // assign scene
-        obj.scene = this;
-        // notify listeners
-        this.sendMessage(new Message(Messages.OBJECT_ADDED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
+    if(this.config.tagsSearchEnabled) {
+      this.gameObjectTags.removeItem(gameObj);
     }
 
-    // immediately removes given game object
-    _removeGameObject(obj: GameObjectProxy) {
-        this.gameObjectTags.get(obj.tag).delete(obj.id);
-        this.gameObjects.delete(obj.id);
-        // notify listeners
-        this.sendMessage(new Message(Messages.OBJECT_REMOVED, null, <PIXICmp.ComponentObject><any>obj.pixiObj));
-    }
+    this.gameObjects.delete(obj.id);
 
-    // clears up everything that has something to do with given component
-    _removeComponentSubscription(component: Component) {
-        this.subscribedMessages.delete(component.id);
+    // notify listeners
+    this.sendMessage(new Message(Messages.OBJECT_REMOVED, null, gameObj));
+  }
 
-        if (this.subscribedMessages.has(component.id)) {
-            let allMessageKeys = this.subscribedMessages.get(component.id);
-            for (let msgKey of allMessageKeys) {
-                this.subscribers.get(msgKey).delete(component.id);
-            }
-        }
+  _onComponentAdded(component: Component, obj: GameObjectProxy) {
+    component.owner = obj.cmpObj;
+    component.scene = this;
+    component.onInit();
+    this.sendMessage(new Message(Messages.COMPONENT_ADDED, component, obj.cmpObj));
+  }
+
+  _onComponentRemoved(component: Component, obj: GameObjectProxy) {
+    this.subscribers.removeItem(component);
+    this.sendMessage(new Message(Messages.COMPONENT_REMOVED, component, obj.cmpObj));
+  }
+
+  _onStateChanged(previous: number, current: number, obj: GameObjectProxy) {
+    if(this.config.statesSearchEnabled) {
+      this.gameObjectStates.remove(previous, obj.cmpObj);
+      this.gameObjectStates.insert(current, obj.cmpObj);
     }
+    this.sendMessage(new Message(Messages.STATE_CHANGED, null, obj.cmpObj, [previous, current]));
+  }
+
+  _onFlagChanged(flag: number, set: boolean, obj: GameObjectProxy) {
+    if(this.config.flagsSearchEnabled) {
+      if(set) {
+        this.gameObjectFlags.insert(flag, obj.cmpObj);
+      } else {
+        this.gameObjectFlags.remove(flag, obj.cmpObj);
+      }
+    }
+  }
+
+  _onTagAdded(tag: string, obj: GameObjectProxy) {
+    if(this.config.tagsSearchEnabled) {
+      this.gameObjectTags.insert(tag, obj.cmpObj);
+    }
+  }
+
+  _onTagRemoved(tag: string, obj: GameObjectProxy) {
+    if(this.config.tagsSearchEnabled) {
+      this.gameObjectTags.remove(tag, obj.cmpObj);
+    }
+  }
 }

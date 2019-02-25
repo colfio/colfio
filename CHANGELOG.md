@@ -1,7 +1,13 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
-## [0.1.3] - 2019-01-28
+
+## [0.1.4] - 2019-02-25
+### Changed
+- Refactor component architecture
+- Improve TS type checks
+
+## [0.1.3] - 2019-02-02
 ### Changed
 - Rename component files
 - Add === checks to ChainComponent
