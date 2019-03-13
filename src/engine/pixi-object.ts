@@ -23,10 +23,33 @@ export namespace PIXICmp {
     tags: Set<string>;
     // wrapped pixi object
     pixiObj: PIXI.Container;
+    // parent game object
+    parentGameObject: PIXICmp.GameObject;
     // scene
     scene: Scene;
     // Link to proxy object, <<<shouldn't be used from within any custom component>>>
     _proxy: GameObjectProxy;
+
+    /*
+     * Casts itself to Sprite (works only if the object is an actual sprite!)
+     */
+    asSprite(): PIXICmp.Sprite;
+
+    /*
+     * Casts itself to Text (works only if the object is an actual text!)
+     */
+    asText(): PIXICmp.Text;
+
+    /*
+     * Casts itself to BitmapText (works only if the object is an actual bitmap text!)
+     */
+    asBitmapText(): PIXICmp.BitmapText;
+
+    /*
+     * Casts itself to Graphics (works only if the object is an actual graphics!)
+     */
+    asGraphics(): PIXICmp.Graphics;
+
 
     /**
      * Adds a new component
@@ -45,9 +68,9 @@ export namespace PIXICmp {
      */
     findComponentByName<T extends Component>(name: string): T;
     /**
-     * Adds a new generic attribute
+     * Adds or changes generic attribute
      */
-    addAttribute(key: string, val: any): void;
+    assignAttribute(key: string, val: any): void;
     /**
      * Returns an attribute by its key
      */
@@ -113,6 +136,26 @@ export namespace PIXICmp {
 
     get scene(): Scene {
       return this._proxy.scene;
+    }
+
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      throw new Error('Can\'t cast this object to sprite!');
+    }
+
+    asText(): PIXICmp.Text {
+      throw new Error('Can\'t cast this object to text!');
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      throw new Error('Can\'t cast this object to bitmap text!');
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      return this;
     }
 
     // overrides pixijs function
@@ -186,8 +229,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);
@@ -260,6 +303,26 @@ export namespace PIXICmp {
       return this._proxy.scene;
     }
 
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      throw new Error('Can\'t cast this object to sprite!');
+    }
+
+    asText(): PIXICmp.Text {
+      throw new Error('Can\'t cast this object to text!');
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      throw new Error('Can\'t cast this object to bitmap text!');
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      throw new Error('Can\'t cast this object to graphics');
+    }
+
     // overrides pixijs function
     addChild<T extends PIXI.DisplayObject[]>(
       ...children: T
@@ -334,8 +397,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);
@@ -407,6 +470,26 @@ export namespace PIXICmp {
       return this._proxy.scene;
     }
 
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      throw new Error('Can\'t cast this object to sprite!');
+    }
+
+    asText(): PIXICmp.Text {
+      throw new Error('Can\'t cast this object to text!');
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      throw new Error('Can\'t cast this object to bitmap text!');
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      throw new Error('Can\'t cast this object to graphics');
+    }
+
     // overrides pixijs function
     addChild<T extends PIXI.DisplayObject[]>(
       ...children: T
@@ -481,8 +564,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);
@@ -555,6 +638,26 @@ export namespace PIXICmp {
       return this._proxy.scene;
     }
 
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      return this;
+    }
+
+    asText(): PIXICmp.Text {
+      throw new Error('Can\'t cast this object to text!');
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      throw new Error('Can\'t cast this object to bitmap text!');
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      throw new Error('Can\'t cast this object to graphics');
+    }
+
     // overrides pixijs function
     addChild<T extends PIXI.DisplayObject[]>(
       ...children: T
@@ -629,8 +732,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);
@@ -704,6 +807,26 @@ export namespace PIXICmp {
       return this._proxy.scene;
     }
 
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      return this;
+    }
+
+    asText(): PIXICmp.Text {
+      throw new Error('Can\'t cast this object to text!');
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      throw new Error('Can\'t cast this object to bitmap text!');
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      throw new Error('Can\'t cast this object to graphics');
+    }
+
     // overrides pixijs function
     addChild<T extends PIXI.DisplayObject[]>(
       ...children: T
@@ -778,8 +901,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);
@@ -851,6 +974,26 @@ export namespace PIXICmp {
       return this._proxy.scene;
     }
 
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      throw new Error('Can\'t cast this object to sprite!');
+    }
+
+    asText(): PIXICmp.Text {
+      return this;
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      throw new Error('Can\'t cast this object to bitmap text!');
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      throw new Error('Can\'t cast this object to graphics');
+    }
+
     // overrides pixijs function
     addChild<T extends PIXI.DisplayObject[]>(
       ...children: T
@@ -925,8 +1068,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);
@@ -998,6 +1141,26 @@ export namespace PIXICmp {
       return this._proxy.scene;
     }
 
+    get parentGameObject(): PIXICmp.GameObject {
+      return <PIXICmp.GameObject><any>this.parent;
+    }
+
+    asSprite(): PIXICmp.Sprite {
+      throw new Error('Can\'t cast this object to sprite!');
+    }
+
+    asText(): PIXICmp.Text {
+      throw new Error('Can\'t cast this object to text!');
+    }
+
+    asBitmapText(): PIXICmp.BitmapText {
+      return this;
+    }
+
+    asGraphics(): PIXICmp.Graphics {
+      throw new Error('Can\'t cast this object to graphics');
+    }
+
     // overrides pixijs function
     addChild<T extends PIXI.DisplayObject[]>(
       ...children: T
@@ -1072,8 +1235,8 @@ export namespace PIXICmp {
     findComponentByName<T extends Component>(name: string): T {
       return this._proxy.findComponentByName<T>(name);
     }
-    addAttribute(key: string, val: any) {
-      this._proxy.addAttribute(key, val);
+    assignAttribute(key: string, val: any) {
+      this._proxy.assignAttribute(key, val);
     }
     getAttribute<T>(key: string): T {
       return this._proxy.getAttribute<T>(key);

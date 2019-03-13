@@ -10,7 +10,8 @@ export default class GenericComponent extends Component {
   private onUpdateFunc: (cmp: Component, delta: number, absolute: number) => void = null;
   private onRemoveFunc: (cmp: Component) => void = null;
   private onFinishFunc: (cmp: Component) => void = null;
-
+  protected timeout: number = 0;
+  protected firstRun: number = 0;
 
   /**
    * Creates a new generic component
@@ -74,6 +75,19 @@ export default class GenericComponent extends Component {
     return this;
   }
 
+  setFrequency(frequency: number): GenericComponent {
+    this.frequency = frequency;
+    return this;
+  }
+
+  /**
+   * Sets timeout for how long this component should run
+   */
+  setTimeout(timeout: number): GenericComponent {
+    this.timeout = timeout;
+    return this;
+  }
+
   onInit() {
     if (this.onInitFunc != null) {
       this.onInitFunc(this);
@@ -97,6 +111,14 @@ export default class GenericComponent extends Component {
   }
 
   onUpdate(delta: number, absolute: number) {
+    if(this.firstRun === 0) {
+      this.firstRun = absolute;
+    }
+    if(this.timeout !== 0 && (absolute - this.firstRun) >= this.timeout) {
+      this.finish();
+      return;
+    }
+
     if (this.onUpdateFunc != null) {
       this.onUpdateFunc(this, delta, absolute);
     }

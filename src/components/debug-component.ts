@@ -1,5 +1,4 @@
 import Component from '../engine/component';
-import GameObjectProxy from '../engine/game-object-proxy';
 import { Messages } from '../engine/constants';
 import { PIXICmp } from '../engine/pixi-object';
 import Message from '../engine/message';
@@ -33,13 +32,13 @@ export default class DebugComponent extends Component {
         cell4.style.color = 'green';
         cell1.innerText = (this.scene.currentAbsolute / 1000).toFixed(2);
         cell2.innerText = msg.action;
-        cell3.innerText = msg.component.name;
-        cell4.innerText = msg.gameObject.name;
+        cell3.innerText = msg.component ? msg.component.name : 'n/a';
+        cell4.innerText = msg.gameObject? msg.gameObject.name : 'n/a';
         row.appendChild(cell1);
         row.appendChild(cell2);
         row.appendChild(cell3);
         row.appendChild(cell4);
-        this.msgElement.appendChild(row);
+        this.msgElement.insertBefore(row, this.msgElement.childNodes[0]);
     }
 
     if(msg.action === Messages.OBJECT_ADDED) {
@@ -50,6 +49,9 @@ export default class DebugComponent extends Component {
       this.removeComponent(msg.component, msg.gameObject);
     } else if(msg.action === Messages.OBJECT_REMOVED) {
       document.getElementById('node_'+msg.gameObject.id).remove();
+    } else if(msg.action === Messages.SCENE_CLEAR) {
+      // remove left panel
+      this.debugElement.innerHTML = '';
     }
   }
 
@@ -57,8 +59,31 @@ export default class DebugComponent extends Component {
   }
 
   protected addGameObject(obj: PIXICmp.GameObject) {
-    let item = document.createElement('li');
-    item.id = this.getObjectId(obj);
+    let id = this.getObjectId(obj);
+    let item = document.getElementById(id);
+    if(item) {
+      return;
+    }
+
+    if(obj.pixiObj.parent !== null) {
+      // add under the parent
+      let list = document.createElement('ul');
+      item = document.createElement('li');
+      list.appendChild(item);
+      item.id = this.getObjectId(obj);
+      let parent = document.getElementById(this.getObjectId(<PIXICmp.GameObject><any>obj.pixiObj.parent));
+      if(parent == null) {
+        // parent hasn't been created yet -> create it accordingly
+        this.addGameObject(obj.parentGameObject);
+        parent = document.getElementById(this.getObjectId(<PIXICmp.GameObject><any>obj.pixiObj.parent));
+      }
+      parent.appendChild(list);
+    } else {
+      item = document.createElement('li');
+      item.id = this.getObjectId(obj);
+      this.debugElement.childNodes[0].appendChild(item);
+    }
+
 
     let content = document.createElement('span');
     content.style.color = 'red';
@@ -71,7 +96,9 @@ export default class DebugComponent extends Component {
       item.appendChild(ul);
     }
 
-    this.debugElement.appendChild(item);
+    for(let [,cmp] of obj._proxy.rawComponents) {
+      this.addComponent(cmp, obj);
+    }
   }
 
   protected removeGameObject(obj: PIXICmp.GameObject) {
@@ -118,8 +145,8 @@ export default class DebugComponent extends Component {
     if(!debugElem) {
       debugElem = document.createElement('div');
       debugElem.id = 'debug';
-      debugElem.style.width = '600px';
-      debugElem.style.height = '900px';
+      debugElem.style.width = '500px';
+      debugElem.style.height = '700px';
       debugElem.style.overflow = 'scroll';
       debugElem.style.cssFloat = 'left';
       debugElem.style.backgroundColor = '#FFF';
@@ -135,8 +162,8 @@ export default class DebugComponent extends Component {
     if(!messageElem) {
       messageElem = document.createElement('div');
       messageElem.id = 'debug_msg';
-      messageElem.style.width = '300px';
-      messageElem.style.height = '600px';
+      messageElem.style.width = '500px';
+      messageElem.style.height = '700px';
       messageElem.style.overflow = 'scroll';
       messageElem.style.cssFloat = 'left';
       messageElem.style.backgroundColor = '#FFF';

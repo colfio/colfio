@@ -1,29 +1,31 @@
 import Component from '../engine/component';
 
-const INPUT_TOUCH = 1;
-const INPUT_DOWN = 1 << 1;
-const INPUT_MOVE = 1 << 2;
-const INPUT_UP = 1 << 3;
+export enum PointerMessages {
+  POINTER_TAP = 'pointer-tap',
+  POINTER_DOWN = 'pointer-down',
+  POINTER_OVER = 'pointer-over',
+  POINTER_RELEASE = 'pointer-release'
+}
 
-const MSG_TOUCH = 'TOUCH';
-const MSG_DOWN = 'DOWN';
-const MSG_MOVE = 'MOVE';
-const MSG_UP = 'UP';
 
 /**
  * Component that handles touch and mouse events and transforms them into messages
  * that can be subscribed by any other component
  */
-export default class TouchInputComopnent extends Component {
-  protected mode: number = INPUT_TOUCH;
-  startHandler: (evt: TouchEvent) => void = null;
-  endHandler: (evt: TouchEvent) => void = null;
-  moveHandler: (evt: TouchEvent) => void = null;
-  lastTouch: Touch | MouseEvent = null;
+export class PointerInputComponent extends Component {
 
-  constructor(mode: number = INPUT_TOUCH) {
+  private lastTouch: Touch | MouseEvent = null;
+  private handleClick: boolean;
+  private handlePointerDown: boolean;
+  private handlePointerOver: boolean;
+  private handlePointerRelease: boolean;
+
+  constructor(handleClick: boolean = true, handlePointerDown: boolean = false, handlePointerOver: boolean = false, handlePointerRelease: boolean = false) {
     super();
-    this.mode = mode;
+    this.handleClick = handleClick;
+    this.handlePointerDown = handlePointerDown;
+    this.handlePointerOver = handlePointerOver;
+    this.handlePointerRelease = handlePointerRelease;
   }
 
   onInit() {
@@ -31,45 +33,35 @@ export default class TouchInputComopnent extends Component {
 
     let canvas = this.scene.app.view;
 
-    // must be done this way, because we want to
-    // remove these listeners while finalization
-    this.startHandler = (evt) => {
-      this.handleStart(evt);
-    };
-    this.endHandler = (evt) => {
-      this.handleEnd(evt);
-    };
-
-    this.moveHandler = (evt) => {
-      this.handleMove(evt);
-    };
-
-    canvas.addEventListener('touchstart', this.startHandler, false);
-    canvas.addEventListener('touchend', this.endHandler, false);
-    canvas.addEventListener('mousedown', this.startHandler, false);
-    if (this.mode |= INPUT_UP) {
-      canvas.addEventListener('mouseup', this.endHandler, false);
+    canvas.addEventListener('touchstart', this.handleStart, false);
+    canvas.addEventListener('touchend', this.handleEnd, false);
+    canvas.addEventListener('mousedown', this.handleStart, false);
+    if (this.handlePointerRelease || this.handleClick) {
+      canvas.addEventListener('mouseup', this.handleEnd, false);
     }
-    if (this.mode |= INPUT_MOVE) {
-      canvas.addEventListener('mousemove', this.moveHandler, false);
-      canvas.addEventListener('touchmove', this.moveHandler, false);
+    if (this.handlePointerOver) {
+      canvas.addEventListener('mousemove', this.handleMove, false);
+      canvas.addEventListener('touchmove', this.handleMove, false);
     }
   }
 
   onFinish() {
     let canvas = this.scene.app.view;
-    canvas.removeEventListener('touchstart', this.startHandler);
-    canvas.removeEventListener('touchend', this.endHandler);
-    canvas.removeEventListener('mousedown', this.startHandler);
-    canvas.removeEventListener('mouseup', this.endHandler);
+    canvas.removeEventListener('touchstart', this.handleStart);
+    canvas.removeEventListener('touchend', this.handleEnd);
+    canvas.removeEventListener('mousedown', this.handleStart);
 
-    if (this.mode |= INPUT_MOVE) {
-      canvas.removeEventListener('mousemove', this.moveHandler);
-      canvas.removeEventListener('touchmove', this.moveHandler);
+    if(this.handlePointerRelease || this.handleClick) {
+      canvas.removeEventListener('mouseup', this.handleEnd);
+    }
+
+    if (this.handlePointerOver) {
+      canvas.removeEventListener('mousemove', this.handleMove);
+      canvas.removeEventListener('touchmove', this.handleMove);
     }
   }
 
-  protected handleStart(evt: TouchEvent | MouseEvent) {
+  protected handleStart = (evt: TouchEvent | MouseEvent) => {
     evt.preventDefault();
     let isTouch = evt instanceof TouchEvent;
     if (isTouch && (evt as TouchEvent).changedTouches.length === 1) {
@@ -79,24 +71,24 @@ export default class TouchInputComopnent extends Component {
       this.lastTouch = evt as MouseEvent;
     }
 
-    if (this.mode |= INPUT_DOWN) {
-      this.sendMessage(MSG_DOWN, {
+    if (this.handlePointerDown) {
+      this.sendMessage(PointerMessages.POINTER_DOWN, {
         mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
         isTouch: isTouch
       });
     }
   }
 
-  protected handleMove(evt: TouchEvent) {
+  protected handleMove = (evt: TouchEvent) => {
     evt.preventDefault();
     let isTouch = typeof (evt.changedTouches) !== 'undefined';
-    this.sendMessage(MSG_MOVE, {
+    this.sendMessage(PointerMessages.POINTER_OVER, {
       mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
       isTouch: isTouch
     });
   }
 
-  protected handleEnd(evt: TouchEvent | MouseEvent) {
+  protected handleEnd = (evt: TouchEvent | MouseEvent) => {
     evt.preventDefault();
     let posX, posY;
     let isTouch = evt instanceof TouchEvent;
@@ -115,13 +107,13 @@ export default class TouchInputComopnent extends Component {
       if (Math.abs(this.lastTouch.pageX - posX) < 10 &&
         Math.abs(this.lastTouch.pageY - posY) < 10) {
         // at last send the message to all subscribers about this event
-        if (isTouch) {
-          this.sendMessage(MSG_TOUCH, {
+        if (isTouch || this.handleClick) {
+          this.sendMessage(PointerMessages.POINTER_TAP, {
             mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
             isTouch: isTouch
           });
         } else {
-          this.sendMessage(MSG_UP, {
+          this.sendMessage(PointerMessages.POINTER_RELEASE, {
             mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
             isTouch: isTouch
           });

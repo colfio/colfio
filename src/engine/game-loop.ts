@@ -3,7 +3,6 @@ window.PIXI = PIXI; // workaround for PIXISound
 import Scene from './scene';
 import { resizeContainer } from '../utils/functions';
 import { SceneConfig } from './scene';
-import DebugComponent from '../components/debug-component';
 
 /**
  * Entry point to the PIXIJS
@@ -17,7 +16,7 @@ export default class GameLoop {
   width: number;
   height: number;
 
-  init(canvas: HTMLCanvasElement, width: number, height: number, resolution: number = 1, sceneConfig?: SceneConfig) {
+  init(canvas: HTMLCanvasElement, width: number, height: number, resolution: number = 1, sceneConfig?: SceneConfig, resizeToScreen: boolean = true) {
     this.width = width;
     this.height = height;
 
@@ -29,8 +28,8 @@ export default class GameLoop {
       resolution: resolution // resolution/device pixel ratio
     });
 
-    this.scene = new Scene(this.app, sceneConfig);
-    if(!sceneConfig.debugEnabled) {
+    this.scene = new Scene('default', this.app, sceneConfig);
+    if(resizeToScreen && (!sceneConfig || !sceneConfig.debugEnabled)) {
       this.initResizeHandler();
     }
 

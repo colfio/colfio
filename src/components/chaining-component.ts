@@ -186,6 +186,7 @@ export default class ChainingComponent extends Component {
   // help parameters used for processing one node
   protected tmpParam: any = null;
   protected tmpParam2: any = null;
+  protected tmpParamArray: string[] = [];
 
   /**
    * Repeats the following part of the chain until endRepeat()
@@ -377,7 +378,7 @@ export default class ChainingComponent extends Component {
   }
 
   onMessage(msg: Message) {
-    this.tmpParam2 = msg.action;
+    this.tmpParamArray.push(msg.action);
   }
 
   onUpdate(delta: number, absolute: number) {
@@ -404,7 +405,7 @@ export default class ChainingComponent extends Component {
         let temp = this.scopeStack.pop();
 
         temp.setParam1(temp.getParam1() - 1); // decrement number of repetitions
-        if (temp.getParam2() === true || // infinite loop
+        if (temp.getParam2() === true || // infinite loop check
           temp.getParam1() > 0) {
           // jump to the beginning
           this.current = temp;
@@ -540,7 +541,7 @@ export default class ChainingComponent extends Component {
           if (this.current.getParam3() === true) {
             let gameObj = this.current.param2A != null ? this.current.param2A : this.owner;
             // remove when finished
-            gameObj.removeComponentByName(this.current.getParam1());
+            gameObj.removeComponentByClass(this.current.getParam1());
           }
 
           this.tmpParam = null;
@@ -577,23 +578,25 @@ export default class ChainingComponent extends Component {
       case CMD_WAIT_FOR_MESSAGE:
         // tmpParam indicates that this component has already subscribed the message
         if (this.tmpParam === true) {
-          if (this.tmpParam2 === this.current.param1) {
+          if (this.tmpParamArray.indexOf(this.current.param1) !== -1) {
             // got message -> unsubscribe and proceed
             this.unsubscribe(this.current.param1);
             this.tmpParam = this.tmpParam2 = null;
+            this.tmpParamArray = [];
             this.gotoNextImmediately(delta, absolute);
           }
         } else {
           // just subscribe and wait
           this.tmpParam = true;
           this.tmpParam2 = null;
+          this.tmpParamArray = [];
           this.subscribe(this.current.param1);
         }
         break;
       case CMD_REMOVE_COMPONENT:
         // pop the object, the name of the component, remove it and go to the next item
         let gameObj2 = this.current.param2 != null ? this.current.param2 : this.owner;
-        gameObj2.removeComponentByName(this.current.param1);
+        gameObj2.removeComponentByClass(this.current.param1);
         this.gotoNextImmediately(delta, absolute);
         break;
       case CMD_REMOVE_GAME_OBJECT_BY_NAME:

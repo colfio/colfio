@@ -2,16 +2,21 @@
 All notable changes to this project/subject will be documented in this file.
 
 
+## [0.1.5] - 2019-03-13
+### Changed
+- Added new tests
+- Fixed bugs accordingly 
+
 ## [0.1.4] - 2019-02-25
 ### Changed
-- Refactor component architecture
-- Improve TS type checks
+- Refactored component architecture
+- Improved TS type checks
 
 ## [0.1.3] - 2019-02-02
 ### Changed
-- Rename component files
-- Add === checks to ChainComponent
-- Add visibility modifiers
+- Renamed component files
+- Added === checks to ChainComponent
+- Added visibility modifiers
 
 ## [0.1.2] - 2019-01-27
 ### Changed

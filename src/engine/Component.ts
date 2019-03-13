@@ -6,20 +6,26 @@ import { PIXICmp } from './pixi-object';
  * Component that defines a functional behavior of an entity which is attached to
  */
 export default class Component {
+
+  // owner object of this component
+  owner: PIXICmp.GameObject = null;
+  // link to scene
+  scene: Scene = null;
+  // update frequency each second (0 is for each frame)
+  frequency: number;
+  // number of last update, is set automatically by its owner
+  _lastUpdate: number;
+
   private static idCounter = 0;
   private isFinished = false;
 
   // auto-incremented id
   protected _id = 0;
-  // owner object of this component
-  protected _owner: PIXICmp.GameObject = null;
-  // link to scene
-  protected _scene: Scene = null;
-
   protected _name: string;
 
   constructor() {
     this._id = Component.idCounter++;
+    this.frequency = 0; // 0 is for each frame
   }
 
   public get id() {
@@ -30,23 +36,7 @@ export default class Component {
     return this._name || this.constructor.name;
   }
 
-  public get owner() {
-    return this._owner;
-  }
-
-  public set owner(owner: PIXICmp.GameObject) {
-    this._owner = owner;
-  }
-
-  public get scene() {
-    return this._scene;
-  }
-
-  public set scene(scene: Scene) {
-    this._scene = scene;
-  }
-
-  public get isRunning {
+  public get isRunning() {
     return !this.isFinished;
   }
 

@@ -20,7 +20,7 @@ export default class DynamicsComponent extends Component {
     if (this.dynamics == null) {
       // add an initial one
       this.dynamics = new Dynamics();
-      this.owner.addAttribute(Attributes.DYNAMICS, this.dynamics);
+      this.owner.assignAttribute(Attributes.DYNAMICS, this.dynamics);
     }
   }
 

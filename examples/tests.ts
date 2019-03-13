@@ -1,2 +1,4 @@
-let tests = import('../src/tests/tests_executor');
-tests.then((val) => val.default());
+let tests = import('../src/tests/component-tests');
+tests.then((val) => {
+	new val.default();
+});

@@ -1,4 +1,3 @@
-import GenericComponent from '../components/generic-component';
 import Component from './component';
 import Scene from './scene';
 import { PIXICmp } from './pixi-object';
@@ -69,11 +68,22 @@ export default class GameObjectProxy {
     return new Set(this._tags);
   }
 
+  public get isOnScene() {
+    return this.scene !== null;
+  }
+
+  public getAllFlags(): Set<number> {
+    return this.flags.getAllFlags();
+  }
+
   /**
    * Adds a new component
    */
   addComponent(component: Component, runInstantly: boolean = false) {
     if(runInstantly) {
+      if(!this.isOnScene) {
+        throw new Error('This object hasn\'t been added to the scene yet');
+      }
       this.initComponent(component);
       component.onUpdate(this.scene.currentDelta, this.scene.currentAbsolute);
     } else {
@@ -87,7 +97,9 @@ export default class GameObjectProxy {
   removeComponent(component: Component) {
     component.onRemove();
     this.components.delete(component.id);
-    this.scene._onComponentRemoved(component, this);
+    if(this.isOnScene) {
+      this.scene._onComponentRemoved(component, this);
+    }
   }
 
   /**
@@ -125,10 +137,23 @@ export default class GameObjectProxy {
   }
 
   /**
-   * Inserts a new attribute to the map
+   * Inserts a new attribute or modifies an existing one
    */
-  addAttribute(key: string, val: any) {
-    this.attributes.set(key, val);
+  assignAttribute(key: string, val: any) {
+    if(!this.attributes.has(key)) {
+      // new attribute
+      this.attributes.set(key, val);
+      if(this.isOnScene) {
+        this.scene._onAttributeAdded(key, val, this);
+      }
+    } else {
+      // replacing existing attribute
+      let previous = this.attributes.get(key);
+      this.attributes.set(key, val);
+      if(this.isOnScene) {
+        this.scene._onAttributeChanged(key, previous, val, this);
+      }
+    }
   }
 
   /**
@@ -142,7 +167,15 @@ export default class GameObjectProxy {
    * Removes an existing attribute
    */
   removeAttribute(key: string): boolean {
-    return this.attributes.delete(key);
+    if(this.attributes.has(key)) {
+      let val = this.attributes.get(key);
+      this.attributes.delete(key);
+      if(this.isOnScene) {
+        this.scene._onAttributeRemoved(key, val, this);
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -150,7 +183,9 @@ export default class GameObjectProxy {
    */
   addTag(tag: string) {
     this._tags.add(tag);
-    this.scene._onTagAdded(tag, this);
+    if(this.isOnScene) {
+      this.scene._onTagAdded(tag, this);
+    }
   }
 
   /**
@@ -158,7 +193,9 @@ export default class GameObjectProxy {
    */
   removeTag(tag: string) {
     this._tags.delete(tag);
-    this.scene._onTagRemoved(tag, this);
+    if(this.isOnScene) {
+      this.scene._onTagRemoved(tag, this);
+    }
   }
 
   /**
@@ -173,7 +210,9 @@ export default class GameObjectProxy {
    */
   setFlag(flag: number) {
     this.flags.setFlag(flag);
-    this.scene._onFlagChanged(flag, true, this);
+    if(this.isOnScene) {
+      this.scene._onFlagChanged(flag, true, this);
+    }
   }
 
   /**
@@ -181,7 +220,9 @@ export default class GameObjectProxy {
    */
   resetFlag(flag: number) {
     this.flags.resetFlag(flag);
-    this.scene._onFlagChanged(flag, false, this);
+    if(this.isOnScene) {
+      this.scene._onFlagChanged(flag, false, this);
+    }
   }
 
   /**
@@ -196,7 +237,9 @@ export default class GameObjectProxy {
    */
   invertFlag(flag: number) {
     this.flags.invertFlag(flag);
-    this.scene._onFlagChanged(flag, this.flags.hasFlag(flag), this);
+    if(this.isOnScene) {
+      this.scene._onFlagChanged(flag, this.flags.hasFlag(flag), this);
+    }
   }
 
   /**
@@ -212,7 +255,9 @@ export default class GameObjectProxy {
   set stateId(state: number) {
     let previous = this.stateId;
     this._stateId = state;
-    this.scene._onStateChanged(previous, state, this);
+    if(this.isOnScene) {
+      this.scene._onStateChanged(previous, state, this);
+    }
   }
 
   /**
@@ -230,9 +275,18 @@ export default class GameObjectProxy {
   }
 
   update(delta: number, absolute: number) {
+    // initialize all components from the previous loop
+    this.initAllComponents();
+
     // update all my components
     for (let [, cmp] of this.components) {
-      cmp.onUpdate(delta, absolute);
+      if(cmp.frequency === 0) {
+        cmp._lastUpdate = absolute;
+        cmp.onUpdate(delta, absolute);
+      } else if(cmp._lastUpdate === undefined || (absolute - cmp._lastUpdate) >= 1000/cmp.frequency) {
+        cmp._lastUpdate = absolute;
+        cmp.onUpdate(delta, absolute);
+      }
     }
 
     // update all my children
@@ -242,15 +296,19 @@ export default class GameObjectProxy {
         cmpChild._proxy.update(delta, absolute);
       }
     }
+  }
 
-    if (this.componentsToAdd.length !== 0) {
-      // add components that are to be updated
+  initAllComponents() {
+    if(this.componentsToAdd.length !== 0) {
       this.componentsToAdd.forEach(cmp => this.initComponent(cmp));
-      this.componentsToAdd = new Array<Component>();
+      this.componentsToAdd = [];
     }
   }
 
-  private initComponent(component: Component) {
+  initComponent(component: Component) {
+    if(!this.isOnScene) {
+      throw new Error('The object must be on the scene before its components are initialized');
+    }
     this.components.set(component.id, component);
     this.scene._onComponentAdded(component, this);
   }

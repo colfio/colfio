@@ -5,7 +5,7 @@ import Flags from './engine/flags';
 import GameObjectProxy from './engine/game-object-proxy';
 import Message from './engine/message';
 import { PIXICmp } from './engine/pixi-object';
-import PIXIObjectBuilder from './engine/pixi-object-builder';
+import PIXIBuilder from './engine/pixi-builder';
 import Scene from './engine/scene';
 import { BaseAnimation, TranslateAnimation, RotationAnimation } from './components/animation';
 import ChainingComponent from './components/chaining-component';
@@ -14,10 +14,9 @@ import DebugComponent from './components/debug-component';
 import DynamicsComponent from './components/dynamics-component';
 import GenericComponent from './components/generic-component';
 import { KeyInputComponent, Keys } from './components/key-input-component';
-import TouchInputComponent from './components/touch-input-component';
+import { PointerInputComponent, PointerMessages } from './components/pointer-input-component';
 import Dynamics from './utils/dynamics';
 import { checkTime } from './utils/functions';
-import { QuadTreeItem, QuadTree } from './utils/quad-tree';
 import Vector from './utils/vector';
 
 export {
@@ -28,7 +27,7 @@ export {
   GameObjectProxy,
   Message,
   PIXICmp,
-  PIXIObjectBuilder,
+  PIXIBuilder,
   Scene,
   BaseAnimation, TranslateAnimation, RotationAnimation,
   ChainingComponent,
@@ -37,9 +36,8 @@ export {
   DynamicsComponent,
   GenericComponent,
   KeyInputComponent, Keys,
-  TouchInputComponent,
+  PointerInputComponent, PointerMessages,
   Dynamics,
   checkTime,
-  QuadTree, QuadTreeItem,
   Vector
 };
