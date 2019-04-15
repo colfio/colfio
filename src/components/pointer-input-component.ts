@@ -1,4 +1,5 @@
 import Component from '../engine/component';
+import Message from '../engine/message';
 
 export enum PointerMessages {
   POINTER_TAP = 'pointer-tap',
@@ -6,7 +7,6 @@ export enum PointerMessages {
   POINTER_OVER = 'pointer-over',
   POINTER_RELEASE = 'pointer-release'
 }
-
 
 /**
  * Component that handles touch and mouse events and transforms them into messages
@@ -19,6 +19,7 @@ export class PointerInputComponent extends Component {
   private handlePointerDown: boolean;
   private handlePointerOver: boolean;
   private handlePointerRelease: boolean;
+  private messagesToSend: Message[];
 
   constructor(handleClick: boolean = true, handlePointerDown: boolean = false, handlePointerOver: boolean = false, handlePointerRelease: boolean = false) {
     super();
@@ -30,6 +31,7 @@ export class PointerInputComponent extends Component {
 
   onInit() {
     this.lastTouch = null;
+    this.messagesToSend = [];
 
     let canvas = this.scene.app.view;
 
@@ -43,6 +45,13 @@ export class PointerInputComponent extends Component {
       canvas.addEventListener('mousemove', this.handleMove, false);
       canvas.addEventListener('touchmove', this.handleMove, false);
     }
+  }
+
+  onUpdate(delta: number, absolute: number) {
+    for(let msg of this.messagesToSend) {
+      this.scene.sendMessage(msg);
+    }
+    this.messagesToSend = [];
   }
 
   onFinish() {
@@ -59,6 +68,11 @@ export class PointerInputComponent extends Component {
       canvas.removeEventListener('mousemove', this.handleMove);
       canvas.removeEventListener('touchmove', this.handleMove);
     }
+  }
+
+  sendMessage(action: string, data: any = null) {
+    // wait for next update loop to send all the messages
+    this.messagesToSend.push(new Message(action, this, this.owner, data));
   }
 
   protected handleStart = (evt: TouchEvent | MouseEvent) => {

@@ -2,6 +2,15 @@
 All notable changes to this project/subject will be documented in this file.
 
 
+## [0.1.6] - 2019-04-15
+### Added
+- Virtual gamepad
+- New Game Object interface
+- Query object search
+
+### Changed
+- Refactored component lifecycle
+
 ## [0.1.5] - 2019-03-13
 ### Changed
 - Added new tests

@@ -1,12 +1,20 @@
 import Message from '../engine/message';
 import Component from '../engine/component';
+import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
+
+interface MessageCaptureContext {
+  onlyOnce: boolean;
+  condition?: QueryCondition;
+  handler: (cmp: Component, msg: Message) => void;
+}
 
 /**
  * Builder for generic components
  */
-export default class GenericComponent extends Component {
+export class GenericComponent extends Component {
   private onInitFunc: (cmp: Component) => void = null;
-  private onMessageFuncs = new Map<string, [boolean, (cmp: Component, msg: Message) => void]>();
+  private onMessageHandlers = new Map<string, MessageCaptureContext>();
+  private onMessageConditionalHandlers = new Map<string, Set<MessageCaptureContext>>();
   private onUpdateFunc: (cmp: Component, delta: number, absolute: number) => void = null;
   private onRemoveFunc: (cmp: Component) => void = null;
   private onFinishFunc: (cmp: Component) => void = null;
@@ -38,7 +46,7 @@ export default class GenericComponent extends Component {
    * Registers a function that will be invoked when a specific message arrives
    */
   doOnMessage(action: string, handler: (cmp: Component, msg: Message) => void): GenericComponent {
-    this.onMessageFuncs.set(action, [false, handler]);
+    this.onMessageHandlers.set(action, { handler: handler, onlyOnce: false });
     return this;
   }
 
@@ -46,7 +54,19 @@ export default class GenericComponent extends Component {
    * Registers a function that will be invoked when a specific message arrives, but only once
    */
   doOnMessageOnce(action: string, handler: (cmp: Component, msg: Message) => void): GenericComponent {
-    this.onMessageFuncs.set(action, [true, handler]);
+    this.onMessageHandlers.set(action, { handler: handler, onlyOnce: true });
+    return this;
+  }
+
+  /**
+   * Registers a function that will be invoked when a specific message arrives and given conditions are met
+   * Can be used to listen only for a group of objects
+   */
+  doOnMessageConditional(action: string, condition: QueryCondition, handler: (cmp: Component, msg: Message) => void) {
+    if (!this.onMessageConditionalHandlers.has(action)) {
+      this.onMessageConditionalHandlers.set(action, new Set());
+    }
+    this.onMessageConditionalHandlers.get(action).add({ onlyOnce: false, handler: handler, condition: condition });
     return this;
   }
 
@@ -94,27 +114,39 @@ export default class GenericComponent extends Component {
     }
 
     // register all messages
-    for (let [key] of this.onMessageFuncs) {
+    for (let [key] of this.onMessageHandlers) {
+      this.subscribe(key);
+    }
+    for (let [key] of this.onMessageConditionalHandlers) {
       this.subscribe(key);
     }
   }
 
   onMessage(msg: Message) {
-    if (this.onMessageFuncs.has(msg.action)) {
-      let handler = this.onMessageFuncs.get(msg.action);
-      handler[1](this, msg); // invoke handler
-      if(handler[0]) { // if true, the handler should be invoked only once
-        this.onMessageFuncs.delete(msg.action);
+    if (this.onMessageHandlers.has(msg.action)) {
+      let handler = this.onMessageHandlers.get(msg.action);
+      handler.handler(this, msg); // invoke handler
+      if (handler.onlyOnce) { // if true, the handler should be invoked only once
+        this.onMessageHandlers.delete(msg.action);
         this.unsubscribe(msg.action);
+      }
+    }
+
+    if (this.onMessageConditionalHandlers.has(msg.action)) {
+      let set = this.onMessageConditionalHandlers.get(msg.action);
+      for (let handler of set) {
+        if (msg.gameObject && queryConditionCheck(msg.gameObject, handler.condition)) {
+          handler.handler(this, msg);
+        }
       }
     }
   }
 
   onUpdate(delta: number, absolute: number) {
-    if(this.firstRun === 0) {
+    if (this.firstRun === 0) {
       this.firstRun = absolute;
     }
-    if(this.timeout !== 0 && (absolute - this.firstRun) >= this.timeout) {
+    if (this.timeout !== 0 && (absolute - this.firstRun) >= this.timeout) {
       this.finish();
       return;
     }

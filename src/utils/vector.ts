@@ -3,7 +3,7 @@
  * operations. All operations on this class produce a new copy of the vector
  * instead of modifying the vector in place.
  */
-export default class Vec2 {
+export default class Vector {
   /** The x-coordinate of the vector */
   x: number;
 
@@ -20,45 +20,45 @@ export default class Vec2 {
    * Returns a new vector that is the result of adding this vector with
    * another vector.
    */
-  add(other: Vec2): Vec2 {
-    return new Vec2(this.x + other.x, this.y + other.y);
+  add(other: Vector): Vector {
+    return new Vector(this.x + other.x, this.y + other.y);
   }
 
   /**
    * Returns a new vector that is the result of subtracting this vector by
    * another vector.
    */
-  subtract(other: Vec2): Vec2 {
-    return new Vec2(this.x - other.x, this.y - other.y);
+  subtract(other: Vector): Vector {
+    return new Vector(this.x - other.x, this.y - other.y);
   }
 
   /**
    * Returns a new vector that is the result of multiplying the elements of
    * this vector by a scalar.
    */
-  multiply(scalar: number): Vec2 {
-    return new Vec2(scalar * this.x, scalar * this.y);
+  multiply(scalar: number): Vector {
+    return new Vector(scalar * this.x, scalar * this.y);
   }
 
   /**
    * Returns a new vector that is the result of dividing the elements of this
    * vector by a scalar.
    */
-  divide(scalar: number): Vec2 {
-    return new Vec2(this.x / scalar, this.y / scalar);
+  divide(scalar: number): Vector {
+    return new Vector(this.x / scalar, this.y / scalar);
   }
 
   /**
    * Return Euklidean distance between two vectors(points)
    */
-  distance(other: Vec2): number {
-    return new Vec2(this.x - other.x, this.y - other.y).magnitude();
+  distance(other: Vector): number {
+    return new Vector(this.x - other.x, this.y - other.y).magnitude();
   }
 
   /**
    * Return Manhattan distance between two vectors (points)
    */
-  manhattanDistance(other: Vec2): number {
+  manhattanDistance(other: Vector): number {
     return Math.abs(this.x - other.x) + Math.abs(this.y - other.y);
   }
 
@@ -67,9 +67,9 @@ export default class Vec2 {
    * vector has a length of 1. This operation is potentially costly so it is
    * best to cache the result when possible.
    */
-  normalize(): Vec2 {
+  normalize(): Vector {
     let magnitude = this.magnitude();
-    return new Vec2(this.x / magnitude, this.y / magnitude);
+    return new Vector(this.x / magnitude, this.y / magnitude);
   }
 
   /**
@@ -102,35 +102,27 @@ export default class Vec2 {
   /**
    * Calculates and returns the dot product of this vector and another vector.
    */
-  dot(other: Vec2): number {
+  dot(other: Vector): number {
     return this.x * other.x + this.y * other.y;
-  }
-
-  /**
-   * Calculates and returns the cross product of this vector and another
-   * vector.
-   */
-  cross(other: Vec2): number {
-    return this.x * other.y - other.x * this.y;
   }
 
   /**
    * Limits the vector size
    */
-  limit(magnitude: number): Vec2 {
+  limit(magnitude: number): Vector {
     let mag = this.magnitudeSquared();
     if (magnitude < mag) {
-      return new Vec2(this.x / Math.sqrt(mag / magnitude), this.y / Math.sqrt(mag / magnitude));
+      return new Vector(this.x / Math.sqrt(mag / magnitude), this.y / Math.sqrt(mag / magnitude));
     } else {
       return this.clone();
     }
   }
 
-  equals(other: Vec2): boolean {
+  equals(other: Vector): boolean {
     return this.x === other.x && this.y === other.y;
   }
 
-  clone(): Vec2 {
-    return new Vec2(this.x, this.y);
+  clone(): Vector {
+    return new Vector(this.x, this.y);
   }
 }

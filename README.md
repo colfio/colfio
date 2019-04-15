@@ -15,8 +15,8 @@ The goal for ECSLite is to be a lightweight and simple library that could be use
 
 ## Examples
 - see the examples folder
-- executor.html - an example how **Executor** component works
-- executor2.html - another Executor example
+- executor.html - an example how **ChainComponent** component works
+- executor2.html - another ChainComponent example
 - rotation.html - rotation animation
 
 
@@ -94,7 +94,7 @@ function newGame(engine: GameLoop) {
   - `tag` - a string that identifies the object
   - `pixiObj` - attached object from PIXI library
   - `attributes` - list of attributes that can be accessed via string keys
-  - `numState` - a numeric state
+  - `stateId` - a numeric state
   - `flags` - a bit array of flags
 
 ![Game Objects Workflow](./docs/objects.png)
@@ -124,6 +124,12 @@ scene.invokeWithDelay(0.5, () => {
   - attaches a component to the root (stage) object
 - `findAllObjectsByTag`
   - allows to find objects by their tags
+- `findObjectByName` and `findObjectsByName` 
+  - finds object(s) by name
+- `findObjectByTag` and `findObjectsByTag`
+  - finds objects by a tag
+- `findObjectByFlag` and `findObjectsByFlag`
+  - finds object(s) by flag
 - `clearScene`
   - removes all components and objects from the scene
 - `sendMessage`
@@ -142,7 +148,7 @@ myObject.hasFlag(12); // false
 
 ### GameObject
 - game objects are only shells for components and attributes
-- `numState` is a numeric state you can use to implement a simple state machine
+- `stateId` is a numeric state you can use to implement a simple state machine
 - `flags` is a bit array described above
 
 ### Message
@@ -166,9 +172,10 @@ myObject.hasFlag(12); // false
 - `unsubscribe(action)` - unsubscribes a message
 - `sendMessage` - sends a message
 - `onMessage` - called whenever the component receives a message
+- `onRemove` - called before removal from the scene
 - `onUpdate` - game loop, called each 16ms, used to update the component's state
 - `onFinish` - called when the component is about to be finished and removed
-- `finish` - will terminate the component and remove it from the game object
+- `finish()` - will terminate the component and remove it from the game object
 
 
 ### Built-in components
@@ -198,7 +205,7 @@ let rotateAnim = new RotationAnimation(
     duration);
 ```
 
-#### TouchInputComponent
+#### PointerInputComponent
 - used for mouse/touch input
 - first you need to specify what you want to capture
   - example: DOWN + MOVE: `new InputManager(INPUT_DOWN | INPUT_MOVE)`
@@ -208,11 +215,9 @@ let rotateAnim = new RotationAnimation(
   - `MSG_UP` - pointer up event
   - `MSG_MOVE` - pointer move event
 
-#### ComposingComponent
-- a component that contains a set of other components
-
-#### DynamicsComponent
-- a helper that can be used to work with velocities
+#### VirtualGamePadComponent
+- simulates a virtual gamepad with 8 that gets rendered on the screen
+- the buttons can be configured and mapped to 8 keyboard keys
 
 #### GenericComponent
 - a functional component
@@ -237,13 +242,13 @@ myObj.addComponent(keyInput);
 const isSpacePressed = keyInput.isKeyPressed(' '.charCodeAt(0));
 ```
 
-#### ChainingComponent
+#### ChainComponent
 - this component is extremely powerful - you can use callbacks to implement a very complex behavior
 - see `executor.html` for more information
 - example: rotation every second
 
 ```javascript
-myObj.addComponent(new ChainingComponent()
+myObj.addComponent(new ChainComponent()
   .beginInterval(1000)
   .execute((cmp) => cmp.owner.rotation += 0.1)
   .endInterval()
@@ -251,11 +256,11 @@ myObj.addComponent(new ChainingComponent()
 ```
 
 
-### PIXIObjectBuilder
+### Builder
 - used to simplify game object creation
 
 ```javascript
-  let obj = new PIXIObjectBuilder(scene)
+  let obj = new Builder(scene)
   .localPos(2,2)
   .withComponent(new Executor()
       .beginRepeat(0)
@@ -267,4 +272,4 @@ myObj.addComponent(new ChainingComponent()
 ```
 
 ### Tests
-- to make this repo as tiny as possible, there is no jest/mocha etc. The tests can be run by simply opening the `examples/tests.html` file in your browser
+- to make this repo as tiny as possible, there is no jest/mocha etc. The tests can be run by simply opening the `examples/tests.html` file in your browser. The result gets displayed on the screen.

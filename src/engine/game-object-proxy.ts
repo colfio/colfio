@@ -1,6 +1,6 @@
 import Component from './component';
 import Scene from './scene';
-import { PIXICmp } from './pixi-object';
+import { GameObject, Container } from './game-object';
 import Flags from './flags';
 
 
@@ -16,7 +16,7 @@ export default class GameObjectProxy {
   // state of this object
   protected _stateId = 0;
   // game object this proxy is attached to
-  protected _pixiObj: PIXI.Container = null;
+  protected _pixiObj: Container = null;
   // link to scene
   protected _scene: Scene = null;
   // collection of tags
@@ -30,18 +30,14 @@ export default class GameObjectProxy {
   // list of components that will be added at the end of update loop
   protected componentsToAdd = new Array<Component>();
 
-  constructor(name: string, pixiObj: PIXICmp.GameObject) {
+  constructor(name: string, pixiObj: Container) {
     this._id = GameObjectProxy.idCounter++;
-    this._pixiObj = <PIXI.Container><any>pixiObj;
+    this._pixiObj = pixiObj;
     this._pixiObj.name = name;
   }
 
   public get id() {
     return this._id;
-  }
-
-  public get cmpObj() {
-    return <PIXICmp.GameObject><any>this._pixiObj;
   }
 
   public get pixiObj() {
@@ -95,23 +91,16 @@ export default class GameObjectProxy {
    * Removes an existing component
    */
   removeComponent(component: Component) {
+    if(component.isRunning) {
+      component._isFinished = true;
+      component.onFinish();
+    }
     component.onRemove();
+    component._lastUpdate = 0;
+    component.owner = null;
     this.components.delete(component.id);
     if(this.isOnScene) {
       this.scene._onComponentRemoved(component, this);
-    }
-  }
-
-  /**
-   * Removes a component by class if it exists
-   * Returns true if the component was removed
-   */
-  removeComponentByName(name: string) {
-    for (let [, cmp] of this.components) {
-      if (cmp.name === name) {
-        this.removeComponent(cmp);
-        return;
-      }
     }
   }
 
@@ -129,7 +118,7 @@ export default class GameObjectProxy {
    */
   findComponentByName<T extends Component>(name: string): T {
     for (let [, cmp] of this.components) {
-      if (cmp.constructor.name === name) {
+      if (cmp.name === name) {
         return cmp as T;
       }
     }
@@ -192,9 +181,11 @@ export default class GameObjectProxy {
    * Removes tag
    */
   removeTag(tag: string) {
-    this._tags.delete(tag);
-    if(this.isOnScene) {
-      this.scene._onTagRemoved(tag, this);
+    if(this._tags.has(tag)) {
+      this._tags.delete(tag);
+      if(this.isOnScene) {
+        this.scene._onTagRemoved(tag, this);
+      }
     }
   }
 
@@ -264,14 +255,15 @@ export default class GameObjectProxy {
    * Processes a new child
    */
   onChildAdded(object: GameObjectProxy) {
-    this.scene._addGameObject(object);
+    this.scene._onObjectAdded(object);
   }
 
   /**
    * Processes a removed child
    */
   onChildRemoved(object: GameObjectProxy) {
-    this.scene._removeGameObject(object);
+    object.removeAllComponents();
+    this.scene._onObjectRemoved(object);
   }
 
   update(delta: number, absolute: number) {
@@ -280,18 +272,20 @@ export default class GameObjectProxy {
 
     // update all my components
     for (let [, cmp] of this.components) {
-      if(cmp.frequency === 0) {
-        cmp._lastUpdate = absolute;
-        cmp.onUpdate(delta, absolute);
-      } else if(cmp._lastUpdate === undefined || (absolute - cmp._lastUpdate) >= 1000/cmp.frequency) {
-        cmp._lastUpdate = absolute;
-        cmp.onUpdate(delta, absolute);
+      if(cmp.isRunning) {
+        if(cmp.frequency === 0) { // update each frame
+          cmp.onUpdate(delta, absolute);
+          cmp._lastUpdate = absolute;
+        } else if((absolute - cmp._lastUpdate) >= 1000/cmp.frequency) {
+          cmp.onUpdate(absolute - cmp._lastUpdate, absolute);
+          cmp._lastUpdate = absolute; // update at given intervals
+        }
       }
     }
 
     // update all my children
     for (let child of this.pixiObj.children) {
-      let cmpChild = <PIXICmp.GameObject><any>child;
+      let cmpChild = <GameObject><any>child;
       if (cmpChild && cmpChild._proxy) { // some object may be regular PIXI objects, not PIXICmp
         cmpChild._proxy.update(delta, absolute);
       }
@@ -309,7 +303,13 @@ export default class GameObjectProxy {
     if(!this.isOnScene) {
       throw new Error('The object must be on the scene before its components are initialized');
     }
+    if(component.owner !== null) {
+      throw new Error(`The component ${component.name}:${component.id} seems to already have a game object assigned!`);
+    }
+    component.owner = this.pixiObj;
     this.components.set(component.id, component);
     this.scene._onComponentAdded(component, this);
+    component._isFinished = false;
+    component.onInit();
   }
 }

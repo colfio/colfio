@@ -1,43 +1,37 @@
 import GameLoop from './engine/game-loop';
 import Component from './engine/component';
-import { Messages, Attributes } from './engine/constants';
+import { Messages, Attributes, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './engine/constants';
 import Flags from './engine/flags';
 import GameObjectProxy from './engine/game-object-proxy';
 import Message from './engine/message';
-import { PIXICmp } from './engine/pixi-object';
-import PIXIBuilder from './engine/pixi-builder';
+import { GameObject, Container, ParticleContainer, Sprite, TilingSprite, Text, BitmapText, Graphics } from './engine/game-object';
+import Builder from './engine/builder';
 import Scene from './engine/scene';
-import { BaseAnimation, TranslateAnimation, RotationAnimation } from './components/animation';
-import ChainingComponent from './components/chaining-component';
-import ComposingComponent from './components/composing-component';
+import ChainComponent from './components/chain-component';
 import DebugComponent from './components/debug-component';
-import DynamicsComponent from './components/dynamics-component';
-import GenericComponent from './components/generic-component';
+import { GenericComponent } from './components/generic-component';
 import { KeyInputComponent, Keys } from './components/key-input-component';
+import { VirtualGamepadComponent, GamepadButtons, GamepadKeyMapper } from './components/virtual-gamepad-component';
 import { PointerInputComponent, PointerMessages } from './components/pointer-input-component';
-import Dynamics from './utils/dynamics';
-import { checkTime } from './utils/functions';
 import Vector from './utils/vector';
+import { QueryCondition, queryConditionCheck} from './utils/query-condition';
 
 export {
   GameLoop,
   Component,
-  Messages, Attributes,
+  Messages, Attributes, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage,
   Flags,
-  GameObjectProxy,
   Message,
-  PIXICmp,
-  PIXIBuilder,
+  GameObjectProxy,
+  GameObject, Container, ParticleContainer, Sprite, TilingSprite, Text, BitmapText, Graphics,
+  Builder,
   Scene,
-  BaseAnimation, TranslateAnimation, RotationAnimation,
-  ChainingComponent,
-  ComposingComponent,
+  ChainComponent,
   DebugComponent,
-  DynamicsComponent,
   GenericComponent,
   KeyInputComponent, Keys,
+  VirtualGamepadComponent, GamepadButtons, GamepadKeyMapper,
   PointerInputComponent, PointerMessages,
-  Dynamics,
-  checkTime,
-  Vector
+  Vector,
+  QueryCondition, queryConditionCheck,
 };

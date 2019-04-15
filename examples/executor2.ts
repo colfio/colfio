@@ -1,13 +1,11 @@
 import { TranslateAnimation, RotationAnimation } from '../src/components/Animation';
-import DebugComponent from '../src/components/debug-component';
-import GameObjectBuilder from '../src/engine/pixi-builder';
-import Executor from '../src/components/chaining-component';
+import GameObjectBuilder from '../src/engine/builder';
+import Executor from '../src/components/chain-component';
 import GameLoop from '../src/engine/game-loop';
-import { PIXICmp } from '../src/engine/pixi-object';
+import * as GameObject from '../src/engine/game-object';
 import Component from '../src/engine/Component';
 
 newGame(new GameLoop());
-
 
 // Start a new game
 function newGame(engine: GameLoop) {
@@ -21,11 +19,10 @@ function newGame(engine: GameLoop) {
     .build();
 
     obj.beginFill(0xfff012, 1);
-    obj.drawRect(0, 0, 100, 100);
+    obj.drawRect(-50, -50, 100, 100);
     obj.endFill();
 
-
-    engine.scene.stage.getPixiObj().addChild(obj);
+    engine.scene.stage.addChild(obj);
 
     obj.addComponent(new Executor()
     .beginRepeat(0)

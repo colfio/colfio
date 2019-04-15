@@ -3,9 +3,10 @@ import Message from './message';
 import Component from './component';
 import * as PIXI from 'pixi.js';
 import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './constants';
-import { PIXICmp } from './pixi-object';
+import { Container } from './game-object';
 import { LookupMap } from '../utils/lookup-map';
 import DebugComponent from '../components/debug-component';
+import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
 
 
 /**
@@ -49,21 +50,21 @@ export default class Scene {
   app: PIXI.Application;
   name: string;
   // PIXI stage object
-  stage: PIXICmp.GameObject = null;
+  stage: Container = null;
   // collection of actions that should be invoked with a delay
   private pendingInvocations: Invocation[];
   // message action keys and all subscribers that listens to all these actions
-  private subscribers: LookupMap<string, Component>;
+  private subscribers: LookupMap<string, Component> ;
   // game objects mapped by their flags
-  private gameObjectFlags: LookupMap<number, PIXICmp.GameObject>;
+  private gameObjectFlags: LookupMap<number, Container>;
   // game objects mapped by their state
-  private gameObjectStates: LookupMap<number, PIXICmp.GameObject>;
+  private gameObjectStates: LookupMap<number, Container>;
   // game objects mapped by their tags
-  private gameObjectTags: LookupMap<string, PIXICmp.GameObject>;
+  private gameObjectTags: LookupMap<string, Container>;
   // game objects mapped by their names
-  private gameObjectNames: LookupMap<string, PIXICmp.GameObject>;
+  private gameObjectNames: LookupMap<string, Container>;
   // collection of ALL game objects, mapped by their ids
-  private gameObjects: Map<number, PIXICmp.GameObject>;
+  private gameObjects: Map<number, Container>;
   // COMPONENT_ADDED event will not be fired if a new object is being added to the scene
   private componentNotifyDisabled = false;
   protected _currentDelta: number;
@@ -75,6 +76,8 @@ export default class Scene {
 
   constructor(name: string, app: PIXI.Application, config?: SceneConfig) {
     this.name = name;
+    this.subscribers = new LookupMap();
+    this.gameObjects = new Map();
 
     this.initConfig(config);
     this.app = app;
@@ -112,8 +115,8 @@ export default class Scene {
   /**
    * Tries to find a global component by its class
    */
-  findGlobalComponentByName(className: string): Component {
-    return this.stage.findComponentByName(className);
+  findGlobalComponentByName<T extends Component>(className: string): T {
+    return this.stage.findComponentByName<T>(className);
   }
 
   /**
@@ -126,7 +129,7 @@ export default class Scene {
   /**
    * Inserts a global attribute
    */
-  addGlobalAttribute(key: string, val: any) {
+  assignGlobalAttribute(key: string, val: any) {
     this.stage.assignAttribute(key, val);
   }
 
@@ -147,7 +150,7 @@ export default class Scene {
   /**
    * Gets object by its id
    */
-  getObjectById(id: number): PIXICmp.GameObject {
+  getObjectById(id: number): Container {
     if(this.gameObjects.has(id)) {
       return this.gameObjects.get(id);
     }
@@ -155,9 +158,23 @@ export default class Scene {
   }
 
   /**
+   * Finds all objects that meet specific condition
+   */
+  findObjectsByQuery(query: QueryCondition): Array<Container> {
+    let result: Container[] = [];
+    // linear complexity
+    for(let [,object] of this.gameObjects) {
+      if(queryConditionCheck(object, query)) {
+        result.push(object);
+      }
+    }
+    return result;
+  }
+
+  /**
    * Finds all game objects by their name
    */
-  findObjectsByName(name: string): Array<PIXICmp.GameObject> {
+  findObjectsByName(name: string): Array<Container> {
     if(!this.config.namesSearchEnabled) {
       throw new Error('Searching by name is not enabled. See SceneConfig');
     }
@@ -167,7 +184,7 @@ export default class Scene {
   /**
    * Finds a first object with a given name
    */
-  findObjectByName(name: string): PIXICmp.GameObject {
+  findObjectByName(name: string): Container {
     if(!this.config.namesSearchEnabled) {
       throw new Error('Searching by name is not enabled. See SceneConfig');
     }
@@ -177,7 +194,7 @@ export default class Scene {
   /**
    * Finds all game objects by their tag
    */
-  findObjectsByTag(tag: string): Array<PIXICmp.GameObject> {
+  findObjectsByTag(tag: string): Array<Container> {
     if(!this.config.tagsSearchEnabled) {
       throw new Error('Searching by tag is not enabled. See SceneConfig');
     }
@@ -187,7 +204,7 @@ export default class Scene {
   /**
    * Finds a first object with a given tag
    */
-  findObjectByTag(tag: string): PIXICmp.GameObject {
+  findObjectByTag(tag: string): Container {
     if(!this.config.tagsSearchEnabled) {
       throw new Error('Searching by tag is not enabled. See SceneConfig');
     }
@@ -197,7 +214,7 @@ export default class Scene {
   /**
    * Finds all game objects by their flag
    */
-  findObjectsByFlag(flag: number): Array<PIXICmp.GameObject> {
+  findObjectsByFlag(flag: number): Array<Container> {
     if(!this.config.flagsSearchEnabled) {
       throw new Error('Searching by flags is not enabled. See SceneConfig');
     }
@@ -207,7 +224,7 @@ export default class Scene {
   /**
    * Finds a first object with a given flag
    */
-  findObjectByFlag(flag: number): PIXICmp.GameObject {
+  findObjectByFlag(flag: number): Container {
     if(!this.config.flagsSearchEnabled) {
       throw new Error('Searching by flags is not enabled. See SceneConfig');
     }
@@ -217,7 +234,7 @@ export default class Scene {
   /**
    * Finds all game objects by their state
    */
-  findObjectsByState(state: number): Array<PIXICmp.GameObject> {
+  findObjectsByState(state: number): Array<Container> {
     if(!this.config.statesSearchEnabled) {
       throw new Error('Searching by states is not enabled. See SceneConfig');
     }
@@ -227,7 +244,7 @@ export default class Scene {
   /**
    * Finds a first object with a given state
    */
-  findObjectByState(state: number): PIXICmp.GameObject {
+  findObjectByState(state: number): Container {
     if(!this.config.statesSearchEnabled) {
       throw new Error('Searching by states is not enabled. See SceneConfig');
     }
@@ -240,7 +257,8 @@ export default class Scene {
    */
   sendMessage(msg: Message) {
     this.subscribers.findAll(msg.action).forEach(ent => {
-      if(!msg.expired) {
+      // don't send message to its own sender
+      if(!msg.expired && (msg.component == null || msg.component.id !== ent.id)) {
         ent.onMessage(msg);
       }
     });
@@ -253,14 +271,16 @@ export default class Scene {
    * Removes all objects from scene
    */
   clearScene(newConfig?: SceneConfig) {
-    if (this.gameObjects != null) {
-      this.sendMessage(new Message(Messages.SCENE_CLEAR, null, null, this.name));
-      // call the finalization function of all components
-      for (let [, gameObj] of this.gameObjects) {
-        for (let [, component] of gameObj._proxy.rawComponents) {
+    this.sendMessage(new Message(Messages.SCENE_CLEAR, null, null, this.name));
+    // call the finalization function of all components
+    for (let [, gameObj] of this.gameObjects) {
+      for (let [, component] of gameObj._proxy.rawComponents) {
+        if(component.isRunning) {
+          component._isFinished = true;
           component.onFinish();
-          component.onRemove();
         }
+        component.onRemove();
+        component.owner = null;
       }
     }
 
@@ -269,27 +289,43 @@ export default class Scene {
     }
 
     // reinitialize everything
-    this.subscribers = new LookupMap();
+    this.subscribers.clear();
     if(this.config.namesSearchEnabled) {
-      this.gameObjectNames = new LookupMap();
+      if(this.gameObjectNames) {
+        this.gameObjectNames.clear();
+      } else {
+        this.gameObjectNames = new LookupMap();
+      }
     }
     if(this.config.statesSearchEnabled) {
-      this.gameObjectStates = new LookupMap();
+      if(this.gameObjectStates) {
+        this.gameObjectStates.clear();
+      } else {
+        this.gameObjectStates = new LookupMap();
+      }
     }
     if(this.config.tagsSearchEnabled) {
-      this.gameObjectTags = new LookupMap();
+      if(this.gameObjectTags) {
+        this.gameObjectTags.clear();
+      } else {
+        this.gameObjectTags = new LookupMap();
+      }
     }
     if(this.config.flagsSearchEnabled) {
-      this.gameObjectFlags = new LookupMap();
+      if(this.gameObjectFlags) {
+        this.gameObjectFlags.clear();
+      } else {
+        this.gameObjectFlags = new LookupMap();
+      }
     }
 
     this.sceneCleared = true;
-    this.gameObjects = new Map();
+    this.gameObjects.clear();
     this.pendingInvocations = [];
     this._currentDelta = this._currentAbsolute = 0;
 
-    let newStage = new PIXICmp.Container('stage');
-    this.app.stage = newStage; // reassign the default stage with our custom one (we need objects from PIXICmp namespace only)
+    let newStage = new Container('stage');
+    this.app.stage = newStage; // reassign the default stage with our custom one (we need objects from namespace only)
     newStage._proxy.scene = this; // assign a scene
     this.stage = newStage;
 
@@ -297,7 +333,7 @@ export default class Scene {
       this.addGlobalComponent(new DebugComponent(), true);
     }
 
-    this._addGameObject(newStage._proxy);
+    this._onObjectAdded(newStage._proxy);
   }
 
   // ===============================================================================
@@ -346,8 +382,8 @@ export default class Scene {
     this.subscribers.remove(msgKey, component);
   }
 
-  _addGameObject(obj: GameObjectProxy) {
-    let pixiObj = obj.cmpObj;
+  _onObjectAdded(obj: GameObjectProxy) {
+    let pixiObj = obj.pixiObj;
     // fill all collections
     if(this.config.namesSearchEnabled) {
       this.gameObjectNames.insert(pixiObj.name, pixiObj);
@@ -365,7 +401,7 @@ export default class Scene {
       this.gameObjectStates.insert(pixiObj.stateId, pixiObj);
     }
 
-    this.gameObjects.set(obj.id, obj.cmpObj);
+    this.gameObjects.set(obj.id, obj.pixiObj);
 
     // assign scene
     obj.scene = this;
@@ -377,10 +413,8 @@ export default class Scene {
     this.sendMessage(new Message(Messages.OBJECT_ADDED, null, pixiObj));
   }
 
-  // immediately removes given game object
-  _removeGameObject(obj: GameObjectProxy) {
-    obj.removeAllComponents();
-    let gameObj = obj.cmpObj;
+  _onObjectRemoved(obj: GameObjectProxy) {
+    let gameObj = obj.pixiObj;
 
     if(this.config.namesSearchEnabled) {
       this.gameObjectNames.remove(gameObj.name, gameObj);
@@ -405,27 +439,25 @@ export default class Scene {
   }
 
   _onComponentAdded(component: Component, obj: GameObjectProxy) {
-    component.owner = obj.cmpObj;
     component.scene = this;
-    component.onInit();
     if(!this.componentNotifyDisabled) {
-      this.sendMessage(new Message(Messages.COMPONENT_ADDED, component, obj.cmpObj));
+      this.sendMessage(new Message(Messages.COMPONENT_ADDED, component, obj.pixiObj));
     }
   }
 
   _onComponentRemoved(component: Component, obj: GameObjectProxy) {
     this.subscribers.removeItem(component);
-    this.sendMessage(new Message(Messages.COMPONENT_REMOVED, component, obj.cmpObj));
+    this.sendMessage(new Message(Messages.COMPONENT_REMOVED, component, obj.pixiObj));
   }
 
   _onStateChanged(previous: number, current: number, obj: GameObjectProxy) {
     if(this.config.statesSearchEnabled) {
-      this.gameObjectStates.remove(previous, obj.cmpObj);
-      this.gameObjectStates.insert(current, obj.cmpObj);
+      this.gameObjectStates.remove(previous, obj.pixiObj);
+      this.gameObjectStates.insert(current, obj.pixiObj);
     }
     if(this.config.notifyStateChanges) {
       let data: StateChangeMessage = { previous, current };
-      this.sendMessage(new Message(Messages.STATE_CHANGED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.STATE_CHANGED, null, obj.pixiObj, data));
     }
   }
 
@@ -437,7 +469,7 @@ export default class Scene {
         previousValue: null,
         currentValue: value
       };
-      this.sendMessage(new Message(Messages.ATTRIBUTE_ADDED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.ATTRIBUTE_ADDED, null, obj.pixiObj, data));
     }
   }
 
@@ -449,7 +481,7 @@ export default class Scene {
         previousValue: previousValue,
         currentValue: currentValue
       };
-      this.sendMessage(new Message(Messages.ATTRIBUTE_CHANGED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.ATTRIBUTE_CHANGED, null, obj.pixiObj, data));
     }
   }
 
@@ -461,41 +493,41 @@ export default class Scene {
         previousValue: value,
         currentValue: null
       };
-      this.sendMessage(new Message(Messages.ATTRIBUTE_REMOVED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.ATTRIBUTE_REMOVED, null, obj.pixiObj, data));
     }
   }
 
   _onFlagChanged(flag: number, set: boolean, obj: GameObjectProxy) {
     if(this.config.flagsSearchEnabled) {
       if(set) {
-        this.gameObjectFlags.insert(flag, obj.cmpObj);
+        this.gameObjectFlags.insert(flag, obj.pixiObj);
       } else {
-        this.gameObjectFlags.remove(flag, obj.cmpObj);
+        this.gameObjectFlags.remove(flag, obj.pixiObj);
       }
     }
     if(this.config.notifyFlagChanges) {
       let data: FlagChangeMessage = { flag, isSet: set };
-      this.sendMessage(new Message(Messages.FLAG_CHANGED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.FLAG_CHANGED, null, obj.pixiObj, data));
     }
   }
 
   _onTagAdded(tag: string, obj: GameObjectProxy) {
     if(this.config.tagsSearchEnabled) {
-      this.gameObjectTags.insert(tag, obj.cmpObj);
+      this.gameObjectTags.insert(tag, obj.pixiObj);
     }
     if(this.config.notifyTagChanges) {
       let data: TagChangeMessage = { tag, type: Messages.TAG_ADDED };
-      this.sendMessage(new Message(Messages.TAG_ADDED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.TAG_ADDED, null, obj.pixiObj, data));
     }
   }
 
   _onTagRemoved(tag: string, obj: GameObjectProxy) {
     if(this.config.tagsSearchEnabled) {
-      this.gameObjectTags.remove(tag, obj.cmpObj);
+      this.gameObjectTags.remove(tag, obj.pixiObj);
     }
     if(this.config.notifyTagChanges) {
       let data: TagChangeMessage = { tag, type: Messages.TAG_REMOVED };
-      this.sendMessage(new Message(Messages.TAG_REMOVED, null, obj.cmpObj, data));
+      this.sendMessage(new Message(Messages.TAG_REMOVED, null, obj.pixiObj, data));
     }
   }
 

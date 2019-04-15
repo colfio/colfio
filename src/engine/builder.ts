@@ -1,5 +1,5 @@
 import Scene from './scene';
-import { PIXICmp } from './pixi-object';
+import { Text, Sprite, Graphics, BitmapText, Container, ParticleContainer, TilingSprite, GameObject } from './game-object';
 import Component from './component';
 import * as PIXI from 'pixi.js';
 import { Vector } from '..';
@@ -35,7 +35,7 @@ class ObjectParameters {
 /**
  * Builder for PIXI objects from given attributes
  */
-export default class PIXIBuilder {
+export default class Builder {
 
   private scene: Scene;
   private locPosX?: number;
@@ -50,15 +50,15 @@ export default class PIXIBuilder {
   private absPosY?: number;
   private scaleX?: number;
   private scaleY?: number;
-  private children: PIXIBuilder[];
+  private children: Builder[];
   private components;
   private componentBuilders: Func<void, Component>[];
   private attributes: Map<string, any>;
   private flags: number[];
   private tags: Set<string>;
   private state?: number;
-  private parent?: PIXICmp.GameObject;
-  private existingObject?: PIXICmp.GameObject;
+  private parent?: Container;
+  private existingObject?: Container;
   private parameters?: ObjectParameters;
   private type: ObjectType = ObjectType.Container; // type of object being built
 
@@ -70,7 +70,7 @@ export default class PIXIBuilder {
   /**
    * Sets an anchor
    */
-  anchor(x: number | Vector, y?: number): PIXIBuilder {
+  anchor(x: number | Vector, y?: number): Builder {
     if(typeof(x) === 'number') {
       this.anchorX = x;
       if (y != null) {
@@ -88,7 +88,7 @@ export default class PIXIBuilder {
   /**
    * Sets a virtual anchor (only moves the object, will not change the pivot)
    */
-  virtualAnchor(x: number | Vector, y?: number): PIXIBuilder {
+  virtualAnchor(x: number | Vector, y?: number): Builder {
     if(typeof(x) === 'number') {
       this.virtAnchorX = x;
       if (y != null) {
@@ -106,7 +106,7 @@ export default class PIXIBuilder {
   /**
    * Sets position relative to the screen ([0,0] for topleft corner, [1,1] for bottomright corner)
    */
-  relativePos(x: number | Vector, y?: number): PIXIBuilder {
+  relativePos(x: number | Vector, y?: number): Builder {
     if(typeof(x) === 'number') {
       this.relPosX = x;
       if (y != null) {
@@ -124,7 +124,7 @@ export default class PIXIBuilder {
   /**
    * Sets local position
    */
-  localPos(x: number | Vector, y?: number): PIXIBuilder {
+  localPos(x: number | Vector, y?: number): Builder {
     if(typeof(x) === 'number') {
       this.locPosX = x;
       if (y != null) {
@@ -143,7 +143,7 @@ export default class PIXIBuilder {
   /**
    * Sets global position
    */
-  globalPos(x: number | Vector, y?: number): PIXIBuilder {
+  globalPos(x: number | Vector, y?: number): Builder {
     if(typeof(x) === 'number') {
       this.absPosX = x;
       if (y != null) {
@@ -159,7 +159,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  scale(x: number | Vector, y?: number): PIXIBuilder {
+  scale(x: number | Vector, y?: number): Builder {
     if(typeof(x) === 'number') {
       this.scaleX = x;
       if (y != null) {
@@ -178,7 +178,7 @@ export default class PIXIBuilder {
   /**
    * Adds an attribute for building
    */
-  withAttribute(key: string, val: any): PIXIBuilder {
+  withAttribute(key: string, val: any): Builder {
     this.attributes.set(key, val);
     return this;
   }
@@ -187,7 +187,7 @@ export default class PIXIBuilder {
    * Adds either a component or an arrow function that returns this component
    * Use arrow function if you want to use this builder for the same object more than once.
    */
-  withComponent(cmp: Component | Func<void, Component>): PIXIBuilder {
+  withComponent(cmp: Component | Func<void, Component>): Builder {
     if(cmp instanceof Component) {
       this.components.push(cmp);
     } else {
@@ -196,38 +196,32 @@ export default class PIXIBuilder {
     return this;
   }
 
-  withFlag(index: number): PIXIBuilder {
+  withFlag(index: number): Builder {
     this.flags.push(index);
     return this;
   }
 
-  withState(state: number): PIXIBuilder {
+  withState(state: number): Builder {
     this.state = state;
     return this;
   }
 
-  withTag(tag: string): PIXIBuilder {
+  withTag(tag: string): Builder {
     this.tags.add(tag);
     return this;
   }
 
-  withParent(parent: PIXICmp.GameObject): PIXIBuilder {
+  withParent(parent: Container): Builder {
     this.parent = parent;
     return this;
   }
 
-  withChild(child: PIXIBuilder): PIXIBuilder {
+  withChild(child: Builder): Builder {
     this.children.push(child);
     return this;
   }
 
-  withExistingObject(obj: PIXICmp.GameObject): PIXIBuilder {
-    this.existingObject = obj;
-    return this;
-  }
-
-
-  asContainer(name: string = ''): PIXIBuilder {
+  asContainer(name: string = ''): Builder {
     this.type = ObjectType.Container;
     this.parameters = {
       name
@@ -235,7 +229,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  asGraphics(name: string = ''): PIXIBuilder {
+  asGraphics(name: string = ''): Builder {
     this.type = ObjectType.Graphics;
     this.parameters = {
       name
@@ -243,7 +237,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  asParticleContainer(name: string = ''): PIXIBuilder {
+  asParticleContainer(name: string = ''): Builder {
     this.type = ObjectType.ParticleContainer;
     this.parameters = {
       name
@@ -251,7 +245,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  asSprite(texture: PIXI.Texture, name: string = ''): PIXIBuilder {
+  asSprite(texture: PIXI.Texture, name: string = ''): Builder {
     this.type = ObjectType.Sprite;
     this.parameters = {
       name, texture,
@@ -259,7 +253,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  asTilingSprite(texture: PIXI.Texture, width: number, height: number, name: string = ''): PIXIBuilder {
+  asTilingSprite(texture: PIXI.Texture, width: number, height: number, name: string = ''): Builder {
     this.type = ObjectType.TilingSprite;
     this.parameters = {
       name, texture, width, height
@@ -267,7 +261,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  asText(name: string = '', text: string = '', fontStyle?: PIXI.TextStyle): PIXIBuilder {
+  asText(name: string = '', text: string = '', fontStyle?: PIXI.TextStyle): Builder {
     this.type = ObjectType.Text;
     this.parameters = {
       name, text, fontStyle
@@ -275,7 +269,7 @@ export default class PIXIBuilder {
     return this;
   }
 
-  asBitmapText(name: string = '', text: string = '', fontName: string, fontSize: number, fontColor: number): PIXIBuilder {
+  asBitmapText(name: string = '', text: string = '', fontName: string, fontSize: number, fontColor: number): Builder {
     this.type = ObjectType.BitmapText;
     this.parameters = {
       name, text, fontName, fontSize, fontColor
@@ -283,34 +277,41 @@ export default class PIXIBuilder {
     return this;
   }
 
-  build<T extends PIXICmp.GameObject>(clearData: boolean = true): T {
-    let object: PIXICmp.GameObject;
+  buildInto(existingObject: Container, clearData: boolean = true) {
+    this.existingObject = existingObject;
+    let output = this.build(clearData);
+    this.existingObject = null;
+    return output;
+  }
+
+  build<T extends Container>(clearData: boolean = true): T {
+    let object: GameObject;
 
     if(this.existingObject !== null) {
       object = this.existingObject;
     } else {
       switch(this.type) {
         case ObjectType.Container:
-          object = new PIXICmp.Container(this.parameters.name);
+          object = new Container(this.parameters.name);
           break;
         case ObjectType.Graphics:
-            object = new PIXICmp.Graphics(this.parameters.name);
+            object = new Graphics(this.parameters.name);
           break;
         case ObjectType.ParticleContainer:
-            object = new PIXICmp.ParticleContainer(this.parameters.name);
+            object = new ParticleContainer(this.parameters.name);
           break;
         case ObjectType.Sprite:
-            object = new PIXICmp.Sprite(this.parameters.name, this.parameters.texture.clone());
+            object = new Sprite(this.parameters.name, this.parameters.texture.clone());
           break;
         case ObjectType.TilingSprite:
-            object = new PIXICmp.TilingSprite(this.parameters.name, this.parameters.texture.clone(), this.parameters.width, this.parameters.height);
+            object = new TilingSprite(this.parameters.name, this.parameters.texture.clone(), this.parameters.width, this.parameters.height);
           break;
         case ObjectType.Text:
-            object = new PIXICmp.Text(this.parameters.name, this.parameters.text);
-            (object as PIXICmp.Text).style = this.parameters.fontStyle;
+            object = new Text(this.parameters.name, this.parameters.text);
+            (object as Text).style = this.parameters.fontStyle;
           break;
         case ObjectType.BitmapText:
-            object = new PIXICmp.BitmapText(this.parameters.name, this.parameters.text, this.parameters.fontName, this.parameters.fontSize, this.parameters.fontColor);
+            object = new BitmapText(this.parameters.name, this.parameters.text, this.parameters.fontName, this.parameters.fontSize, this.parameters.fontColor);
           break;
       }
     }
@@ -338,7 +339,7 @@ export default class PIXIBuilder {
       object.setFlag(flag);
     }
 
-    if (this.state != null) {
+    if (this.state !== null) {
       object.stateId = this.state;
     }
 
@@ -346,103 +347,103 @@ export default class PIXIBuilder {
       this.tags.forEach(tag => object.addTag(tag));
     }
 
-    if (this.parent != null) {
+    if (this.parent !== null) {
       this.parent.pixiObj.addChild(object.pixiObj);
     }
 
     // now, when this object is already assigned to its parent, we can build children
     for(let child of this.children) {
-      let newChild = child.withParent(object).build(clearData);
+      let newChild = child.withParent(<Container><any>object).build(clearData);
       object.pixiObj.addChild(newChild.pixiObj);
     }
 
     let pixiObj = object.pixiObj;
 
-    if (this.scaleX != null) {
+    if (this.scaleX !== null) {
       pixiObj.scale.x = this.scaleX;
     }
 
-    if (this.scaleY != null) {
+    if (this.scaleY !== null) {
       pixiObj.scale.y = this.scaleY;
     }
 
-    if (this.relPosX != null) {
+    if (this.relPosX !== null) {
       let point = new PIXI.Point();
       point.x = this.relPosX * this.scene.app.screen.width;
       pixiObj.position.x = pixiObj.toLocal(point).x;
-      if (this.scaleX != null) {
+      if (this.scaleX !== null) {
         pixiObj.position.x *= this.scaleX;
       }
     }
 
-    if (this.relPosY != null) {
+    if (this.relPosY !== null) {
       let point = new PIXI.Point();
       point.y = this.relPosY * this.scene.app.screen.height;
       pixiObj.position.y = pixiObj.toLocal(point).y;
-      if (this.scaleY != null) {
+      if (this.scaleY !== null) {
         pixiObj.position.y *= this.scaleY;
       }
     }
 
     // if the local position is set along with relative position, it will be treated as an offset
-    if (this.locPosX != null) {
-      if(this.relPosX != null) {
+    if (this.locPosX !== null) {
+      if(this.relPosX !== null) {
         pixiObj.position.x += this.locPosX;
       } else {
         pixiObj.position.x = this.locPosX;
       }
     }
 
-    if (this.locPosY != null) {
-      if(this.relPosY != null) {
+    if (this.locPosY !== null) {
+      if(this.relPosY !== null) {
         pixiObj.position.y += this.locPosY;
       } else {
         pixiObj.position.y = this.locPosY;
       }
     }
 
-    if (this.absPosX != null) {
+    if (this.absPosX !== null) {
       let point = new PIXI.Point();
       point.x = this.absPosX;
       pixiObj.position.x = pixiObj.toLocal(point, this.scene.stage.pixiObj).x;
-      if (this.scaleX != null) {
+      if (this.scaleX !== null) {
         pixiObj.position.x *= this.scaleX;
       }
     }
 
-    if (this.absPosY != null) {
+    if (this.absPosY !== null) {
       let point = new PIXI.Point();
       point.y = this.absPosY;
       pixiObj.position.y = pixiObj.toLocal(point, this.scene.stage.pixiObj).y;
-      if (this.scaleY != null) {
+      if (this.scaleY !== null) {
         pixiObj.position.y *= this.scaleY;
       }
     }
 
-    if (this.anchorX != null) {
+    if (this.anchorX !== null) {
       // sprites and texts have anchors
-      if (pixiObj instanceof PIXICmp.Sprite || pixiObj instanceof PIXICmp.Text) {
+      if (pixiObj instanceof Sprite || pixiObj instanceof Text) {
         pixiObj.anchor.x = this.anchorX;
       } else {
         pixiObj.pivot.x = this.anchorX * pixiObj.width;
       }
     }
 
-    if (this.anchorY != null) {
+    if (this.anchorY !== null) {
       // sprites and texts have anchors
-      if (pixiObj instanceof PIXICmp.Sprite || pixiObj instanceof PIXICmp.Text) {
+      if (pixiObj instanceof Sprite || pixiObj instanceof Text) {
         pixiObj.anchor.y = this.anchorY;
       } else {
         pixiObj.pivot.y = this.anchorY * pixiObj.height;
       }
     }
 
-    if (this.virtAnchorX != null) {
+    if (this.virtAnchorX !== null) {
       let anchor = this.virtAnchorX - (this.anchorX === null ? 0 : this.anchorX);
       pixiObj.position.x -= anchor * pixiObj.width;
     }
 
-    if(this.virtAnchorY != null) {
+    if(this.virtAnchorY !== null) {
       let anchor = this.virtAnchorY - (this.anchorY === null ? 0 : this.anchorY);
       pixiObj.position.y -= anchor * pixiObj.height;
     }
@@ -453,7 +454,7 @@ export default class PIXIBuilder {
     return object as T;
   }
 
-  clear() {
+  clear(): Builder {
     this.locPosX = null;
     this.locPosY = null;
     this.anchorX = null;
@@ -479,5 +480,7 @@ export default class PIXIBuilder {
     this.parameters = {
       name: ''
     };
+
+    return this;
   }
 }

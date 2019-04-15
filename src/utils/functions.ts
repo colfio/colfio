@@ -35,22 +35,3 @@ export const resizeContainer = (container: HTMLElement, virtualWidth: number, vi
   container.style.setProperty('top', topPos + 'px');
   container.style.setProperty('left', ((scale - 1) * virtualWidth / 2 + (window.innerWidth - virtualWidth * scale) / 2) + 'px');
 };
-
-/**
- * Randomly sorts an array
- */
-export const shuffle = (arr: Array<any>) => {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-};
-
-
-/**
- * Returns true if given time has already reached or exceeded certain period
- */
-export const checkTime = (lastTime: number, time: number, frequency: number) => {
-  return (time - lastTime) > 1000 / frequency;
-};

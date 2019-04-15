@@ -1,6 +1,6 @@
 import Message from './message';
 import Scene from './scene';
-import { PIXICmp } from './pixi-object';
+import { Container } from './game-object';
 
 /**
  * Component that defines a functional behavior of an entity which is attached to
@@ -8,16 +8,17 @@ import { PIXICmp } from './pixi-object';
 export default class Component {
 
   // owner object of this component
-  owner: PIXICmp.GameObject = null;
+  owner: Container = null;
   // link to scene
   scene: Scene = null;
   // update frequency each second (0 is for each frame)
   frequency: number;
+  removeWhenFinished = true;
   // number of last update, is set automatically by its owner
   _lastUpdate: number;
-
+  _isFinished = false;
   private static idCounter = 0;
-  private isFinished = false;
+
 
   // auto-incremented id
   protected _id = 0;
@@ -26,6 +27,7 @@ export default class Component {
   constructor() {
     this._id = Component.idCounter++;
     this.frequency = 0; // 0 is for each frame
+    this._lastUpdate = 0;
   }
 
   public get id() {
@@ -37,7 +39,11 @@ export default class Component {
   }
 
   public get isRunning() {
-    return !this.isFinished;
+    return !this._isFinished;
+  }
+
+  public get isFinished() {
+    return this._isFinished;
   }
 
   /**
@@ -78,8 +84,7 @@ export default class Component {
   /**
    * Subscribes itself as a listener for action with given key
    */
-  subscribe(action: string, ...actions: string[]) {
-    this.scene._subscribeComponent(action, this);
+  subscribe(...actions: string[]) {
     for (let action of actions) {
       this.scene._subscribeComponent(action, this);
     }
@@ -103,10 +108,10 @@ export default class Component {
    * Detaches component from scene
    */
   finish() {
-    this.owner.removeComponent(this);
     this.onFinish();
-    this.isFinished = true;
+    this._isFinished = true;
+    if(this.removeWhenFinished) {
+      this.owner.removeComponent(this);
+    }
   }
 }
-
-

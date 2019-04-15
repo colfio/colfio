@@ -1,5 +1,5 @@
 import Component from './component';
-import { PIXICmp } from './pixi-object';
+import { Container } from './game-object';
 
 /**
  * Message that stores type of action, a relevant component, a relevant game object and custom data if needed
@@ -10,6 +10,11 @@ export default class Message {
    * Data payload
    */
   data: any = null;
+
+  /*
+   * If any handler sets this flag to true, the message will no longer be handled
+   */
+  expired: boolean = false;
 
   /**
    * Action type identifier
@@ -24,26 +29,13 @@ export default class Message {
   /**
    * GameObject attached to this message
    */
-  private _gameObject: PIXICmp.GameObject = null;
+  private _gameObject: Container = null;
 
-  /*
-   * If any handler sets this flag to true, the message will no longer be handled
-   */
-  private _expired: boolean = false;
-
-  constructor(action: string, component: Component, gameObject: PIXICmp.GameObject, data: any = null) {
+  constructor(action: string, component?: Component, gameObject?: Container, data: any = null) {
     this._action = action;
     this._component = component;
     this._gameObject = gameObject;
     this.data = data;
-  }
-
-  get expired() {
-    return this._expired;
-  }
-
-  expire() {
-    this._expired = true;
   }
 
   get action() {

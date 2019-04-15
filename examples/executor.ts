@@ -1,9 +1,9 @@
 import { TranslateAnimation, RotationAnimation } from '../src/components/Animation';
 import DebugComponent from '../src/components/debug-component';
-import GameObjectBuilder from '../src/engine/pixi-builder';
-import Executor from '../src/components/chaining-component';
+import GameObjectBuilder from '../src/engine/builder';
+import Executor from '../src/components/chain-component';
 import GameLoop from '../src/engine/game-loop';
-import { PIXICmp } from '../src/engine/pixi-object';
+import * as GameObject from '../src/engine/game-object';
 import Component from '../src/engine/Component';
 
 newGame(new GameLoop());
@@ -26,13 +26,9 @@ function newGame(engine: GameLoop) {
     obj.addComponent(new Executor()
     .beginInterval(1)
     .execute((cmp) => cmp.addComponentAndWait(new TranslateAnimation(100, 100, 200, 100, 1000)))
-    .removePrevious()
     .execute((cmp) => cmp.addComponentAndWait(new TranslateAnimation(200, 100, 200, 200, 1000)))
-    .removePrevious()
     .execute((cmp) => cmp.addComponentAndWait(new TranslateAnimation(200, 200, 100, 200, 1000)))
-    .removePrevious()
     .execute((cmp) => cmp.addComponentAndWait(new TranslateAnimation(100, 200, 100, 100, 1000)))
-    .removePrevious()
     .endInterval());
 }
 
