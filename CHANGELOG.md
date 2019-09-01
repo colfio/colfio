@@ -2,6 +2,10 @@
 All notable changes to this project/subject will be documented in this file.
 
 
+## [0.1.7] - 2019-09-01
+### Changed
+- Added minor functional adjustments to the gameloop
+
 ## [0.1.6] - 2019-04-15
 ### Added
 - Virtual gamepad

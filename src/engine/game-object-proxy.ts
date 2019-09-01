@@ -277,7 +277,8 @@ export default class GameObjectProxy {
           cmp.onUpdate(delta, absolute);
           cmp._lastUpdate = absolute;
         } else if((absolute - cmp._lastUpdate) >= 1000/cmp.frequency) {
-          cmp.onUpdate(absolute - cmp._lastUpdate, absolute);
+          let delta = cmp._lastUpdate === 0 ? 1000 / cmp.frequency : (absolute - cmp._lastUpdate);
+          cmp.onUpdate(delta, absolute);
           cmp._lastUpdate = absolute; // update at given intervals
         }
       }

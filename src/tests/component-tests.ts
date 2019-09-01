@@ -220,7 +220,7 @@ class ChainComponentTest extends BaseTest {
       .waitForMessage('TOKEN')
       .endRepeat()
       .execute((cmp) => {
-        onFinish('Chain component repeat test', tokens === 2 ? 'OK' : 'FAILURE', tokens === 2);
+        scene.invokeWithDelay(0, () => onFinish('Chain component repeat test', tokens === 2 ? 'OK' : 'FAILURE', tokens === 2));
       })
     );
 
@@ -247,7 +247,7 @@ class ChainComponentTest2 extends BaseTest {
       .execute(() => whileTokens++)
       .endWhile()
       .execute((cmp) => {
-        onFinish('Chain component repeat test 2', tokens === 2 ? 'OK' : 'FAILURE', tokens === 2);
+        scene.invokeWithDelay(0, () => onFinish('Chain component repeat test 2', tokens === 2 ? 'OK' : 'FAILURE', tokens === 2));
       })
     );
 
@@ -262,7 +262,7 @@ class ChainComponentTest3 extends BaseTest {
       .waitForMessage('TOKEN')
       .execute((cmp) => {
         finished = true;
-        onFinish('Chain component repeat test 3', 'OK', true);
+        scene.invokeWithDelay(0, () => onFinish('Chain component repeat test 3', 'OK', true));
       })
     );
 
@@ -271,6 +271,38 @@ class ChainComponentTest3 extends BaseTest {
       scene.invokeWithDelay(1000, () => {
         if(!finished) {
           onFinish('Chain component repeat test 3', 'TIMEOUT', false);
+        }
+      });
+    });
+    this.loop(scene, ticker);
+  }
+}
+// ============================================================================================================
+class ChainComponentTest4 extends BaseTest {
+  executeTest(scene: Scene, ticker: Ticker, onFinish: (test: string, result: string, success: boolean) => void) {
+
+    let finished = false;
+    let token = 0;
+
+    let cmpGenerator = () => new GenericComponent('generic').doOnMessage('STOP', (cmp, msg) =>  {
+      token++;
+      cmp.finish();
+    });
+
+    scene.addGlobalComponent(new ChainComponent()
+      .addComponentsAndWait([cmpGenerator(), cmpGenerator(), cmpGenerator()]) // add 3 components and wait when all of them finish
+      .execute((cmp) => {
+        finished = true;
+        let success = token === 3;
+        scene.invokeWithDelay(0, () => onFinish('Chain component wait for 3 components', success ? 'OK' : 'FAILURE, expected 3, got ' + token, success));
+      })
+    );
+
+    scene.invokeWithDelay(500, () => {
+      scene.sendMessage(new Message('STOP'));
+      scene.invokeWithDelay(500, () => {
+        if(!finished) {
+          onFinish('Chain component wait for 3 components', 'TIMEOUT', false);
         }
       });
     });
@@ -287,7 +319,7 @@ class ChainComponentConditionalTest extends BaseTest {
       .waitForMessageConditional('TOKEN', { ownerState: 22, ownerFlag: 12 })
       .execute((cmp) => {
         finished = true;
-        onFinish('Chain component conditional test', 'OK', true);
+        scene.invokeWithDelay(0, () => onFinish('Chain component conditional test', 'OK', true));
       })
     );
 
@@ -296,7 +328,7 @@ class ChainComponentConditionalTest extends BaseTest {
 
       scene.invokeWithDelay(1000, () => {
         if(!finished) {
-          onFinish('Chain component conditional test', 'TIMEOUT', false);
+          scene.invokeWithDelay(0, () => onFinish('Chain component conditional test', 'TIMEOUT', false));
         }
       });
     });
@@ -315,7 +347,7 @@ class BuilderTest extends BaseTest {
       finishedComponents++;
       if(finishedComponents === 100) {
         // we have all
-        onFinish('Builder test', 'OK', true);
+        scene.invokeWithDelay(0, () => onFinish('Builder test', 'OK', true));
       }
     }));
 
@@ -751,6 +783,7 @@ class ComponentTests {
     new ChainComponentTest(),
     new ChainComponentTest2(),
     new ChainComponentTest3(),
+    new ChainComponentTest4(),
     new ChainComponentConditionalTest(),
     new BuilderTest(),
     new BuilderTest2(),

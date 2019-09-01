@@ -65,14 +65,16 @@ export default class Scene {
   private gameObjectNames: LookupMap<string, Container>;
   // collection of ALL game objects, mapped by their ids
   private gameObjects: Map<number, Container>;
+  // indicator if the scene is just being updated
+  private updating: boolean;
   // COMPONENT_ADDED event will not be fired if a new object is being added to the scene
   private componentNotifyDisabled = false;
-  protected _currentDelta: number;
-  protected _currentAbsolute: number;
+  private _currentDelta: number;
+  private _currentAbsolute: number;
 
-  protected config: SceneConfig;
+  private config: SceneConfig;
   // indicator that will be reset upon first update
-  protected sceneCleared: boolean;
+  private sceneCleared: boolean;
 
   constructor(name: string, app: PIXI.Application, config?: SceneConfig) {
     this.name = name;
@@ -268,9 +270,20 @@ export default class Scene {
   }
 
   /**
+   * Removes all objects from scene at the end of current update loop
+   */
+  clearSceneAsync(newConfig?: SceneConfig) {
+    this.invokeWithDelay(0, () => this.clearScene(newConfig));
+  }
+
+  /**
    * Removes all objects from scene
    */
   clearScene(newConfig?: SceneConfig) {
+    if(this.updating) {
+      throw new Error('Scene can\'t be cleared during update. Use invokeWithDelay() instead!');
+    }
+
     this.sendMessage(new Message(Messages.SCENE_CLEAR, null, null, this.name));
     // call the finalization function of all components
     for (let [, gameObj] of this.gameObjects) {
@@ -349,8 +362,10 @@ export default class Scene {
     this._currentDelta = delta;
     this._currentAbsolute = absolute;
 
+    this.updating = true;
     // update root object and all other objects recursively
     this.stage._proxy.update(delta, absolute);
+    this.updating = false;
 
     // execute pending invocations
     let i = this.pendingInvocations.length;
