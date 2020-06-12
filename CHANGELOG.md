@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+## [0.2.0] - 2020-08-15
+### Added
+New tests
+New component lifecycle functions
+
+### Changed
+Upgrade pixi to 5.0.0
+
 
 ## [0.1.7] - 2019-09-01
 ### Changed

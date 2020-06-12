@@ -18,7 +18,7 @@ newGame(new GameLoop());
 // Start a new game
 function newGame(engine: GameLoop) {
     
-    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement, 800, 600, 1, { debugEnabled: true }, false);
+    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement, { debugEnabled: true });
 
     let rect1Gfx = new GameObject.Graphics();
     rect1Gfx.beginFill(0xfff012, 1);

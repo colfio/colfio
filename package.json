@@ -1,6 +1,6 @@
 {
   "name": "ecs-lite",
-	"version": "0.1.7",
+	"version": "0.2.0",
 	"license": "MIT",
   "scripts": {
     "start": "parcel examples/*.html --out-dir www --open",
@@ -11,8 +11,7 @@
   "devDependencies": {
     "parcel-bundler": "^1.8.1",
     "typescript": "^2.8.3",
-    "@types/pixi.js": "^4.7.1",
-    "pixi.js": "^4.7.3"
+    "pixi.js": "^5.0.0"
   },
   "dependencies": {
   }

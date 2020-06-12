@@ -1,4 +1,4 @@
-import Component from '../engine/component';
+import Component from '../engine/Component';
 
 class Interpolation {
   static linear: any = (current: number, start: number, length: number) => Math.min(1, Math.max(0, (current - start) / length));
@@ -12,7 +12,7 @@ class Interpolation {
 
 
 
-export class BaseAnimation extends Component {
+export class BaseAnimation extends Component<void> {
   protected duration = 0;
   protected goBack = false;
   protected goingBack = false;
@@ -85,17 +85,17 @@ export class TranslateAnimation extends BaseAnimation {
 
   onInit() {
     super.onInit();
-    this.owner.pixiObj.position.x = this.srcPosX;
-    this.owner.pixiObj.position.y = this.srcPosY;
+    this.owner.position.x = this.srcPosX;
+    this.owner.position.y = this.srcPosY;
   }
 
   protected applyAnim(percent: number, inverted: boolean) {
     if (inverted) {
-      this.owner.pixiObj.position.x = this.targetPosX + percent * (this.srcPosX - this.targetPosX);
-      this.owner.pixiObj.position.y = this.targetPosY + percent * (this.srcPosY - this.targetPosY);
+      this.owner.position.x = this.targetPosX + percent * (this.srcPosX - this.targetPosX);
+      this.owner.position.y = this.targetPosY + percent * (this.srcPosY - this.targetPosY);
     } else {
-      this.owner.pixiObj.position.x = this.srcPosX + percent * (this.targetPosX - this.srcPosX);
-      this.owner.pixiObj.position.y = this.srcPosY + percent * (this.targetPosY - this.srcPosY);
+      this.owner.position.x = this.srcPosX + percent * (this.targetPosX - this.srcPosX);
+      this.owner.position.y = this.srcPosY + percent * (this.targetPosY - this.srcPosY);
     }
   }
 }
@@ -112,14 +112,14 @@ export class RotationAnimation extends BaseAnimation {
 
   onInit() {
     super.onInit();
-    this.owner.pixiObj.rotation = this.srcRot;
+    this.owner.rotation = this.srcRot;
   }
 
   protected applyAnim(percent: number, inverted: boolean) {
     if (inverted) {
-      this.owner.pixiObj.rotation = this.targetRot + percent * (this.srcRot - this.targetRot);
+      this.owner.rotation = this.targetRot + percent * (this.srcRot - this.targetRot);
     } else {
-      this.owner.pixiObj.rotation = this.srcRot + percent * (this.targetRot - this.srcRot);
+      this.owner.rotation = this.srcRot + percent * (this.targetRot - this.srcRot);
     }
   }
 }

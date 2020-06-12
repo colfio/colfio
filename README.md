@@ -22,9 +22,10 @@ The goal for ECSLite is to be a lightweight and simple library that could be use
 
 # Usage
 - this library uses PixiJS and Parcel Bundler
-- you need to have NodeJS 14+ version installed
+- you need to have NodeJS 16+ version installed
 - installation: `npm install`
 - running: `npm start`
+- for now, this library is not distributed as a NPM package, therefore you have to include the source code in your project
 - you can find all examples at `localhost:1234`, e.g., `localhost:1234/executor.html`
 
 - here is an example of a HTML code that will run the engine
@@ -54,19 +55,21 @@ import GameLoop from '../src/engine/GameLoop';
 newGame(new GameLoop());
 // Start a new game
 function newGame(engine: GameLoop) {
-    engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement, 800, 600);
+        engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement);
 }
-
 ```
 
 
 ## How does it work?
-- the logic is implemented inside components - you declare a component, attach it to a game object, and via its `update` method, you can update the state
+- the logic is implemented inside components - you declare a component, attach it to a game object, and via its `onUpdate` method, you can update the state
 
 ### Components
 - each component has the following lifecycle functions:
   - `onInit` - initializes the component
   - `onMessage` - sends a message to all subscribed components
+  - `onAttach` - called when the component is being added to the scene 
+  - `onDetach` - called when the component is being detached from the scene
+  - `onFixedUpdate` - called with given frequency (only when `frequency` property is set)
   - `onUpdate` - called during the game loop, updates the component state
   - `onFinish` - called whenever this component has finished its execution
 - if you want to add a new component to a game object, you have to call `addComponent` - it will add it to the queue of new components that will be added in the end of the loop
@@ -77,22 +80,23 @@ function newGame(engine: GameLoop) {
 - example: creating a simple rectangle
 
 ```javascript
-    let rect1Gfx = new PIXICmp.Graphics();
+    let rect1Gfx = new ECS.Graphics();
     rect1Gfx.beginFill(0xfff012, 1);
     rect1Gfx.drawRect(0, 0, 100, 100);
     rect1Gfx.position.set(200, 200);
     rect1Gfx.pivot.set(50,50);
     rect1Gfx.addComponent(new RotationAnim());
-    engine.scene.stage.getPixiObj().addChild(rect1Gfx);
+    engine.scene.stage.addChild(rect1Gfx);
 ```
 
 ### Game Objects
 - game objects form a tree-like structure called Scene Graph. Any transformation of an object applies to its children as well
+- the scene has one parent called `stage`. All objects are located in the structure of its descendants
 - each object is added to the scene instantly
 - every object has one main function: `onUpdate()` that calls all components attached to the object and calls respective functions upon them
 - game objects have these important properties:
-  - `tag` - a string that identifies the object
-  - `pixiObj` - attached object from PIXI library
+  - `name` - a string that identifies the object
+  - `tags` - a set of tags
   - `attributes` - list of attributes that can be accessed via string keys
   - `stateId` - a numeric state
   - `flags` - a bit array of flags
@@ -100,9 +104,13 @@ function newGame(engine: GameLoop) {
 ![Game Objects Workflow](./docs/objects.png)
 
 ### Packages
-- **Scene** - serves as a message bus and scene manager, contains global components, game objects, and attributes
-- **Component** - a basic unit of the ECS pattern. Components are attached to game objects, can subscribe to the messaging system via `subscribe()` and send messages to other components via `sendMessage`
-- **GameObject** - game objects are mere containers for components and attributes
+- **Engine** - entry point to the library, accepts a configuration object and initializes PIXI game loop
+- **Scene** - a scene manager, provides querying of components and game objects, manages global components
+- **Component** - functional components of game objects. Global components are attached to the `stage` object
+- **GameObject** - an interface that declares extension methods for PIXI containers
+- **GameObjectProxy** - a delegate that contains implementation of methods in ECS.GameObject interface. It's used as a proxy by respective containers (because JavaScript doesn't have multi-inheritance facility)
+- **Container, Sprite,...** -  PIXI containers that inherit from respective PIXI objects, implements ECS.GameObject interface and passes the implementation on to GameObjectProxy (in order to avoid duplicated code)
+
 
 ![Packages](./docs/packages.png)
 
@@ -150,6 +158,7 @@ myObject.hasFlag(12); // false
 - game objects are only shells for components and attributes
 - `stateId` is a numeric state you can use to implement a simple state machine
 - `flags` is a bit array described above
+- `tags` is a list of tags
 
 ### Message
 - messaging system uses a class `Message` to store data
@@ -171,6 +180,9 @@ myObject.hasFlag(12); // false
 - `subscribe(action)` - subscribes for messages with a given action
 - `unsubscribe(action)` - unsubscribes a message
 - `sendMessage` - sends a message
+- `onAttach` - called when the component is being added to the scene 
+- `onDetach` - called when the component is being detached from the scene
+- `onFixedUpdate` - called with given frequency (only when `frequency` property is set)
 - `onMessage` - called whenever the component receives a message
 - `onRemove` - called before removal from the scene
 - `onUpdate` - game loop, called each 16ms, used to update the component's state
@@ -224,7 +236,7 @@ let rotateAnim = new RotationAnimation(
 - example: a very simple rotation animation
 
 ```typescript
-myObj.addComponent(new GenericComponent()
+myObj.addComponent(new GenericComponent('some_cool_name')
   .doOnInit((cmp) => cmp.owner.rotation = 0)
   .doOnUpdate((cmp, delta, absolute) => cmp.owner.rotation += 0.1)
 );
@@ -250,7 +262,7 @@ const isSpacePressed = keyInput.isKeyPressed(' '.charCodeAt(0));
 ```javascript
 myObj.addComponent(new ChainComponent()
   .beginInterval(1000)
-  .execute((cmp) => cmp.owner.rotation += 0.1)
+    .call((cmp) => cmp.owner.rotation += 0.1)
   .endInterval()
 );
 ```
@@ -264,8 +276,8 @@ myObj.addComponent(new ChainComponent()
   .localPos(2,2)
   .withComponent(new Executor()
       .beginRepeat(0)
-      .addComponentAndWait(() => new RotationAnimation(0,1,1)) 
-      .addComponentAndWait(() => new TranslateAnimation(1,1,2,2,1))
+      .waitFor(() => new RotationAnimation(0,1,1)) 
+      .waitFor(() => new TranslateAnimation(1,1,2,2,1))
       .endRepeat()
   )
   .build(myPixiObject);

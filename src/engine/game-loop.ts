@@ -2,98 +2,124 @@ import * as PIXI from 'pixi.js';
 window.PIXI = PIXI; // workaround for PIXISound
 import Scene from './scene';
 import { resizeContainer } from '../utils/functions';
-import { SceneConfig } from './scene';
+import { SceneConfig, defaultConfig as sceneDefaultConfig } from './scene';
+
+export enum GameLoopType {
+    FIXED,
+    VARIABLE
+}
+
+export interface EngineConfig extends SceneConfig {
+    resizeToScreen?: boolean;
+    transparent?: boolean;
+    backgroundColor?: number;
+    antialias?: boolean;
+    width?: number;
+    height?: number;
+    resolution?: number;
+    gameLoopType?: GameLoopType;
+}
+
+const defaultConfig: EngineConfig = {
+    ...sceneDefaultConfig,
+    resizeToScreen: true,
+    transparent: false,
+    backgroundColor: 0x000000,
+    antialias: true,
+    width: undefined,
+    height: undefined,
+    resolution: 1,
+    gameLoopType: GameLoopType.VARIABLE
+};
 
 /**
  * Entry point to the PIXIJS
  */
 export default class GameLoop {
-  app: PIXI.Application = null;
-  lastTime = 0;
-  gameTime = 0;
-  scene: Scene = null;
-  ticker: PIXI.Ticker = null;
-  width: number;
-  height: number;
-  _running: boolean;
+    app: PIXI.Application = null;
+    lastTime = 0;
+    gameTime = 0;
+    scene: Scene = null;
+    ticker: PIXI.Ticker = null;
+    virtualWidth: number;
+    virtualHeight: number;
+    _running: boolean;
+    config: EngineConfig;
 
-  options: {
-    transparent?: boolean;
-    backgroundColor?: number;
-    antialias?: boolean;
-  };
 
-  private resizeToScreen: boolean;
+    init(canvas: HTMLCanvasElement, engineConfig?: EngineConfig) {
+        this.config = {
+            ...defaultConfig,
+            ...engineConfig
+        };
 
-  constructor(options?: { transparent?: boolean; backgroundColor?: number; antialias?: boolean; }) {
-    this.options = options;
-  }
+        // enable debug if the query string contains ?debug
+        this.config.debugEnabled = this.config.debugEnabled || /[?&]debug/.test(location.search);
 
-  init(canvas: HTMLCanvasElement, width: number, height: number, resolution: number = 1, sceneConfig?: SceneConfig, resizeToScreen: boolean = true) {
-    this.width = width;
-    this.height = height;
-    this.resizeToScreen = resizeToScreen && (!sceneConfig || !sceneConfig.debugEnabled);
+        // do not resize to screen if debug window is on
+        this.config.resizeToScreen = this.config.resizeToScreen && !this.config.debugEnabled;
 
-    sceneConfig = sceneConfig || {};
+        this.virtualWidth = this.config.width || canvas.width;
+        this.virtualHeight = this.config.height || canvas.height;
 
-    // enable debug if the query string contains ?debug
-    sceneConfig.debugEnabled = sceneConfig.debugEnabled || /[?&]debug/.test(location.search);
+        this.app = new PIXI.Application({
+            width: this.virtualWidth / this.config.resolution,
+            height: this.virtualHeight / this.config.resolution,
+            view: canvas,
+            resolution: this.config.resolution, // resolution/device pixel ratio
+            transparent: this.config.transparent,
+            antialias: this.config.antialias,
+            backgroundColor: this.config.backgroundColor,
+        });
 
-    this.app = new PIXI.Application({
-      width: width / resolution,
-      height: height / resolution,
-      view: canvas,
-      resolution: resolution, // resolution/device pixel ratio
-      transparent: (this.options && this.options.transparent !== undefined) ? this.options.transparent : false,
-      antialias:  (this.options && this.options.antialias !== undefined) ? this.options.antialias : true,
-      backgroundColor: (this.options && this.options.backgroundColor !== undefined) ? this.options.backgroundColor : 0x000000,
-    });
+        this.scene = new Scene('default', this.app, this.config);
 
-    this.scene = new Scene('default', this.app, sceneConfig);
-    if(this.resizeToScreen) {
-      this.initResizeHandler();
+        if (this.config.resizeToScreen) {
+            this.initResizeHandler();
+        }
+
+        this.ticker = this.app.ticker;
+        // stop the shared ticket and update it manually
+        this.ticker.autoStart = false;
+        this.ticker.stop();
+        this._running = true;
+        this.loop(performance.now());
     }
 
-    this.ticker = this.app.ticker;
-    // stop the shared ticket and update it manually
-    this.ticker.autoStart = false;
-    this.ticker.stop();
-    this._running = true;
-    this.loop(performance.now());
-  }
-
-  get running() {
-    return this._running;
-  }
-
-  destroy() {
-    this.app.destroy(false);
-    this._running = false;
-    if(this.resizeToScreen) {
-      window.removeEventListener('resize',this.resizeHandler);
+    get running() {
+        return this._running;
     }
-  }
 
-  private loop(time: number) {
-    // update our component library
-    let dt = Math.min(time - this.lastTime, 300); // 300ms threshold
-    this.lastTime = time;
-    this.gameTime += dt;
-    this.scene._update(dt, this.gameTime);
-
-    // update PIXI
-    if(this._running) {
-      this.ticker.update(this.gameTime);
-      requestAnimationFrame((time) => this.loop(time));
+    destroy() {
+        this.app.destroy(false);
+        this._running = false;
+        if (this.config.resizeToScreen) {
+            window.removeEventListener('resize', this.resizeHandler);
+        }
     }
-  }
 
-  private initResizeHandler() {
-    let virtualWidth = this.width;
-    let virtualHeight = this.height;
-    resizeContainer(this.app.view, virtualWidth, virtualHeight);
-    window.addEventListener('resize',this.resizeHandler);
-  }
+    private loop(time: number) {
+        // update our component library
+        let dt = Math.min(time - this.lastTime, 300); // 300ms threshold
+        this.lastTime = time;
+        this.gameTime += dt;
+        if (this.config.gameLoopType === GameLoopType.FIXED) {
+            this.scene._update(16, this.gameTime); // 16ms is a fixed tick
+        } else {
+            this.scene._update(dt, this.gameTime);
+        }
 
-  private resizeHandler = (evt) => resizeContainer(this.app.view, this.width, this.height);
+        // update PIXI
+        if (this._running) {
+            this.ticker.update(this.gameTime);
+            requestAnimationFrame((time) => this.loop(time));
+        }
+    }
+
+    private initResizeHandler() {
+        resizeContainer(this.app.view, this.virtualWidth, this.virtualHeight);
+        window.addEventListener('resize', this.resizeHandler);
+    }
+
+    private resizeHandler = () => resizeContainer(this.app.view, this.virtualWidth, this.virtualHeight);
 }
