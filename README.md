@@ -197,26 +197,6 @@ myObject.hasFlag(12); // false
 ![Debug Component](./docs/debugcomponent.png)
 
 
-#### Animation
-- TranslateAnimation - for translation
-
-```javascript
-let translateAnim = new TranslateAnimation(
-    fromX, 
-    fromY,
-    toX,
-    toY, duration);
-```
-
-- RotationAnimation - for rotation
-
-```javascript
-let rotateAnim = new RotationAnimation(
-    from, 
-    to,
-    duration);
-```
-
 #### PointerInputComponent
 - used for mouse/touch input
 - first you need to specify what you want to capture
@@ -272,9 +252,9 @@ myObj.addComponent(new ChainComponent()
 - used to simplify game object creation
 
 ```javascript
-  let obj = new Builder(scene)
+  let obj = new ECS.Builder(scene)
   .localPos(2,2)
-  .withComponent(new Executor()
+  .withComponent(new ChainComponent()
       .beginRepeat(0)
       .waitFor(() => new RotationAnimation(0,1,1)) 
       .waitFor(() => new TranslateAnimation(1,1,2,2,1))

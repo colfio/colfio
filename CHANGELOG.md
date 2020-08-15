@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
-## [0.2.0] - 2020-08-15
+## [0.2.1] - 2020-08-15
+### Changed
+Renamed some classes, changed formatting to 4-tab
+
+## [0.2.0] - 2020-06-12
 ### Added
 New tests
 New component lifecycle functions
