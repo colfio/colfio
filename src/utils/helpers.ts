@@ -1,7 +1,4 @@
 export const isMobileDevice = () => /(iphone|ipod|ipad|android)/gi.test(navigator.userAgent);
-
-export const isPdfPrint = () => window.location.search.match(/print-pdf/gi);
-
 /**
  * Resizes container to a fixed resolution
  */

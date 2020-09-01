@@ -4,7 +4,18 @@ import { Messages, Attributes, AttributeChangeMessage, StateChangeMessage, FlagC
 import Flags from './engine/flags';
 import GameObjectProxy from './engine/game-object-proxy';
 import Message from './engine/message';
-import { GameObject, Container, ParticleContainer, Sprite, TilingSprite, Text, BitmapText, Graphics, Mesh, NineSlicePlane } from './engine/game-object';
+
+import GameObject from './engine/game-object';
+import BitmapText from './engine/game-objects/bitmap-text';
+import Container from './engine/game-objects/container';
+import Graphics from './engine/game-objects/graphics';
+import Mesh from './engine/game-objects/mesh';
+import NineSlicePlane from './engine/game-objects/nine-slice-plane';
+import ParticleContainer from './engine/game-objects/particle-container';
+import Sprite from './engine/game-objects/sprite';
+import Text from './engine/game-objects/text';
+import TilingSprite from './engine/game-objects/tiling-sprite';
+
 import Builder from './engine/builder';
 import Scene from './engine/scene';
 import AsyncComponent from './components/async-component';

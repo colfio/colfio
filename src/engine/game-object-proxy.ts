@@ -1,6 +1,7 @@
 import Component, { ComponentState } from './component';
 import Scene from './scene';
-import { GameObject, Container } from './game-object';
+import Container from './game-objects/container';
+import GameObject from './game-object';
 import Flags from './flags';
 
 export enum GameObjectState {

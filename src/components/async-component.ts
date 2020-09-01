@@ -1,8 +1,8 @@
 import Message from '../engine/message';
 import Component from '../engine/component';
-import { Container } from '../engine/game-object';
+import Container from '../engine/game-objects/container';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
-import { ExNode } from './chain-component';
+import CmdNode from '../utils/cmd-node';
 
 const CMD_WAIT_TIME = 1;
 const CMD_ADD_COMPONENT_AND_WAIT = 2;
@@ -20,11 +20,14 @@ interface Func<T, TResult> {
 
 /**
  * Component that executes a chain of commands during the update loop by using JavaScript generators
+ * =================================####### WARNING #######==========================================
+ * This component is heavily experimental. If you wanna use chain of commands, use chain-component instead
+ * =================================####### WARNING #######========================================== 
  */
 export default class AsyncComponent<T> extends Component<T> {
 
 	// current node
-	protected current: ExNode = null;
+	protected current: CmdNode = null;
 	protected currentGenerator: Generator<any>;
 	// help parameters used for processing one node
 	protected tmpParam: any = null;
@@ -157,8 +160,8 @@ export default class AsyncComponent<T> extends Component<T> {
 				if (!this.current.cached) {
 					// add only once
 					this.current.cacheParams();
-					let gameObj = this.current.param2A != null ? this.current.param2A : this.owner;
-					gameObj.addComponent(this.current.param1A);
+					let gameObj = this.current.param2C != null ? this.current.param2C : this.owner;
+					gameObj.addComponent(this.current.param1C);
 				}
 				// wait for finish
 				if (!this.current.getParam1().isRunning) {
@@ -171,8 +174,8 @@ export default class AsyncComponent<T> extends Component<T> {
 				if (!this.current.cached) {
 					// add only once
 					this.current.cacheParams();
-					let gameObj = this.current.param2A != null ? this.current.param2A : this.owner;
-					for (let component of this.current.param1A) {
+					let gameObj = this.current.param2C != null ? this.current.param2C : this.owner;
+					for (let component of this.current.param1C) {
 						gameObj.addComponent(component);
 					}
 				}
@@ -227,7 +230,7 @@ export default class AsyncComponent<T> extends Component<T> {
 	}
 
 	protected enqueue(key: number, param1: any = null, param2: any = null) {
-		let node = new ExNode(key, param1, param2);
+		let node = new CmdNode(key, param1, param2);
 		this.current = node;
 	}
 

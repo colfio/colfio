@@ -1,5 +1,5 @@
 import { KeyInputComponent, Keys } from './key-input-component';
-import { Graphics } from '../engine/game-object';
+import Graphics from '../engine/game-objects/graphics';
 
 export enum GamepadButtons {
 	UP, DOWN, RIGHT, LEFT, X, Y, A, B

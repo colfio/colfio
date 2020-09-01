@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 window.PIXI = PIXI; // workaround for PIXISound
 import Scene from './scene';
-import { resizeContainer } from '../utils/functions';
+import { resizeContainer } from '../utils/helpers';
 import { SceneConfig, defaultConfig as sceneDefaultConfig } from './scene';
 
 export enum GameLoopType {

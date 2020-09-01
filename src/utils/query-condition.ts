@@ -1,4 +1,5 @@
-import { Container } from '../engine/game-object';
+import Container from '../engine/game-objects/container';
+
 /**
  * Condition for generic object queries
  * If given value is null or undefined, it will not be taken into account

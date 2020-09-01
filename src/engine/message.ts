@@ -1,5 +1,5 @@
 import Component from './component';
-import { Container } from './game-object';
+import Container from './game-objects/container';
 
 /**
  * Response collected when a message is sent

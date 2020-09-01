@@ -1,17 +1,24 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+## [0.2.2] - 2020-09-01
+### Added
+- Added support for new pixi objects
+
+### Changed
+- Split objects into separate files
+
 ## [0.2.1] - 2020-08-15
 ### Changed
-Renamed some classes, changed formatting to 4-tab
+- Renamed some classes, changed formatting to 4-tab
 
 ## [0.2.0] - 2020-06-12
 ### Added
-New tests
-New component lifecycle functions
+- New tests
+- New component lifecycle functions
 
 ### Changed
-Upgrade pixi to 5.0.0
+- Upgrade pixi to 5.0.0
 
 
 ## [0.1.7] - 2019-09-01

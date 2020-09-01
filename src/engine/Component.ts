@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Message from './message';
 import Scene from './scene';
-import { Container } from './game-object';
+import Container from './game-objects/container';
 
 export enum ComponentState {
 	NEW = 0,

@@ -1,5 +1,14 @@
 import Scene from './scene';
-import { Text, Sprite, Graphics, BitmapText, Container, ParticleContainer, TilingSprite, GameObject, Mesh } from './game-object';
+import BitmapText from './game-objects/bitmap-text';
+import Container from './game-objects/container';
+import Graphics from './game-objects/graphics';
+import Mesh from './game-objects/mesh';
+import NineSlicePlane from './game-objects/nine-slice-plane';
+import ParticleContainer from './game-objects/particle-container';
+import Sprite from './game-objects/sprite';
+import Text from './game-objects/text';
+import TilingSprite from './game-objects/tiling-sprite';
+
 import Component from './component';
 import * as PIXI from 'pixi.js';
 import Vector from '../utils/vector';
@@ -312,7 +321,7 @@ export default class Builder {
 
 
 	private process<T extends Container>(clearData: boolean = true): T {
-		let object: GameObject;
+		let object: Container;
 
 		if (this.objectToBuild !== null) {
 			object = this.objectToBuild;

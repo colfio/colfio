@@ -1,7 +1,9 @@
 import Message from '../engine/message';
 import Component, { ComponentState } from '../engine/component';
-import { Container } from '../engine/game-object';
+import Container from '../engine/game-objects/container';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
+import Stack from '../utils/stack';
+import CmdNode from '../utils/cmd-node';
 
 const CMD_BEGIN_REPEAT = 1;
 const CMD_END_REPEAT = 2;
@@ -37,120 +39,6 @@ interface Func<T, TResult> {
 }
 
 
-/**
- * Simple stack
- */
-class Stack {
-	protected topNode: ExNode = null;
-	protected size = 0;
-
-	constructor() {
-		this.topNode = null;
-		this.size = 0;
-	}
-
-	/**
-	 * Pushes a new node onto the stack
-	 */
-	push(node: ExNode) {
-		this.topNode = node;
-		this.size += 1;
-	}
-
-	/**
-	 * Pops the current node from the stack
-	 */
-	pop(): ExNode {
-		let temp = this.topNode;
-		this.topNode = this.topNode.previous;
-		this.size -= 1;
-		return temp;
-	}
-
-	/**
-	 * Returns the node on the top
-	 */
-	top(): ExNode {
-		return this.topNode;
-	}
-}
-
-/**
- * Node for ChainComponent, represents a command context
- */
-export class ExNode {
-	// key taken from CMD_XXX constants
-	key = 0;
-	// custom parameters
-	param1: any = null;
-	param2: any = null;
-	// cached custom parameters
-	param1A: any = null;
-	param2A: any = null;
-	cached: boolean = false;
-	// link to previous and next node
-	next: ExNode = null;
-	previous: ExNode = null;
-
-	constructor(key: number, param1: any = null, param2: any = null) {
-		this.key = key;
-		this.param1 = param1;
-		this.param2 = param2;
-
-		this.param1A = null;
-		this.param2A = null;
-	}
-
-	/**
-	 * Caches params or their results (if a corresponding parameter is a function) into param<num>A variables
-	 */
-	cacheParams() {
-		if (!this.cached) {
-			if (this.param1 != null) {
-				this.param1A = typeof (this.param1) === 'function' ? this.param1() : this.param1;
-			}
-
-			if (this.param2 != null) {
-				this.param2A = typeof (this.param2) === 'function' ? this.param2() : this.param2;
-			}
-
-			this.cached = true;
-		}
-	}
-
-	/**
-	 * Gets result of param 1
-	 */
-	getParam1() {
-		if (!this.cached) {
-			this.cacheParams();
-		}
-		return this.param1A;
-	}
-
-	setParam1(val: any) {
-		this.param1A = val;
-	}
-
-	/**
-	 * Gets result of param 2
-	 */
-	getParam2() {
-		if (!this.cached) {
-			this.cacheParams();
-		}
-		return this.param2A;
-	}
-
-	setParam2(val: any) {
-		this.param2A = val;
-	}
-
-	resetCache() {
-		this.param1A = this.param2A = null;
-		this.cached = false;
-	}
-}
 
 /**
  * Component that executes a chain of commands during the update loop
@@ -158,13 +46,14 @@ export class ExNode {
 export default class ChainComponent extends Component<void> {
 
 	// stack of current scope
-	protected scopeStack = new Stack();
+	protected scopeStack = new Stack<CmdNode>();
 	// current node
-	protected current: ExNode = null;
+	protected current: CmdNode = null;
 	// linked list
-	protected head: ExNode = null;
-	protected tail: ExNode = null;
-	// help parameters used for processing one node
+	protected head: CmdNode = null;
+	protected tail: CmdNode = null;
+	
+	// helping parameters used for processing the current node
 	protected tmpParam: any = null;
 	protected tmpParam2: any = null;
 
@@ -687,10 +576,11 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	protected enqueue(key: number, param1: any = null, param2: any = null) {
-		let node = new ExNode(key, param1, param2);
+		let node = new CmdNode(key, param1, param2);
 
 		/*
-		  // update 200411: I must have been mad back then to implement this behavior... ALWAYS ADD TO THE TAIL!
+		  // update 200411: I must have been mad back then when I implemented this behavior... 
+		  // ALWAYS ADD A NEW NODE TO THE TAIL!
 		  if (this.current != null && this.current !== this.head) {
 			// already running -> append to the current node
 			let temp = this.current.next;
@@ -714,7 +604,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	// dequeues a next node
-	protected dequeue(): ExNode {
+	protected dequeue(): CmdNode {
 		if (this.current == null || this.current.next == null) {
 			return null;
 		} else {

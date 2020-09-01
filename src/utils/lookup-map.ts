@@ -1,6 +1,6 @@
 
-interface Lookable {
-	id;
+type Lookable = {
+	id: any;
 }
 
 /**

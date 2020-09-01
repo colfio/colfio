@@ -3,7 +3,7 @@ import Message from './message';
 import Component from './component';
 import * as PIXI from 'pixi.js';
 import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './constants';
-import { Container } from './game-object';
+import Container from './game-objects/container';
 import { LookupMap } from '../utils/lookup-map';
 import DebugComponent from '../components/debug-component';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
