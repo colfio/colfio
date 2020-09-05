@@ -1,6 +1,6 @@
 
 /**
- * Bit array for flags
+ * Slightly optimized bit array for flags
  */
 export default class Flags {
 	// flag array 1-128

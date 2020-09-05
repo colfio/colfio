@@ -1,37 +1,53 @@
-import Scene from './scene';
+import Scene from './ecs-scene';
+
+import AnimatedSprite from './game-objects/animated-sprite';
 import BitmapText from './game-objects/bitmap-text';
 import Container from './game-objects/container';
 import Graphics from './game-objects/graphics';
 import Mesh from './game-objects/mesh';
 import NineSlicePlane from './game-objects/nine-slice-plane';
 import ParticleContainer from './game-objects/particle-container';
+import SimpleMesh from './game-objects/simple-mesh';
+import SimplePlane from './game-objects/simple-plane';
+import SimpleRope from './game-objects/simple-rope';
 import Sprite from './game-objects/sprite';
 import Text from './game-objects/text';
 import TilingSprite from './game-objects/tiling-sprite';
 
-import Component from './component';
-import * as PIXI from 'pixi.js';
+import Component from './ecs-component';
 import Vector from '../utils/vector';
+import { Func } from '../utils/helpers';
 
-// a function that has a return type
-interface Func<T, TResult> {
-	(item: T): TResult;
-}
+import * as PIXI from 'pixi.js';
 
 enum ObjectType {
-	Graphics,
-	Container,
-	ParticleContainer,
-	Sprite,
-	TilingSprite,
-	Text,
+	AnimatedSprite,
 	BitmapText,
-	Mesh
+	Container,
+	Graphics,
+	Mesh,
+	NineSlicePlane,
+	ParticleContainer,
+	SimpleMesh,
+	SimplePlane,
+	SimpleRope,
+	Sprite,
+	Text,
+	TilingSprite,
 }
 
-interface ObjectProps {
+/**
+ * Properties of all pixi objects that will eventually be passed 
+ * to the constructors upon creation
+ */
+type ObjectProps = {
 	type: ObjectType;
-	texture?: PIXI.Texture; // sprite, tilingsprite
+	textures?: PIXI.Texture[] | PIXI.AnimatedSprite.FrameObject[]; // animatedsprite
+	texture?: PIXI.Texture; // sprite, tilingsprite, simpleplane, simplerope, nineSlicePlane
+	leftWidth?: number;
+	topHeight?: number;
+	rightWidth?: number;
+	bottomHeight?: number;
 	width?: number; // tilingsprite
 	height?: number; // tilingsprite
 	text?: string; // text
@@ -41,9 +57,14 @@ interface ObjectProps {
 	fontColor?: number; // bitmaptext
 	geometry?: PIXI.Geometry; // mesh
 	shader?: PIXI.Shader | PIXI.MeshMaterial; // mesh
+	vertices?: Float32Array; // simpleMesh
+	verticesX?: number; // simplePlane
+	verticesY?: number; // simplePlane
+	points?: PIXI.Point[]; // simpleRope
 }
 
-interface BuilderProps {
+
+type BuilderProps = {
 	name: string;
 	locPosX?: number;
 	locPosY?: number;
@@ -66,8 +87,9 @@ interface BuilderProps {
 	parent?: Container;
 }
 
+
 /**
- * Builder for PIXI objects from given attributes
+ * Builder for Game Objects
  */
 export default class Builder {
 
@@ -84,6 +106,7 @@ export default class Builder {
 
 	/**
 	 * Sets an anchor
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
 	 */
 	anchor(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -101,7 +124,8 @@ export default class Builder {
 	}
 
 	/**
-	 * Sets a virtual anchor (only moves the object, will not change the pivot)
+	 * Sets a virtual anchor (it aligns the position but doesn't change the real pivot nor anchor)
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
 	 */
 	virtualAnchor(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -120,6 +144,7 @@ export default class Builder {
 
 	/**
 	 * Sets position relative to the screen ([0,0] for topleft corner, [1,1] for bottomright corner)
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
 	 */
 	relativePos(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -138,6 +163,7 @@ export default class Builder {
 
 	/**
 	 * Sets local position
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
 	 */
 	localPos(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -157,6 +183,7 @@ export default class Builder {
 
 	/**
 	 * Sets global position
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
 	 */
 	globalPos(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -174,6 +201,10 @@ export default class Builder {
 		return this;
 	}
 
+	/**
+	 * Sets local scale
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 */
 	scale(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
 			this.props.scaleX = x;
@@ -191,7 +222,7 @@ export default class Builder {
 	}
 
 	/**
-	 * Adds an attribute for building
+	 * Adds an attribute to the object
 	 */
 	withAttribute(key: string, val: any): Builder {
 		this.props.attributes.set(key, val);
@@ -199,7 +230,7 @@ export default class Builder {
 	}
 
 	/**
-	 * Adds either a component or an arrow function that returns this component
+	 * Adds either a component or an arrow function that returns this component (can be used as a factory)
 	 * Use arrow function if you want to use this builder for the same object more than once.
 	 */
 	withComponent(cmp: Component<any> | Func<void, Component<any>>): Builder {
@@ -251,9 +282,43 @@ export default class Builder {
 		return this;
 	}
 
+	asAnimatedSprite(textures: PIXI.Texture[] | PIXI.AnimatedSprite.FrameObject[]): Builder {
+		this.objectProps = { 
+			type: ObjectType.AnimatedSprite, 
+			textures
+		};
+		return this;
+	}
+	
+	asBitmapText(text: string = '', fontName: string, fontSize: number, fontColor: number): Builder {
+		this.objectProps = {
+			text, fontName, fontSize, fontColor, type: ObjectType.BitmapText
+		};
+		return this;
+	}
+	
 	asGraphics(): Builder {
 		this.objectProps = {
 			type: ObjectType.Graphics
+		};
+		return this;
+	}
+
+	asMesh(geometry: PIXI.Geometry, shader: PIXI.Shader | PIXI.MeshMaterial): Builder {
+		this.objectProps = {
+			geometry, shader, type: ObjectType.Mesh
+		};
+		return this;
+	}
+
+	asNineSlicePlane(texture: PIXI.Texture, leftWidth: number, topHeight: number, rightWidth: number, bottomHeight: number): Builder {
+		this.objectProps = {
+			type: ObjectType.NineSlicePlane,
+			texture,
+			leftWidth,
+			topHeight,
+			rightWidth,
+			bottomHeight
 		};
 		return this;
 	}
@@ -262,6 +327,34 @@ export default class Builder {
 		this.objectProps = {
 			type: ObjectType.ParticleContainer
 		};
+		return this;
+	}
+
+	asSimpleMesh(texture?: PIXI.Texture, vertices?: Float32Array): Builder {
+		this.objectProps = {
+			type: ObjectType.SimpleMesh,
+			texture,
+			vertices
+		};
+		return this;
+	}
+
+	asSimplePlane(texture: PIXI.Texture, verticesX: number, verticesY: number): Builder {
+		this.objectProps = {
+			type: ObjectType.SimplePlane,
+			texture,
+			verticesX,
+			verticesY,
+		}
+		return this;
+	}
+
+	asSimpleRope(texture: PIXI.Texture, points: PIXI.Point[]): Builder {
+		this.objectProps = {
+			type: ObjectType.SimpleRope,
+			texture,
+			points
+		}
 		return this;
 	}
 
@@ -287,38 +380,38 @@ export default class Builder {
 		return this;
 	}
 
-	asBitmapText(text: string = '', fontName: string, fontSize: number, fontColor: number): Builder {
-		this.objectProps = {
-			text, fontName, fontSize, fontColor, type: ObjectType.BitmapText
-		};
-		return this;
-	}
 
-	asMesh(geometry: PIXI.Geometry, shader: PIXI.Shader | PIXI.MeshMaterial): Builder {
-		this.objectProps = {
-			geometry, shader, type: ObjectType.Mesh
-		};
-		return this;
-	}
-
+	/**
+	 * Copies the attributes and properties to already existing object.
+	 * All properties will be removed from the builder
+	 */
 	buildInto(obj: Container) {
 		this.objectToBuild = obj;
 		return this.process(true);
 	}
 
-	buildIntoKeepData(obj: Container) {
+	/**
+	 * Copies the attributes and properties to already existing object
+	 * Properties will be kept in the builder for later use
+	 */
+	buildIntoAndKeepData(obj: Container) {
 		this.objectToBuild = obj;
 		return this.process(false);
 	}
 
-	buildKeepData<T extends Container>(): T {
-		return this.process(false);
-	}
-
+	/**
+	 * Builds a new object and removes all properties from the builder
+	 */
 	build<T extends Container>(): T {
 		return this.process(true);
 	}
-
+	
+	/**
+	 * Builds a new object and keeps stored data
+	 */
+	buildAndKeepData<T extends Container>(): T {
+		return this.process(false);
+	}
 
 	private process<T extends Container>(clearData: boolean = true): T {
 		let object: Container;
@@ -330,30 +423,48 @@ export default class Builder {
 				case ObjectType.Container:
 					object = new Container(this.props.name);
 					break;
+				case ObjectType.AnimatedSprite:
+					object = new AnimatedSprite(this.props.name, this.objectProps.textures);
+					break;
+				case ObjectType.BitmapText:
+					object = new BitmapText(this.props.name, this.objectProps.text, this.objectProps.fontName, 
+						this.objectProps.fontSize, this.objectProps.fontColor);
+					break;
 				case ObjectType.Graphics:
 					object = new Graphics(this.props.name);
+					break;
+				case ObjectType.Mesh:
+					object = new Mesh(this.props.name, this.objectProps.geometry, this.objectProps.shader);
+					break;
+				case ObjectType.NineSlicePlane:
+					object = new NineSlicePlane(this.props.name, this.objectProps.texture, this.objectProps.leftWidth, 
+						this.objectProps.topHeight, this.objectProps.rightWidth, this.objectProps.bottomHeight);	
 					break;
 				case ObjectType.ParticleContainer:
 					object = new ParticleContainer(this.props.name);
 					break;
+				case ObjectType.SimpleMesh:
+					object = new SimpleMesh(this.props.name, this.objectProps.texture, this.objectProps.vertices);
+					break;
+				case ObjectType.SimplePlane:
+					object = new SimplePlane(this.props.name, this.objectProps.texture, this.objectProps.verticesX, this.objectProps.verticesY);
+					break;
+				case ObjectType.SimpleRope:
+					object = new SimpleRope(this.props.name, this.objectProps.texture, this.objectProps.points)
+					break;
 				case ObjectType.Sprite:
 					object = new Sprite(this.props.name, this.objectProps.texture.clone());
-					break;
-				case ObjectType.TilingSprite:
-					object = new TilingSprite(this.props.name, this.objectProps.texture.clone(), this.objectProps.width, this.objectProps.height);
 					break;
 				case ObjectType.Text:
 					object = new Text(this.props.name, this.objectProps.text);
 					(object as Text).style = this.objectProps.fontStyle;
 					break;
-				case ObjectType.BitmapText:
-					object = new BitmapText(this.props.name, this.objectProps.text, this.objectProps.fontName, this.objectProps.fontSize, this.objectProps.fontColor);
-					break;
-				case ObjectType.Mesh:
-					object = new Mesh(this.props.name, this.objectProps.geometry, this.objectProps.shader);
+				case ObjectType.TilingSprite:
+					object = new TilingSprite(this.props.name, this.objectProps.texture.clone(), this.objectProps.width, this.objectProps.height);
 					break;
 			}
 		}
+
 
 		// add all components and attributes before the object is added to the scene
 		// this means that we won't get any notification that attributes/components have been added
@@ -361,7 +472,7 @@ export default class Builder {
 			object.addComponent(component);
 		}
 
-		// for security -> we can't use the same components for more than one object
+		// for safety -> we can't use the same components for more than one object
 		this.props.components = [];
 
 		// consider also component builders
@@ -496,12 +607,12 @@ export default class Builder {
 
 	private clear(): Builder {
 		this.props = {
+			name: '',
 			components: [],
 			componentBuilders: [],
 			attributes: new Map(),
 			flags: [],
 			tags: new Set(),
-			name: ''
 		};
 		this.objectProps = {
 			type: ObjectType.Container

@@ -1,6 +1,7 @@
 import Message from '../engine/message';
-import Component from '../engine/component';
+import Component from '../engine/ecs-component';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
+
 
 interface MessageCaptureContext<T> {
 	onlyOnce: boolean;
@@ -9,10 +10,10 @@ interface MessageCaptureContext<T> {
 }
 
 /**
- * Builder for functional components
+ * Functional component
  */
 export class FuncComponent<T = void> extends Component<T> {
-	protected timeout: number = 0;
+	protected duration: number = 0;
 	protected firstRun: number = 0;
 
 	private onInitFunc: (cmp: Component<T>) => void = null;
@@ -123,16 +124,19 @@ export class FuncComponent<T = void> extends Component<T> {
 		return this;
 	}
 
+	/**
+	 * Sets frequency for the fixed loop
+	 */
 	setFixedFrequency(fixedfrequency: number): FuncComponent<T> {
 		this.fixedFrequency = fixedfrequency;
 		return this;
 	}
 
 	/**
-	 * Sets timeout for how long this component should run
+	 * Sets a duration for how long this component should run
 	 */
-	setTimeout(timeout: number): FuncComponent<T> {
-		this.timeout = timeout;
+	setDuration(duration: number): FuncComponent<T> {
+		this.duration = duration;
 		return this;
 	}
 
@@ -185,7 +189,7 @@ export class FuncComponent<T = void> extends Component<T> {
 		if (this.firstRun === 0) {
 			this.firstRun = absolute;
 		}
-		if (this.timeout !== 0 && (absolute - this.firstRun) >= this.timeout) {
+		if (this.duration !== 0 && (absolute - this.firstRun) >= this.duration) {
 			this.finish();
 			return;
 		}

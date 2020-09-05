@@ -1,13 +1,17 @@
 import GameObjectProxy from './game-object-proxy';
-import Component from './component';
-import Scene from './scene';
+import Component from './ecs-component';
+import Scene from './ecs-scene';
 
+import AnimatedSprite from './game-objects/animated-sprite';
 import BitmapText from './game-objects/bitmap-text';
 import Container from './game-objects/container';
 import Graphics from './game-objects/graphics';
 import Mesh from './game-objects/mesh';
 import NineSlicePlane from './game-objects/nine-slice-plane';
 import ParticleContainer from './game-objects/particle-container';
+import SimpleMesh from './game-objects/simple-mesh';
+import SimplePlane from './game-objects/simple-plane';
+import SimpleRope from './game-objects/simple-rope';
 import Sprite from './game-objects/sprite';
 import Text from './game-objects/text';
 import TilingSprite from './game-objects/tiling-sprite';
@@ -15,63 +19,92 @@ import TilingSprite from './game-objects/tiling-sprite';
 import * as PIXI from 'pixi.js';
 
 /**
- * PIXI object attached to the component architecture
+ * Interface for PIXI objects attached to the component architecture
  */
 export default interface GameObject {
 	// unique identifier
 	id: number;
 	// name of the object
 	name: string;
-	// state of the object
+	// state of the object (can by any number)
 	stateId: number;
 	// wrapped pixi object
 	pixiObj: PIXI.Container;
 	// parent game object
-	parentGameObject: GameObject;
+	parentGameObject: Container;
 	// scene
 	scene: Scene;
-	// Link to proxy object, <<<shouldn't be used from within any custom component>>>
+	// Link to proxy object, <<<!!!shouldn't be used from within any custom component!!!>>>
 	_proxy: GameObjectProxy;
 
+	// ==================== Methods for type casting ====================
+
 	/*
-	* Casts itself to container (works only if the object is an actual container!)
+	* Casts itself to animated sprite
 	*/
-	asContainer(): Container;
+	asAnimatedSprite(): AnimatedSprite;
 
 	/*
-	 * Casts itself to particle container (works only if the object is an actual particle container!)
-	 */
-	asParticleContainer(): ParticleContainer;
-
-	/*
-	 * Casts itself to Sprite (works only if the object is an actual sprite!)
-	 */
-	asSprite(): Sprite;
-
-	/*
-	* Casts itself to TilingSprite (works only if the object is an actual tilingsprite!)
-	*/
-	asTilingSprite(): TilingSprite;
-
-	/*
-	 * Casts itself to Text (works only if the object is an actual text!)
-	 */
-	asText(): Text;
-
-	/*
-	 * Casts itself to BitmapText (works only if the object is an actual bitmap text!)
+	 * Casts itself to BitmapText
 	 */
 	asBitmapText(): BitmapText;
 
 	/*
-	 * Casts itself to Graphics (works only if the object is an actual graphics!)
+	* Casts itself to Container
+	*/
+	asContainer(): Container;
+
+	/*
+	 * Casts itself to Graphics
 	 */
 	asGraphics(): Graphics;
 
 	/*
-	 * Casts itself to Mesh  (works only if the object is an actual Mesh!)
+	 * Casts itself to Mesh
 	 */
 	asMesh(): Mesh;
+
+	/*
+	 * Casts itself to Nine Slice Plane
+	 */
+	asNineSlicePlane(): NineSlicePlane;
+
+	/*
+	 * Casts itself to Particle Container
+	 */
+	asParticleContainer(): ParticleContainer;
+
+	/*
+	 * Casts itself to Simple Mesh
+	 */
+	asSimpleMesh(): SimpleMesh;
+
+	/*
+	 * Casts itself to Simple Plane
+	 */
+	asSimplePlane(): SimplePlane;
+
+	/*
+	 * Casts itself to Simple Rope
+	 */
+	asSimpleRope(): SimpleRope;
+
+	/*
+	 * Casts itself to Sprite
+	 */
+	asSprite(): Sprite;
+
+	/*
+	 * Casts itself to Text
+	 */
+	asText(): Text;
+
+	/*
+	* Casts itself to TilingSprite
+	*/
+	asTilingSprite(): TilingSprite;
+
+	// ========================================================================
 
 	/**
 	 * Adds a new component
@@ -136,7 +169,7 @@ export default interface GameObject {
 	 */
 	detach(): void;
 	/**
-	 * Detaches itself from its parent and destroys the container
+	 * Detaches itself from its parent (if not already detached) and destroys the object
 	 */
 	destroy(): void;
 	/**

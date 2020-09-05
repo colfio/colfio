@@ -1,4 +1,4 @@
-import Container from '../engine/game-objects/container';
+import Container from '../e../engine/ecs-game-objectntainer';
 
 /**
  * Condition for generic object queries

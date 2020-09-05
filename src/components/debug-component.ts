@@ -1,5 +1,5 @@
-import Component from '../engine/component';
-import { Messages } from '../engine/constants';
+import Component from '../engine/ecs-component';
+import { Messages } from '../engine/ecs-constants';
 import Container from '../engine/game-objects/container';
 import Message from '../engine/message';
 import { Keys } from './key-input-component';
@@ -8,9 +8,19 @@ import { Keys } from './key-input-component';
  * Debugging component that display a scene graph
  */
 export default class DebugComponent extends Component<void> {
-	discaredMessages: string[] = [Messages.COMPONENT_ADDED, Messages.COMPONENT_REMOVED, Messages.OBJECT_ADDED,
-	Messages.OBJECT_REMOVED, Messages.STATE_CHANGED,
-	Messages.ATTRIBUTE_CHANGED, Messages.ATTRIBUTE_REMOVED];
+
+	// messages that will be ignored
+	discaredMessages: string[] = [
+		Messages.COMPONENT_ADDED, 
+		Messages.COMPONENT_REMOVED, 
+		Messages.OBJECT_ADDED,
+		Messages.OBJECT_REMOVED, 
+		Messages.STATE_CHANGED,
+		Messages.ATTRIBUTE_CHANGED, 
+		Messages.ATTRIBUTE_REMOVED
+	];
+	
+	// if true, will also render properties
 	displayProps = true;
 
 	protected debugElement: HTMLElement = null;
@@ -25,7 +35,7 @@ export default class DebugComponent extends Component<void> {
 
 	onMessage(msg: Message) {
 
-		// discared common messages from the log
+		// discared messages from the log
 		if (this.discaredMessages.indexOf(msg.action as any) === -1) {
 			let row = document.createElement('tr');
 			let cell1 = document.createElement('td');

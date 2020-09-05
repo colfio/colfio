@@ -1,4 +1,4 @@
-import Component from './component';
+import Component from './ecs-component';
 import Container from './game-objects/container';
 
 /**
@@ -25,7 +25,10 @@ export interface MessageResponse {
 export class MessageResponses {
 	responses: MessageResponse[] = [];
 
-	getResponse<T>(): T {
+	/**
+	 * Gets data of the first response
+	 */
+	getData<T>(): T {
 		return (this.responses && this.responses.length > 0) ? this.responses[0].data as T : null;
 	}
 
@@ -43,24 +46,9 @@ export class MessageResponses {
 }
 
 /**
- * Message that stores type of action, a relevant component, a relevant game object and custom data if needed
+ * Messaging entity, informs who has sent it and from which component
  */
 export default class Message {
-
-	/**
-	 * Data payload
-	 */
-	data: any = null;
-
-	/*
-	 * If any handler sets this flag to true, the message will no longer be handled
-	 */
-	expired: boolean = false;
-
-	/**
-	 * Stores any response along the way
-	 */
-	responses: MessageResponses;
 
 	/**
 	 * Action type identifier
@@ -76,6 +64,22 @@ export default class Message {
 	 * GameObject attached to this message
 	 */
 	private _gameObject: Container = null;
+	
+	/**
+	 * Data payload
+	 */
+	data: any = null;
+
+	/*
+	 * If any handler sets this flag to true, the message will not be sent further
+	 */
+	expired: boolean = false;
+
+	/**
+	 * Stores any response along the way
+	 */
+	responses: MessageResponses;
+
 
 	constructor(action: string, component?: Component<any>, gameObject?: Container, data: any = null) {
 		this._action = action;

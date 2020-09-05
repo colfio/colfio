@@ -1,19 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Message from './message';
-import Scene from './scene';
+import Scene from './ecs-scene';
 import Container from './game-objects/container';
 
 export enum ComponentState {
 	NEW = 0,
 	INITIALIZED = 1,
 	RUNNING = 2,
-	FINISHED = 3,
-	DETACHED = 4,
+	DETACHED = 3,
+	FINISHED = 4,
 	REMOVED = 5
 }
 
 /**
- * Component that defines a functional behavior of an entity which is attached to
+ * Component that defines a functional behavior of an entity it is attached to
  */
 export default class Component<T = void> {
 	private static idCounter = 0;
@@ -24,10 +24,11 @@ export default class Component<T = void> {
 	scene: Scene = null;
 	// properties
 	props: T;
-	// fixed-update frequency each second
+	// fixed-update frequency
 	fixedFrequency: number;
 	// number of last update, is set automatically by its owner
 	_lastFixedUpdate: number;
+	// component state
 	_cmpState: ComponentState = ComponentState.NEW;
 
 	// auto-incremented id
@@ -72,13 +73,6 @@ export default class Component<T = void> {
 	}
 
 	/**
-	 * Called when the component is being detached from the scene
-	 */
-	onDetach() {
-		// override
-	}
-
-	/**
 	 * Handles incoming message
 	 */
 	onMessage(msg: Message) {
@@ -87,7 +81,7 @@ export default class Component<T = void> {
 
 	/**
 	 * Handles fixed update loop
-	 * Executed ONLY if frequency is set
+	 * Called ONLY if fixedFrequency is set
 	 */
 	onFixedUpdate(delta: number, absolute: number) {
 		// override
@@ -101,7 +95,15 @@ export default class Component<T = void> {
 	}
 
 	/**
-	 * Called before removal from scene
+	 * Called either before removal or before 
+	 * the owner object gets detached from the scene
+	 */
+	onDetach() {
+
+	}
+
+	/**
+	 * Called before removal from its owner
 	 */
 	onRemove() {
 		// override
@@ -115,7 +117,7 @@ export default class Component<T = void> {
 	}
 
 	/**
-	 * Subscribes itself as a listener for action with given key
+	 * Subscribes itself as a listener for an action of a given key
 	 */
 	subscribe(...actions: string[]) {
 		for (let action of actions) {
@@ -124,7 +126,7 @@ export default class Component<T = void> {
 	}
 
 	/**
-	 * Unsubscribes itself
+	 * Unsubscribes itself from given action (or a set of actions)
 	 */
 	unsubscribe(...actions: string[]) {
 		for (let action of actions) {
@@ -142,7 +144,8 @@ export default class Component<T = void> {
 	}
 
 	/**
-	 * Detaches component from scene
+	 * Aborts the component and immediately removes it from its object
+	 * Will call onFinish(), onDetach() and onRemove() 
 	 */
 	finish() {
 		if (this._cmpState === ComponentState.RUNNING && this.owner) {

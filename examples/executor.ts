@@ -1,9 +1,9 @@
 import { TranslateAnimation, RotationAnimation } from './animations';
 import * as ECS from '../src';
 
-newGame(new ECS.GameLoop());
+newGame(new ECS.Engine);
 // Start a new game
-function newGame(engine: ECS.GameLoop) {
+function newGame(engine: ECS.Engine) {
 	engine.init(document.getElementById("gameCanvas") as HTMLCanvasElement, { debugEnabled: true });
 
 	let obj = new ECS.Builder(engine.scene)

@@ -1,4 +1,5 @@
 export const isMobileDevice = () => /(iphone|ipod|ipad|android)/gi.test(navigator.userAgent);
+
 /**
  * Resizes container to a fixed resolution
  */
@@ -32,3 +33,14 @@ export const resizeContainer = (container: HTMLElement, virtualWidth: number, vi
 	container.style.setProperty('top', topPos + 'px');
 	container.style.setProperty('left', ((scale - 1) * virtualWidth / 2 + (window.innerWidth - virtualWidth * scale) / 2) + 'px');
 };
+
+
+// a function that has a return type
+export interface Func<T, TResult> {
+	(item: T): TResult;
+}
+
+// a function that doesn't return anything
+export interface Action<T> {
+	(item: T): void;
+}

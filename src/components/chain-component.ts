@@ -1,10 +1,12 @@
 import Message from '../engine/message';
-import Component, { ComponentState } from '../engine/component';
+import Component, { ComponentState } from '../engine/ecs-component';
 import Container from '../engine/game-objects/container';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
 import Stack from '../utils/stack';
 import CmdNode from '../utils/cmd-node';
+import { Func, Action } from '../utils/helpers';
 
+// ============= COMMANDS ===========
 const CMD_BEGIN_REPEAT = 1;
 const CMD_END_REPEAT = 2;
 const CMD_CALL = 3;
@@ -24,21 +26,10 @@ const CMD_WAIT_FRAMES = 17;
 const CMD_WAIT_FOR_MESSAGE = 18;
 const CMD_WAIT_FOR_MESSAGE_CONDITION = 19;
 const CMD_REMOVE_COMPONENT = 20;
-const CMD_REMOVE_GAME_OBJECTS_BY_QUERY = 21;
-const CMD_REMOVE_GAME_OBJECT = 22;
-const CMD_SEND_MESSAGE = 24;
-
-// a function that doesn't return anything
-interface Action<T> {
-	(item: T): void;
-}
-
-// a function that has a return type
-interface Func<T, TResult> {
-	(item: T): TResult;
-}
-
-
+const CMD_DETACH_GAME_OBJECTS_BY_QUERY = 21;
+const CMD_DESTROY_GAME_OBJECTS_BY_QUERY = 22;
+const CMD_DETACH_GAME_OBJECT = 23;
+const CMD_DESTROY_GAME_OBJECT = 23;
 
 /**
  * Component that executes a chain of commands during the update loop
@@ -57,13 +48,17 @@ export default class ChainComponent extends Component<void> {
 	protected tmpParam: any = null;
 	protected tmpParam2: any = null;
 
-	protected interruptChecks: Func<void, boolean>[] = [];
+	protected abortIfChecks: Func<void, boolean>[] = [];
 
 	constructor(name: string = 'Chain') {
 		super();
 		this._name = name;
 	}
 
+	/**
+	 * Merges this component with another component.
+	 * Puts the other component to the beginning of this one
+	 */
 	mergeAtBeginning(other: ChainComponent): ChainComponent {
 		if (other.cmpState === ComponentState.RUNNING) {
 			throw new Error('Can\'t merge running component!');
@@ -80,6 +75,11 @@ export default class ChainComponent extends Component<void> {
 		return this;
 	}
 
+	/**
+	 * Merges this component with another component
+	 * Puts the other component to the end of this one
+	 * 
+	 */
 	mergeWith(other: ChainComponent): ChainComponent {
 		if (other.cmpState === ComponentState.RUNNING) {
 			throw new Error('Can\'t merge running component!');
@@ -97,7 +97,7 @@ export default class ChainComponent extends Component<void> {
 
 	/**
 	 * Repeats the following part of the chain until endRepeat()
-	 * @param num number of repetitions, 0 for infinite loop; or function that returns that number
+	 * @param num number of repetitions (0 for infinite loop); or a function that returns that number
 	 */
 	beginRepeat(param: number | Func<void, number>): ChainComponent {
 		this.enqueue(CMD_BEGIN_REPEAT, param, param === 0);
@@ -112,11 +112,6 @@ export default class ChainComponent extends Component<void> {
 		return this;
 	}
 
-	sendMessageDelayed(action: string, data: any = null): ChainComponent {
-		this.enqueue(CMD_SEND_MESSAGE, action, data);
-		return this;
-	}
-
 	/**
 	 * Executes a closure
 	 * @param {action} func function to execute
@@ -127,7 +122,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Attaches itself to a game objects and executes the pipeline
+	 * Attaches itself to a game object and executes the chain
 	 */
 	executeUpon(obj: Container): ChainComponent {
 		obj.addComponentAndRun(this);
@@ -135,8 +130,8 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Repeats the following part of the chain up to the endWhile()
-	 * till the func() keeps returning true
+	 * Repeats the following part of the chain down to the endWhile() block
+	 * till the func() returns true
 	 * @param func function that returns either true or false
 	 */
 	beginWhile(func: Func<void, boolean>): ChainComponent {
@@ -180,8 +175,8 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Defines a set of commands that are to be executed if the condition of the current
-	 * beginIf() command is not met
+	 * Defines a set of commands that are to be executed if the condition 
+	 * of the current beginIf() command is not met
 	 */
 	else(): ChainComponent {
 		this.enqueue(CMD_ELSE);
@@ -197,7 +192,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Adds a new component to a given game object (or to an owner if not specified)
+	 * Adds a new component to a given game object (or to the owner of this component if none specified)
 	 * @param component component or function that returns a component
 	 * @param gameObj game object or function that returns a game object
 	 */
@@ -208,16 +203,7 @@ export default class ChainComponent extends Component<void> {
 
 
 	/**
-	 * Waits given amount of seconds
-	 * @param time number of seconds to wait; or function that returns this number
-	 */
-	waitTime(time: number | Func<void, number>): ChainComponent {
-		this.enqueue(CMD_WAIT_TIME, time);
-		return this;
-	}
-
-	/**
-	 * Waits until given component has finished
+	 * Waits until a given component has finished
 	 * If provided component doesn't have an owner, it will be attached to the owner of this chain-component
 	 * @param component or function that returns this component
 	 */
@@ -236,7 +222,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Waits until given function keeps returning true
+	 * Waits till a given function returns true
 	 * @param func
 	 */
 	waitUntil(func: Func<void, boolean>): ChainComponent {
@@ -245,7 +231,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Waits given number of iterations of update loop
+	 * Waits for a given number of iterations of the update loop
 	 * @param num number of frames
 	 */
 	waitFrames(num: number): ChainComponent {
@@ -254,7 +240,17 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Waits until a message with given key isn't sent
+	 * Waits for a given amount of miliseconds
+	 * @param time number of miliseconds to wait; or function that returns this number
+	 */
+	waitTime(time: number | Func<void, number>): ChainComponent {
+		this.enqueue(CMD_WAIT_TIME, time);
+		return this;
+	}
+
+
+	/**
+	 * Waits until a message of a given key is captured
 	 * @param msg message key
 	 */
 	waitForMessage(msg: string): ChainComponent {
@@ -263,7 +259,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Waits until a message with given key and a specific condition isn't sent
+	 * Waits until a message of a given key, meeting a specific condition is captured
 	 */
 	waitForMessageConditional(msg: string, condition: QueryCondition) {
 		this.enqueue(CMD_WAIT_FOR_MESSAGE_CONDITION, msg, condition);
@@ -271,9 +267,9 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Removes component from given game object (or the owner if null)
+	 * Removes component from given object (or the owner if null)
 	 * @param cmp name of the component or the component itself
-	 * @param gameObj
+	 * @param gameObj object from which the component should be removed
 	 */
 	removeComponent(cmp: string, gameObj: Container = null): ChainComponent {
 		this.enqueue(CMD_REMOVE_COMPONENT, cmp, gameObj);
@@ -281,29 +277,45 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Removes game objects that meets given condition
+	 * Detaches game objects that meet given condition
 	 */
-	removeGameObjectsByQuery(query: QueryCondition): ChainComponent {
-		this.enqueue(CMD_REMOVE_GAME_OBJECTS_BY_QUERY, query);
+	detachGameObjectsByQuery(query: QueryCondition): ChainComponent {
+		this.enqueue(CMD_DETACH_GAME_OBJECTS_BY_QUERY, query);
 		return this;
 	}
 
 	/**
-	 * Removes given game object
-	 * @param obj
+	 * Destroys game objects that meet given condition
 	 */
-	removeGameObject(obj: Container): ChainComponent {
-		this.enqueue(CMD_REMOVE_GAME_OBJECT, obj);
+	destroyGameObjectsByQuery(query: QueryCondition): ChainComponent {
+		this.enqueue(CMD_DESTROY_GAME_OBJECTS_BY_QUERY, query);
 		return this;
 	}
 
 	/**
-	 * Interrupts this component whenever a condition is true
+	 * Detaches given game object
+	 */
+	detachGameObject(obj: Container): ChainComponent {
+		this.enqueue(CMD_DETACH_GAME_OBJECT, obj);
+		return this;
+	}
+
+	
+	/**
+	 * Destroys given game object
+	 */
+	destroyGameObject(obj: Container): ChainComponent {
+		this.enqueue(CMD_DESTROY_GAME_OBJECT, obj);
+		return this;
+	}
+
+	/**
+	 * Interrupts this component as soon as the function argument returns true
 	 * The condition is checked every loop
 	 * @param obj
 	 */
-	interruptIf(func: Func<void, boolean>): ChainComponent {
-		this.interruptChecks.push(func);
+	addAbortCondition(func: Func<void, boolean>): ChainComponent {
+		this.abortIfChecks.push(func);
 		return this;
 	}
 
@@ -311,20 +323,22 @@ export default class ChainComponent extends Component<void> {
 		if (this.current && ((this.current.key === CMD_WAIT_FOR_MESSAGE && this.current.param1 === msg.action) || (
 			this.current.key === CMD_WAIT_FOR_MESSAGE_CONDITION && this.current.param1 === msg.action &&
 			queryConditionCheck(msg.gameObject, this.current.param2)))) {
-			this.tmpParam2 = true; // set a flag that the message just arrived
+				// set a flag that the message just arrived
+				// it will be processed during the next loop
+				this.tmpParam2 = true;
 		}
 	}
 
 	onUpdate(delta: number, absolute: number) {
 
 		if (this.owner === null) {
-			// one of the closures might have removed this component from its parent
+			// someone might have removed this component from its parent. Hence this check
 			return;
 		}
 
-		if (this.interruptChecks.length !== 0) {
+		if (this.abortIfChecks.length !== 0) {
 			// always check for conditions for interrupt
-			for (let check of this.interruptChecks) {
+			for (let check of this.abortIfChecks) {
 				if (check()) {
 					this.finish();
 					return;
@@ -478,10 +492,6 @@ export default class ChainComponent extends Component<void> {
 				gameObj.addComponent(this.current.getParam1());
 				this.gotoNextImmediately(delta, absolute);
 				break;
-			case CMD_SEND_MESSAGE:
-				this.sendMessage(this.current.getParam1(), this.current.getParam2());
-				this.gotoNextImmediately(delta, absolute);
-				break;
 			case CMD_WAIT_FOR_ALL_TO_FINISH:
 				// wait until isFinished is true
 				const checkInit = !this.current.cached;
@@ -561,14 +571,25 @@ export default class ChainComponent extends Component<void> {
 				gameObj2.removeComponent(gameObj2.findComponentByName(this.current.param1));
 				this.gotoNextImmediately(delta, absolute);
 				break;
-			case CMD_REMOVE_GAME_OBJECTS_BY_QUERY:
-				let objects = this.scene.findObjectsByQuery(this.current.param1);
-				for (let obj of objects) {
-					obj.destroy();
+			case CMD_DETACH_GAME_OBJECTS_BY_QUERY:
+				let objectsToDetach = this.scene.findObjectsByQuery(this.current.param1);
+				for (let obj of objectsToDetach) {
+					obj.detach();
 				}
 				this.gotoNextImmediately(delta, absolute);
 				break;
-			case CMD_REMOVE_GAME_OBJECT:
+			case CMD_DESTROY_GAME_OBJECTS_BY_QUERY:
+				let objectsToDestroy = this.scene.findObjectsByQuery(this.current.param1);
+				for (let obj of objectsToDestroy) {
+					obj.detach();
+				}
+				this.gotoNextImmediately(delta, absolute);
+				break;
+			case CMD_DETACH_GAME_OBJECT:
+				(this.current.param1 as Container).detach();
+				this.gotoNextImmediately(delta, absolute);
+				break;
+			case CMD_DESTROY_GAME_OBJECT:
 				(this.current.param1 as Container).destroy();
 				this.gotoNextImmediately(delta, absolute);
 				break;

@@ -1,7 +1,7 @@
 import { Graphics, FuncComponent, Container } from '..';
 import { addTest } from './test-collector';
 import { WIDTH, HEIGHT } from './test-runner';
-import { ComponentState } from '../engine/component';
+import { ComponentState } from '../engine/ecs-component';
 import Builder from '../engine/builder';
 
 addTest('Component lifecycle test', (scene, onFinish, tick) => {
@@ -71,7 +71,7 @@ addTest('ComponentUpdateTest', (scene, onFinish) => {
 	scene.stage.pixiObj.addChild(gfx);
 	gfx.scale.x = 0;
 	gfx.addComponent(new FuncComponent('').doOnFixedUpdate(() => gfx.scale.x++).setFixedFrequency(1)); // 1 per second
-	scene.invokeWithDelay(3500, () => {
+	scene.callWithDelay(3500, () => {
 		let success = Math.floor(gfx.scale.x) === 3;
 		onFinish(success, 'Wrong value: ' + gfx.scale.x);
 	});
@@ -88,7 +88,7 @@ addTest('FrequencyTest', (scene, onFinish) => {
 	gfx.addComponent(new FuncComponent('')
 		.setFixedFrequency(0.5) // 1x in 2 seconds
 		.doOnFixedUpdate(() => gfx.scale.x /= 2));
-	scene.invokeWithDelay(2500, () => { // should run 1x
+	scene.callWithDelay(2500, () => { // should run 1x
 		if (Math.abs(gfx.scale.x - 0.5) <= 0.01) {
 			onFinish(true);
 		} else {
@@ -107,7 +107,7 @@ addTest('FrequencyTest2', (scene, onFinish) => {
 	gfx.addComponent(new FuncComponent('')
 		.setFixedFrequency(2) // 2x per second
 		.doOnFixedUpdate(() => gfx.scale.x /= 2));
-	scene.invokeWithDelay(1800, () => { // should run 3x: 500 1000 1500
+	scene.callWithDelay(1800, () => { // should run 3x: 500 1000 1500
 		if (Math.abs(gfx.scale.x - 0.125) <= 0.01) {
 			onFinish(true);
 		} else {
@@ -128,7 +128,7 @@ addTest('FrequencyTest3', (scene, onFinish) => {
 		.doOnFixedUpdate((cmp, delta) => {
 			gfx.scale.x *= (delta / 1000);
 		})); // delta should be 500
-	scene.invokeWithDelay(2200, () => { // should run 4x: 500 1000 1500, 2000
+	scene.callWithDelay(2200, () => { // should run 4x: 500 1000 1500, 2000
 		if (Math.abs(gfx.scale.x - 0.0625) <= 0.01) {
 			onFinish(true);
 		} else {
@@ -170,11 +170,11 @@ addTest('RecycleTest', (scene, onFinish) => {
 
 	gfx.addComponent(recyclableComponent);
 
-	scene.invokeWithDelay(1200, () => {
+	scene.callWithDelay(1200, () => {
 		gfx.removeComponent(gfx.findComponentByName('recyclable'));
 		gfx2.addComponent(recyclableComponent);
 
-		scene.invokeWithDelay(1200, () => {
+		scene.callWithDelay(1200, () => {
 			let success = initToken === 2 && removeToken === 1 && finishToken === 1 && updateToken === 3;
 			if (success) {
 				onFinish(true);

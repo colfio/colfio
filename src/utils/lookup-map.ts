@@ -5,6 +5,7 @@ type Lookable = {
 
 /**
  * Accelerating structure for sorting items by two attributes
+ * Used by the game scene
  */
 export class LookupMap<K, T extends Lookable> {
 	private items: Map<K, Map<number, T>> = new Map();

@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+## [0.2.3] - 2020-09-05
+### Added
+- New comments
+
+### Changed
+- Renamed GameLoop to Engine
+
 ## [0.2.2] - 2020-09-01
 ### Added
 - Added support for new pixi objects

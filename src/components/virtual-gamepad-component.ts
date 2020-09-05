@@ -6,7 +6,7 @@ export enum GamepadButtons {
 }
 
 /**
- * Gamepad-keyboard mapper
+ * Gamepad-keyboard mapper, can be customized
  */
 export interface GamepadKeyMapper {
 	KEY_UP?: Keys;
@@ -18,7 +18,6 @@ export interface GamepadKeyMapper {
 	KEY_X?: Keys;
 	KEY_Y?: Keys;
 }
-
 /**
  * Component that simulates gamepad, is mapped to keyboard events
  */
@@ -46,10 +45,10 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		this.gamePadRenderer.clear();
 		let w = this.scene.app.screen.width;
 		let h = this.scene.app.screen.height;
+		// TODO make it configurable. This is a mess. Mess mess messsssssssss
 		let circX = w * 0.15;
 		let circX2 = w * 0.85;
 		let circY = h * 0.75;
-		// TODO make it configurable
 		let cSize = h * 0.24;
 		let buttonSize = cSize / 1.8;
 

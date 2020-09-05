@@ -15,13 +15,13 @@ addTest('ChainComponentTest', (scene, onFinish) => {
 	gfx.addComponent(new FuncComponent('').doOnMessage('TOKEN', () => tokens++));
 	gfx.addComponent(new ChainComponent()
 		.beginRepeat(2)
-		.waitFor(() => new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation += 0.1 * delta).setTimeout(500))
-		.waitFor(() => new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation -= 0.1 * delta).setTimeout(500))
-		.addComponent(() => new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation += 0.01 * delta).setTimeout(1000).doOnFinish((cmp) => cmp.sendMessage('TOKEN')))
+		.waitFor(() => new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation += 0.1 * delta).setDuration(500))
+		.waitFor(() => new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation -= 0.1 * delta).setDuration(500))
+		.addComponent(() => new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation += 0.01 * delta).setDuration(1000).doOnFinish((cmp) => cmp.sendMessage('TOKEN')))
 		.waitForMessage('TOKEN')
 		.endRepeat()
 		.call(() => {
-			scene.invokeWithDelay(0, () => onFinish(tokens === 2));
+			scene.callWithDelay(0, () => onFinish(tokens === 2));
 		})
 	);
 });
@@ -44,7 +44,7 @@ addTest('ChainComponentTest2', (scene, onFinish) => {
 		.call(() => whileTokens++)
 		.endWhile()
 		.call(() => {
-			scene.invokeWithDelay(0, () => onFinish(tokens === 2));
+			scene.callWithDelay(0, () => onFinish(tokens === 2));
 		})
 	);
 });
@@ -53,11 +53,11 @@ addTest('ChainComponentTest3', (scene, onFinish) => {
 	scene.addGlobalComponent(new ChainComponent()
 		.waitForMessage('TOKEN')
 		.call(() => {
-			scene.invokeWithDelay(0, () => onFinish(true));
+			scene.callWithDelay(0, () => onFinish(true));
 		})
 	);
 
-	scene.invokeWithDelay(2000, () => {
+	scene.callWithDelay(2000, () => {
 		scene.sendMessage(new Message('TOKEN'));
 	});
 });
@@ -74,11 +74,11 @@ addTest('ChainComponentTest4', (scene, onFinish) => {
 		.waitFor([cmpGenerator(), cmpGenerator(), cmpGenerator()]) // add 3 components and wait when all of them finish
 		.call(() => {
 			let success = token === 3;
-			scene.invokeWithDelay(0, () => onFinish(success, 'FAILURE, expected 3, got ' + token));
+			scene.callWithDelay(0, () => onFinish(success, 'FAILURE, expected 3, got ' + token));
 		})
 	);
 
-	scene.invokeWithDelay(500, () => {
+	scene.callWithDelay(500, () => {
 		scene.sendMessage(new Message('STOP'));
 	});
 });
@@ -89,11 +89,11 @@ addTest('ChainComponentConditionalTest', (scene, onFinish) => {
 	scene.addGlobalComponent(new ChainComponent()
 		.waitForMessageConditional('TOKEN', { ownerState: 22, ownerFlag: 12 })
 		.call(() => {
-			scene.invokeWithDelay(0, () => onFinish(true));
+			scene.callWithDelay(0, () => onFinish(true));
 		})
 	);
 
-	scene.invokeWithDelay(200, () => {
+	scene.callWithDelay(200, () => {
 		scene.stage.addComponent(new ChainComponent().call((cmp) => cmp.sendMessage('TOKEN')));
 	});
 });
@@ -149,7 +149,7 @@ addTest('Chain Wait for all', (scene, onFinish) => {
 			})]);
 
 	scene.addGlobalComponentAndRun(chain);
-	scene.invokeWithDelay(100, () => {
+	scene.callWithDelay(100, () => {
 		onFinish(token === 2, `Wrong token value, expected 2, found ${token}`);
 	});
 });
@@ -172,7 +172,7 @@ addTest('Chain Wait for first', (scene, onFinish) => {
 			})]);
 
 	scene.addGlobalComponentAndRun(chain);
-	scene.invokeWithDelay(100, () => {
+	scene.callWithDelay(100, () => {
 		onFinish(token === 3, `Wrong token value, expected 3, found ${token}`);
 	});
 });

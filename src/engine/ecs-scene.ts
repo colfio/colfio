@@ -1,8 +1,8 @@
 import GameObjectProxy from './game-object-proxy';
 import Message from './message';
-import Component from './component';
+import Component from './ecs-component';
 import * as PIXI from 'pixi.js';
-import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './constants';
+import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './ecs-constants';
 import Container from './game-objects/container';
 import { LookupMap } from '../utils/lookup-map';
 import DebugComponent from '../components/debug-component';
@@ -11,7 +11,7 @@ import { MessageResponse } from './message';
 
 
 /**
- * Class for action that is to be executed with certain delay
+ * Class for action that is to be executed with a delay
  */
 class Invocation {
 	delay = 0; // time of invocation
@@ -20,8 +20,9 @@ class Invocation {
 }
 
 /**
- * Scene features
+ * Scene options
  * Note that every optimization consumes some memory as the data needs to be stored in maps and sets
+ * If you don't need any of those features below, keep them disabled
  */
 export interface SceneConfig {
 	// enables searching by object flags
@@ -57,7 +58,7 @@ export const defaultConfig: SceneConfig = {
 };
 
 /**
- * Scene that keeps collection of all game objects and component listeners
+ * Scene that keeps a collection of all game objects and component listeners
  */
 export default class Scene {
 	app: PIXI.Application;
@@ -65,8 +66,10 @@ export default class Scene {
 	width: number;
 	height: number;
 	resolution: number;
+	
 	// PIXI stage object
 	stage: Container = null;
+	
 	// collection of actions that should be invoked with a delay
 	private pendingInvocations: Invocation[];
 	// message action keys and all subscribers that listens to all these actions
@@ -82,7 +85,7 @@ export default class Scene {
 	// collection of ALL game objects, mapped by their ids
 	private gameObjects: Map<number, Container>;
 	// indicator if the scene is just being updated
-	private updating: boolean;
+	private isUpdating: boolean;
 	private _currentDelta: number;
 	private _currentAbsolute: number;
 
@@ -96,6 +99,7 @@ export default class Scene {
 		this.gameObjects = new Map();
 
 		this.initConfig(config);
+
 		this.app = app;
 		this.resolution = this.app.renderer.resolution;
 		this.width = this.app.renderer.width / this.resolution;
@@ -117,10 +121,10 @@ export default class Scene {
 
 	/**
 	 * Adds a new function that will be invoked after a given amount of time
-	 * @param delay delay in miliseconds
-	 * @param aaction function pointer with no arguments
+	 * @param delay delay in miliseconds. If 0, it will be invoked IN THE END OF THE UPDATE LOOP
+	 * @param action function pointer with no arguments
 	 */
-	invokeWithDelay(delay: number, action: () => void) {
+	callWithDelay(delay: number, action: () => void) {
 		this.pendingInvocations.push({
 			delay: delay,
 			time: 0,
@@ -129,14 +133,14 @@ export default class Scene {
 	}
 
 	/**
-	 * Adds a component to the stage object
+	 * Adds a component to the stage object (global component)
 	 */
 	addGlobalComponent(cmp: Component<any>) {
 		this.stage.addComponent(cmp);
 	}
 
 	/**
-	 * Adds a component to the stage object and invokes it immediately
+	 * Adds a component to the stage object and invokes it immediately (global component)
 	 */
 	addGlobalComponentAndRun(cmp: Component<any>) {
 		this.stage.addComponentAndRun(cmp);
@@ -180,7 +184,7 @@ export default class Scene {
 	/**
 	 * Gets object by its id
 	 */
-	getObjectById(id: number): Container {
+	findObjectById(id: number): Container {
 		if (this.gameObjects.has(id)) {
 			return this.gameObjects.get(id);
 		}
@@ -212,7 +216,7 @@ export default class Scene {
 	}
 
 	/**
-	 * Finds a first object with a given name
+	 * Finds a first object of a given name
 	 */
 	findObjectByName(name: string): Container {
 		if (!this.config.namesSearchEnabled) {
@@ -272,7 +276,7 @@ export default class Scene {
 	}
 
 	/**
-	 * Finds a first object with a given state
+	 * Finds a first object of a given state
 	 */
 	findObjectByState(state: number): Container {
 		if (!this.config.statesSearchEnabled) {
@@ -288,8 +292,10 @@ export default class Scene {
 	sendMessage(msg: Message) {
 		const responses: MessageResponse[] = [];
 		this.subscribers.findAll(msg.action).forEach(ent => {
+			// don't send expired messages 
 			// don't send message to its own sender
 			if (!msg.expired && (msg.component == null || msg.component.id !== ent.id)) {
+				// collect responses
 				const resp = ent.onMessage(msg);
 				responses.push({
 					componentId: msg.component ? msg.component.id : undefined,
@@ -298,10 +304,12 @@ export default class Scene {
 			}
 		});
 
-		// check global subscribers (expiration doesn't apply and we won't receive any response)
-		this.subscribers.findAll(Messages.ANY).forEach(ent => ent.onMessage(msg));
-		// add all responses
 		msg.responses.responses = responses;
+
+		// check global subscribers that are interested in all messages (usually for debugging)
+		this.subscribers.findAll(Messages.ANY).forEach(ent => ent.onMessage(msg));
+	
+		
 		if (this.config.debugEnabled) {
 			console.log(`MSG: ${msg.action}; ${msg.responses.isProcessed() ? 'PROCESSED' : 'IGNORED'} ${msg.responses.isError() ? 'ERROR' : 'SUCCESS'}`);
 		}
@@ -311,15 +319,15 @@ export default class Scene {
 	 * Removes all objects from scene at the end of current update loop
 	 */
 	clearSceneAsync(newConfig?: SceneConfig) {
-		this.invokeWithDelay(0, () => this.clearScene(newConfig));
+		this.callWithDelay(0, () => this.clearScene(newConfig));
 	}
 
 	/**
-	 * Removes all objects from scene
+	 * Removes all objects from the scene
 	 */
 	clearScene(newConfig?: SceneConfig) {
-		if (this.updating) {
-			throw new Error('Scene can\'t be cleared during update. Use invokeWithDelay() instead!');
+		if (this.isUpdating) {
+			throw new Error('Scene can\'t be cleared during update loop. Use clearSceneAsync() instead!');
 		}
 
 		this.sendMessage(new Message(Messages.SCENE_CLEAR, null, null, this.name));
@@ -365,6 +373,7 @@ export default class Scene {
 		this._currentDelta = this._currentAbsolute = 0;
 
 		let newStage = new Container('stage');
+	
 		// stage doesn't have any parents, we need to remove its children recursively
 		for (let child of this.app.stage.children) {
 			child.destroy();
@@ -375,6 +384,7 @@ export default class Scene {
 		this.stage = newStage;
 
 		if (this.config.debugEnabled) {
+			// inject debugger component
 			this.addGlobalComponentAndRun(new DebugComponent());
 		}
 
@@ -394,10 +404,10 @@ export default class Scene {
 		this._currentDelta = delta;
 		this._currentAbsolute = absolute;
 
-		this.updating = true;
+		this.isUpdating = true;
 		// update root object and all other objects recursively
 		this.stage._proxy.update(delta, absolute);
-		this.updating = false;
+		this.isUpdating = false;
 
 		// execute pending invocations
 		let i = this.pendingInvocations.length;

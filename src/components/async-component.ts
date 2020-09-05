@@ -1,8 +1,9 @@
 import Message from '../engine/message';
-import Component from '../engine/component';
+import Component from '../engine/ecs-component';
 import Container from '../engine/game-objects/container';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
 import CmdNode from '../utils/cmd-node';
+import { Func } from '../utils/helpers';
 
 const CMD_WAIT_TIME = 1;
 const CMD_ADD_COMPONENT_AND_WAIT = 2;
@@ -11,12 +12,6 @@ const CMD_WAIT_FRAMES = 4;
 const CMD_WAIT_FOR_MESSAGE = 5;
 const CMD_WAIT_FOR_MESSAGE_CONDITION = 6;
 const CMD_ADD_COMPONENTS_AND_WAIT = 7;
-
-
-// a function that has a return type
-interface Func<T, TResult> {
-	(item: T): TResult;
-}
 
 /**
  * Component that executes a chain of commands during the update loop by using JavaScript generators
@@ -72,8 +67,8 @@ export default class AsyncComponent<T> extends Component<T> {
 	}
 
 	/**
-	 * Waits given amount of seconds
-	 * @param time number of seconds to wait; or function that returns this number
+	 * Waits given amount of miliseconds
+	 * @param time number of miliseconds to wait; or function that returns this number
 	 */
 	waitTime(time: number | Func<void, number>): IterableIterator<void> {
 		this.currentGenerator = this.createGenerator();

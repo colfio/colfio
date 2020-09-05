@@ -2,6 +2,10 @@ import { Scene } from '..';
 import { Ticker } from 'pixi.js';
 
 
+// ====================================================
+// Test runner that displays results in a html table
+// ====================================================
+
 export const WIDTH = 600;
 export const HEIGHT = 600;
 export const TIME_STEP = 16.67;
@@ -36,12 +40,18 @@ export class BaseTest {
 		return this._currentTime;
 	}
 
+	/**
+	 * Function that is invoked before the test is executed 
+	 */
 	beforeTest(scene: Scene, ticker: Ticker) {
 		this.currentScene = scene;
 		this.currentTicker = ticker;
 		scene.clearScene({});
 	}
 
+	/**
+	 * Function that is invoked after the test is executed 
+	 */
 	afterTest() {
 		this.stopLoop();
 		this.currentScene.clearScene({});
@@ -113,10 +123,12 @@ export class TestRunner {
 				this.logResult(name, !success ? (errorMsg ? 'FAILURE: ' + errorMsg : 'FAILURE') : 'OK', success);
 				currentTest.stopLoop();
 			});
+			// run loop for all tests
 			this.runTestLoop(currentTest, () => this.gotoNextTest());
 		} catch (error) {
 			console.log(error.stack);
 			this.logResult(name, error, false);
+			// move on to another test if an error occurs 
 			this.gotoNextTest();
 		}
 	}
@@ -132,13 +144,17 @@ export class TestRunner {
 	}
 
 	private runTestLoop(test: BaseTest, onFinish: () => void) {
+		// run loop until the tests either fails or suceeds
+
 		if (test.isRunning) {
 			if (test.currentTime >= (TIMEOUT_SECONDS * 1000)) {
 				// interrupt
 				test.stopLoop();
 				this.logResult(test.name, 'TIMEOUT ' + TIMEOUT_SECONDS + 's', false);
 			}
+			// ========== perform a tick upon the game engine
 			test.tick();
+			// ===============================================
 			requestAnimationFrame(() => this.runTestLoop(test, onFinish));
 		} else {
 			onFinish();

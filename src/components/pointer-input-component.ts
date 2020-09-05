@@ -1,4 +1,4 @@
-import Component from '../engine/component';
+import Component from '../engine/ecs-component';
 import Message from '../engine/message';
 
 export enum PointerMessages {

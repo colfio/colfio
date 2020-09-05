@@ -1,3 +1,7 @@
+
+/**
+ * Generic message of the engine
+ */
 export enum Messages {
 	ANY = 'ANY',
 	OBJECT_ADDED = 'OBJECT_ADDED',
@@ -13,6 +17,8 @@ export enum Messages {
 	TAG_REMOVED = 'TAG_REMOVED',
 	SCENE_CLEAR = 'SCENE_CLEAR'
 }
+
+// ===================== Types for respective message types =====================
 
 export interface AttributeChangeMessage {
 	key: string;
@@ -34,8 +40,4 @@ export interface FlagChangeMessage {
 export interface TagChangeMessage {
 	type: Messages.TAG_ADDED | Messages.TAG_REMOVED;
 	tag: string;
-}
-
-export enum Attributes {
-	DYNAMICS = 'DYNAMICS'
 }

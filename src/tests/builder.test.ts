@@ -9,11 +9,11 @@ addTest('BuilderTest', (scene, onFinish) => {
 	builder.anchor(0.5, 0.5);
 
 	let finishedComponents = 0;
-	builder.withComponent(() => new FuncComponent('').setTimeout(Math.random() * 3000).doOnFinish(() => {
+	builder.withComponent(() => new FuncComponent('').setDuration(Math.random() * 3000).doOnFinish(() => {
 		finishedComponents++;
 		if (finishedComponents === 100) {
 			// we have all
-			scene.invokeWithDelay(0, () => onFinish(true));
+			scene.callWithDelay(0, () => onFinish(true));
 		}
 	}));
 
@@ -22,7 +22,7 @@ addTest('BuilderTest', (scene, onFinish) => {
 		builder.asText('Hello', new PIXI.TextStyle({
 			fontSize: 35,
 			fill: '#F00'
-		})).withParent(scene.stage).buildKeepData();
+		})).withParent(scene.stage).buildAndKeepData();
 	}
 });
 
@@ -44,7 +44,7 @@ addTest('BuilderTest2', (scene, onFinish) => {
 	builder.anchor(0.5, 0.5);
 	builder.localPos(WIDTH / 2, HEIGHT / 2).withParent(scene.stage).build();
 
-	scene.invokeWithDelay(2000, () => {
+	scene.callWithDelay(2000, () => {
 		let objects = scene.findObjectsByName('text');
 		if (objects.length === 3 && objects.filter(obj => obj.pixiObj.parent.name === 'text').length === 2) {
 			onFinish(true);
@@ -71,7 +71,7 @@ addTest('Builder component init test', (scene, onFinish) => {
 	builder.withComponent(() => new FuncComponent('').doOnInit(() => initOrder.push('PARENT')));
 	builder.withParent(scene.stage).build();
 
-	scene.invokeWithDelay(500, () => {
+	scene.callWithDelay(500, () => {
 		const expectedOrder = ['PARENT', 'CHILD1', 'CHILD2'];
 		const orderEqual = expectedOrder.filter((val, index) => initOrder[index] !== val).length === 0;
 

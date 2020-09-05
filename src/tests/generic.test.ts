@@ -12,7 +12,7 @@ addTest('RotationTest', (scene, onFinish) => {
 	gfx.endFill();
 	scene.stage.pixiObj.addChild(gfx);
 	gfx.addComponent(new FuncComponent('').doOnUpdate((cmp, delta) => gfx.rotation += delta * 0.001));
-	scene.invokeWithDelay(1500, () => {
+	scene.callWithDelay(1500, () => {
 		onFinish(true);
 	});
 });
@@ -32,7 +32,7 @@ addTest('FuncComponentTest', (scene, onFinish) => {
 
 	// chain component will fire two messages that should be captured by FuncComponent and token var should be increased
 
-	scene.invokeWithDelay(2000, () => {
+	scene.callWithDelay(2000, () => {
 		if (token === 2) {
 			onFinish(true);
 		} else {
@@ -55,7 +55,7 @@ addTest('FuncComponentTest2', (scene, onFinish) => {
 
 	// chain component will fire two messages that should be captured by FuncComponent only once
 
-	scene.invokeWithDelay(2000, () => {
+	scene.callWithDelay(2000, () => {
 		if (token === 1) {
 			onFinish(true);
 		} else {
@@ -96,7 +96,7 @@ addTest('FuncComponentConditionalTest', (scene, onFinish) => {
 			.call((cmp) => cmp.sendMessage('msg_conditional'))) // should be captured by empty closure, name-closure and flag-closure
 		.withParent(scene.stage).build();
 
-	scene.invokeWithDelay(2000, () => {
+	scene.callWithDelay(2000, () => {
 		let success = token === 4 && tokenTag === 1 && tokenName === 4 && tokenState === 1 && tokenTag === 1;
 		if (success) {
 			onFinish(true);

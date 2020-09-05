@@ -1,5 +1,8 @@
-import Component from '../engine/component';
+import Component from '../engine/ecs-component';
 
+/**
+ * Key Codes
+ */
 export enum Keys {
 	KEY_LEFT = 37,
 	KEY_UP = 38,
@@ -62,14 +65,18 @@ export class KeyInputComponent extends Component<void> {
 		document.removeEventListener('keydown', this.onKeyDown);
 	}
 
-	isHandledKeyPressed(keyCode: number) {
-		return this.isKeyPressed(keyCode) || this.handledKeys.has(keyCode);
+	/**
+	 * Returns true if given key is pressed
+	 * @param keyCode code of the key. You can use enum Keys to get the code your need
+	 * @param includeHandled if true, it will check for already handled keys as well
+	 */
+	isKeyPressed(keyCode: number, includeHandled = false) {
+		return this.keys.has(keyCode) || (includeHandled && this.handledKeys.has(keyCode));
 	}
 
-	isKeyPressed(keyCode: number) {
-		return this.keys.has(keyCode);
-	}
-
+	/**
+	 * Marks given key as handled
+	 */
 	handleKey(keyCode: number) {
 		this.keys.delete(keyCode);
 		this.handledKeys.add(keyCode);

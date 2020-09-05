@@ -1,6 +1,6 @@
 import { Graphics, Container, FuncComponent, Message } from '..';
 import Builder from '../engine/builder';
-import { Messages } from '../engine/constants';
+import { Messages } from '../engine/ecs-constants';
 import { addTest } from './test-collector';
 
 addTest('MessageNotifyTest', (scene, onFinish, tick) => {
@@ -37,7 +37,7 @@ addTest('MessageNotifyTest', (scene, onFinish, tick) => {
 		.withParent(scene.stage)
 		.withState(12).build();
 
-	scene.invokeWithDelay(500, () => { // wait a few frames
+	scene.callWithDelay(500, () => { // wait a few frames
 		if (token === 2) { // we expect only two messages: OBJECT_ATTACHED and COMPONENT_ADDED
 			onFinish(true);
 		} else {
@@ -92,7 +92,7 @@ addTest('MessageNotifyTest2', (scene, onFinish, tick) => {
 	scene.stage.addComponent(new FuncComponent('GENERIC2')); // component added
 	scene.stage.removeComponent(scene.stage.findComponentByName('GENERIC1')); // component removed
 
-	scene.invokeWithDelay(500, () => { // wait a few frames
+	scene.callWithDelay(500, () => { // wait a few frames
 		if (token === 12) { // we expect all 12 messages
 			onFinish(true);
 		} else {
@@ -113,14 +113,14 @@ addTest('FinishedComponentMessageTest', (scene, onFinish) => {
 	scene.stage.pixiObj.addChild(container);
 	container.addComponent(recyclableComponent);
 
-	scene.invokeWithDelay(100, () => { // wait 100s and send the first message
+	scene.callWithDelay(100, () => { // wait 100s and send the first message
 		scene.sendMessage(new Message('TOKEN_MSG'));
 		recyclableComponent.finish(); // finish the component
 		container = new Container('');
 		scene.stage.pixiObj.addChild(container);
 		container.addComponent(recyclableComponent);
 
-		scene.invokeWithDelay(200, () => {
+		scene.callWithDelay(200, () => {
 			scene.sendMessage(new Message('TOKEN_MSG')); // send another message -> should be captured and token should be increased
 			let success = token === 2;
 			if (success) {
