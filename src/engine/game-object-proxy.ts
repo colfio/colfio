@@ -1,5 +1,5 @@
-import Component, { ComponentState } from './ecs-component';
-import Scene from './ecs-scene';
+import Component, { ComponentState } from './component';
+import Scene from './scene';
 import Container from './game-objects/container';
 import GameObject from './game-object';
 import Flags from '../utils/flags';
@@ -109,7 +109,7 @@ export default class GameObjectProxy {
 			if (this._internalState === GameObjectState.DETACHED) {
 				throw new Error('Can\'t run a component upon a detached object!');
 			}
-			this.initComponent(component);
+			this.initNewComponent(component);
 			if (!this.waitingForUpdate) {
 				// run only if this object has already run within the current tick
 				component.onUpdate(this.scene.currentDelta, this.scene.currentAbsolute);
@@ -297,6 +297,9 @@ export default class GameObjectProxy {
 	 * The child will initialize all components just here
 	 */
 	onChildAdded(object: GameObjectProxy) {
+		if(object.internalState === GameObjectState.ATTACHED) {
+			throw new Error(`This object has already been added to the scene: ${object.pixiObj.name}`);
+		}
 		object.scene = this.scene;
 		object.attach();
 	}
@@ -347,7 +350,7 @@ export default class GameObjectProxy {
 		this.lastAbsolute = absolute;
 	}
 
-	initComponent(component: Component<any>) {
+	initNewComponent(component: Component<any>) {
 		if (!this.isOnScene) {
 			throw new Error('The object must be on the scene before its components are initialized');
 		}
@@ -358,8 +361,10 @@ export default class GameObjectProxy {
 		component.owner = this.pixiObj;
 		this.components.set(component.id, component);
 		this.scene._onComponentAdded(component, this);
+
 		component.onInit();
 		component._cmpState = ComponentState.INITIALIZED;
+
 		component.onAttach();
 		component._cmpState = ComponentState.RUNNING;
 	}
@@ -372,7 +377,7 @@ export default class GameObjectProxy {
 			toAdd.forEach(cmp => {
 				// at first, add it to the set so it can be looked up
 				this.components.set(cmp.id, cmp);
-				this.initComponent(cmp);
+				this.initNewComponent(cmp);
 			});
 		}
 	}
@@ -403,9 +408,11 @@ export default class GameObjectProxy {
 
 		// detach all components
 		this.components.forEach(cmp => {
-			this.scene._onComponentDetached(cmp);
-			cmp.onDetach();
-			cmp._cmpState = ComponentState.DETACHED;
+			if(cmp._cmpState !== ComponentState.DETACHED) {
+				this.scene._onComponentDetached(cmp);
+				cmp.onDetach();
+				cmp._cmpState = ComponentState.DETACHED;
+			}
 		});
 
 		this.scene._onObjectRemoved(this);

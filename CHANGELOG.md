@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+
+## [0.2.4] - 2020-09-08
+### Changed
+- Improved component lifecycle
+- Fixed bugs within components
+
 ## [0.2.3] - 2020-09-05
 ### Added
 - New comments

@@ -1,8 +1,8 @@
 import GameObjectProxy from './game-object-proxy';
 import Message from './message';
-import Component from './ecs-component';
+import Component from './component';
 import * as PIXI from 'pixi.js';
-import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './ecs-constants';
+import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './constants';
 import Container from './game-objects/container';
 import { LookupMap } from '../utils/lookup-map';
 import DebugComponent from '../components/debug-component';
@@ -297,10 +297,12 @@ export default class Scene {
 			if (!msg.expired && (msg.component == null || msg.component.id !== ent.id)) {
 				// collect responses
 				const resp = ent.onMessage(msg);
-				responses.push({
-					componentId: msg.component ? msg.component.id : undefined,
-					data: resp
-				});
+				if(resp) {
+					responses.push({
+						componentId: ent.id,
+						data: resp
+					});
+				}
 			}
 		});
 
@@ -494,6 +496,7 @@ export default class Scene {
 
 	_onComponentDetached(component: Component<any>) {
 		this.subscribers.removeItem(component);
+		this.sendMessage(new Message(Messages.COMPONENT_DETACHED, component, component.owner));
 	}
 
 	_onComponentRemoved(component: Component<any>, obj: GameObjectProxy) {

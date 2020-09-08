@@ -52,6 +52,7 @@ export default class CmdNode {
 	}
 
 	setParam1(val: any) {
+        this.param1 = val;
 		this.param1C = val;
 	}
 
@@ -63,6 +64,7 @@ export default class CmdNode {
 	}
 
 	setParam2(val: any) {
+        this.param2 = val;
 		this.param2C = val;
 	}
 

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Message from './message';
-import Scene from './ecs-scene';
+import Scene from './scene';
 import Container from './game-objects/container';
+import { MessageResponse } from '../../dist/engine/message';
 
 export enum ComponentState {
 	NEW = 0,
@@ -9,7 +10,7 @@ export enum ComponentState {
 	RUNNING = 2,
 	DETACHED = 3,
 	FINISHED = 4,
-	REMOVED = 5
+	REMOVED = 5,
 }
 
 /**
@@ -59,7 +60,7 @@ export default class Component<T = void> {
 
 
 	/**
-	 * Called when the component is being added to a new object
+	 * Called when the component is being added to a new object FOR THE FIRST TIME
 	 */
 	onInit() {
 		// override
@@ -75,7 +76,7 @@ export default class Component<T = void> {
 	/**
 	 * Handles incoming message
 	 */
-	onMessage(msg: Message) {
+	onMessage(msg: Message): any | void {
 		// override
 	}
 
@@ -95,15 +96,14 @@ export default class Component<T = void> {
 	}
 
 	/**
-	 * Called either before removal or before 
-	 * the owner object gets detached from the scene
+	 * Called before the owner object gets detached from the scene
 	 */
 	onDetach() {
-
+		// override
 	}
 
 	/**
-	 * Called before removal from its owner
+	 * Called before the component gets removed from its owner object
 	 */
 	onRemove() {
 		// override
@@ -148,7 +148,7 @@ export default class Component<T = void> {
 	 * Will call onFinish(), onDetach() and onRemove() 
 	 */
 	finish() {
-		if (this._cmpState === ComponentState.RUNNING && this.owner) {
+		if (this.owner && this._cmpState === ComponentState.RUNNING) {
 			this.onFinish();
 			this._cmpState = ComponentState.FINISHED;
 			this.owner.removeComponent(this);

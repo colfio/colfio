@@ -1,6 +1,6 @@
 import GameObjectProxy from '../game-object-proxy';
-import Component from '../ecs-component';
-import Scene from '../ecs-scene';
+import Component from '../component';
+import Scene from '../scene';
 import GameObject from '../game-object';
 
 import AnimatedSprite from './animated-sprite';

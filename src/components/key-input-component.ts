@@ -1,4 +1,4 @@
-import Component from '../engine/ecs-component';
+import Component from '../engine/component';
 
 /**
  * Key Codes
@@ -55,12 +55,12 @@ export class KeyInputComponent extends Component<void> {
 		this._name = KeyInputComponent.name;
 	}
 
-	onInit() {
+	onAttach() {
 		document.addEventListener('keyup', this.onKeyUp, false);
 		document.addEventListener('keydown', this.onKeyDown, false);
 	}
 
-	onRemove() {
+	onDetach() {
 		document.removeEventListener('keyup', this.onKeyUp);
 		document.removeEventListener('keydown', this.onKeyDown);
 	}

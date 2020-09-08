@@ -1,4 +1,4 @@
-import Component from './ecs-component';
+import Component from './component';
 import Container from './game-objects/container';
 
 /**

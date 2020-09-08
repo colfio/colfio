@@ -36,7 +36,7 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		this._name = KeyInputComponent.name; // simulates key input component
 	}
 
-	onInit() {
+	onAttach() {
 		this.gamePadRenderer = new Graphics('gamepad');
 		this.renderButtons();
 	}
@@ -122,7 +122,7 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		this.owner.asContainer().addChild(this.gamePadRenderer);
 	}
 
-	onRemove() {
+	onDetach() {
 		this.gamePadRenderer.removeListener('touchstart', this.pointerDown);
 		this.gamePadRenderer.removeListener('touchend', this.pointerUp);
 		this.gamePadRenderer.removeListener('touchendoutside', this.pointerUp);

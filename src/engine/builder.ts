@@ -1,4 +1,4 @@
-import Scene from './ecs-scene';
+import Scene from './scene';
 
 import AnimatedSprite from './game-objects/animated-sprite';
 import BitmapText from './game-objects/bitmap-text';
@@ -14,7 +14,7 @@ import Sprite from './game-objects/sprite';
 import Text from './game-objects/text';
 import TilingSprite from './game-objects/tiling-sprite';
 
-import Component from './ecs-component';
+import Component from './component';
 import Vector from '../utils/vector';
 import { Func } from '../utils/helpers';
 

@@ -1,6 +1,6 @@
 import { Graphics, Container, FuncComponent, Message } from '..';
 import Builder from '../engine/builder';
-import { Messages } from '../engine/ecs-constants';
+import { Messages } from '../engine/constants';
 import { addTest } from './test-collector';
 
 addTest('MessageNotifyTest', (scene, onFinish, tick) => {

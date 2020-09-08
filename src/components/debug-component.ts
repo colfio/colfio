@@ -1,5 +1,5 @@
-import Component from '../engine/ecs-component';
-import { Messages } from '../engine/ecs-constants';
+import Component from '../engine/component';
+import { Messages } from '../engine/constants';
 import Container from '../engine/game-objects/container';
 import Message from '../engine/message';
 import { Keys } from './key-input-component';

@@ -1,16 +1,16 @@
 import * as PIXI from 'pixi.js';
 window.PIXI = PIXI; // workaround for PIXISound
 
-import Scene from './ecs-scene';
+import Scene from './scene';
 import { resizeContainer } from '../utils/helpers';
-import { SceneConfig, defaultConfig as sceneDefaultConfig } from './ecs-scene';
+import { SceneConfig, defaultConfig as sceneDefaultConfig } from './scene';
 
 /**
  * Type of the game loop
  */
 export enum GameLoopType {
-	FIXED,
-	VARIABLE
+	FIXED = 'FIXED',
+	VARIABLE = 'VARIABLE'
 }
 
 /**
@@ -43,7 +43,7 @@ export interface EngineConfig extends SceneConfig {
 
 const defaultConfig: EngineConfig = {
 	...sceneDefaultConfig,
-	resizeToScreen: true,
+	resizeToScreen: false,
 	transparent: false,
 	backgroundColor: 0x000000,
 	antialias: true,

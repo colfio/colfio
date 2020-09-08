@@ -1,4 +1,4 @@
-import Component from '../engine/ecs-component';
+import Component from '../engine/component';
 import Message from '../engine/message';
 
 export enum PointerMessages {
@@ -34,7 +34,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		});
 	}
 
-	onInit() {
+	onAttach() {
 		this.lastTouch = null;
 		this.messagesToSend = [];
 
@@ -59,7 +59,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		this.messagesToSend = [];
 	}
 
-	onFinish() {
+	onDetach() {
 		let canvas = this.scene.app.view;
 		canvas.removeEventListener('touchstart', this.handleStart);
 		canvas.removeEventListener('touchend', this.handleEnd);

@@ -1,5 +1,5 @@
 import Message from '../engine/message';
-import Component, { ComponentState } from '../engine/ecs-component';
+import Component, { ComponentState } from '../engine/component';
 import Container from '../engine/game-objects/container';
 import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
 import Stack from '../utils/stack';
