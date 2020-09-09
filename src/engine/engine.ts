@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-window.PIXI = PIXI; // workaround for PIXISound
+(window as any).PIXI = PIXI; // workaround for PIXISound
 
 import Scene from './scene';
 import { resizeContainer } from '../utils/helpers';
@@ -59,7 +59,7 @@ const defaultConfig: EngineConfig = {
  */
 export default class Engine {
 	app: PIXI.Application = null;
-	
+
 	lastFrameTime = 0;
 	gameTime = 0;
 	scene: Scene = null;
@@ -72,7 +72,7 @@ export default class Engine {
 
 
 	init(canvas: HTMLCanvasElement, engineConfig?: EngineConfig) {
-		
+
 		// merge config
 		this.config = {
 			...defaultConfig,
@@ -83,7 +83,7 @@ export default class Engine {
 		this.config.debugEnabled = this.config.debugEnabled || /[?&]debug/.test(location.search);
 
 		// do not resize to screen if debug window is on
-		this.config.resizeToScreen = this.config.resizeToScreen && !this.config.debugEnabled;
+		this.config.resizeToScreen = (this.config.resizeToScreen || /[?&]responsive/.test(location.search)) && !this.config.debugEnabled;
 
 		this.virtualWidth = this.config.width || canvas.width;
 		this.virtualHeight = this.config.height || canvas.height;
@@ -125,14 +125,14 @@ export default class Engine {
 	}
 
 	private loop(time: number) {
-		
+
 		let dt = Math.min(time - this.lastFrameTime, this.config.gameLoopThreshold) * this.config.speed;
 		this.lastFrameTime = time;
-		
+
 		if (this.config.gameLoopType === GameLoopType.FIXED) {
 			// fixed game loop
 			this.gameTime += this.config.gameLoopFixedTick * this.config.speed;
-			this.scene._update(this.config.gameLoopFixedTick * this.config.speed, this.gameTime); 
+			this.scene._update(this.config.gameLoopFixedTick * this.config.speed, this.gameTime);
 		} else {
 			// variable game loop
 			this.gameTime += dt;

@@ -24,8 +24,8 @@ import * as PIXI from 'pixi.js';
 export default class ParticleContainer extends PIXI.ParticleContainer implements GameObject {
 	_proxy: GameObjectProxy;
 
-	constructor(name: string = '') {
-		super();
+	constructor(name: string = '', maxSize: number, properties: PIXI.IParticleProperties) {
+		super(maxSize, properties);
 		this._proxy = new GameObjectProxy(name, this);
 	}
 
@@ -45,19 +45,45 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 		return <Container><any>this.parent;
 	}
 
-	asAnimatedSprite(): AnimatedSprite { throw new Error('Can\'t cast to this object!'); }
-    asBitmapText(): BitmapText { throw new Error('Can\'t cast to this object!'); }
-    asContainer(): Container { return this; }
-    asGraphics(): Graphics { throw new Error('Can\'t cast to this object!'); }
-    asMesh(): Mesh { throw new Error('Can\'t cast to this object!'); }
-    asNineSlicePlane(): NineSlicePlane { throw new Error('Can\'t cast to this object!'); }
-    asParticleContainer(): ParticleContainer { return this; }
-    asSimpleMesh(): SimpleMesh { throw new Error('Can\'t cast to this object!'); }
-    asSimplePlane(): SimplePlane { throw new Error('Can\'t cast to this object!'); }
-    asSimpleRope(): SimpleRope { throw new Error('Can\'t cast to this object!'); }
-    asSprite(): Sprite { throw new Error('Can\'t cast to this object!'); }
-    asText(): Text { throw new Error('Can\'t cast to this object!'); }
-    asTilingSprite(): TilingSprite { throw new Error('Can\'t cast to this object!'); }
+	asAnimatedSprite(): AnimatedSprite {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asBitmapText(): BitmapText {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asContainer(): Container {
+		return this;
+	}
+	asGraphics(): Graphics {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asMesh(): Mesh {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asNineSlicePlane(): NineSlicePlane {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asParticleContainer(): ParticleContainer {
+		return this;
+	}
+	asSimpleMesh(): SimpleMesh {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asSimplePlane(): SimplePlane {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asSimpleRope(): SimpleRope {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asSprite(): Sprite {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asText(): Text {
+		throw new Error('Can\'t cast to this object!');
+	}
+	asTilingSprite(): TilingSprite {
+		throw new Error('Can\'t cast to this object!');
+	}
 
 	// overrides pixijs function
 	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {

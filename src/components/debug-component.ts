@@ -11,15 +11,15 @@ export default class DebugComponent extends Component<void> {
 
 	// messages that will be ignored
 	discaredMessages: string[] = [
-		Messages.COMPONENT_ADDED, 
-		Messages.COMPONENT_REMOVED, 
+		Messages.COMPONENT_ADDED,
+		Messages.COMPONENT_REMOVED,
 		Messages.OBJECT_ADDED,
-		Messages.OBJECT_REMOVED, 
+		Messages.OBJECT_REMOVED,
 		Messages.STATE_CHANGED,
-		Messages.ATTRIBUTE_CHANGED, 
+		Messages.ATTRIBUTE_CHANGED,
 		Messages.ATTRIBUTE_REMOVED
 	];
-	
+
 	// if true, will also render properties
 	displayProps = true;
 

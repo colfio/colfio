@@ -2,7 +2,6 @@
 import Message from './message';
 import Scene from './scene';
 import Container from './game-objects/container';
-import { MessageResponse } from '../../dist/engine/message';
 
 export enum ComponentState {
 	NEW = 0,
@@ -137,15 +136,15 @@ export default class Component<T = void> {
 	/**
 	 * Sends a message to all subscribers
 	 */
-	sendMessage(action: string, data: any = null): Message {
+	sendMessage(action: string, data?: any, tagFilter?: string[]): Message {
 		const msg = new Message(action, this, this.owner, data);
-		this.scene.sendMessage(msg);
+		this.scene.sendMessage(msg, tagFilter);
 		return msg;
 	}
 
 	/**
 	 * Aborts the component and immediately removes it from its object
-	 * Will call onFinish(), onDetach() and onRemove() 
+	 * Will call onFinish(), onDetach() and onRemove()
 	 */
 	finish() {
 		if (this.owner && this._cmpState === ComponentState.RUNNING) {

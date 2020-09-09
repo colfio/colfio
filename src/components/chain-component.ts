@@ -43,7 +43,7 @@ export default class ChainComponent extends Component<void> {
 	// linked list
 	protected head: CmdNode = null;
 	protected tail: CmdNode = null;
-	
+
 	// helping parameters used for processing the current node
 	protected tmpParam: any = null;
 	protected tmpParam2: any = null;
@@ -78,7 +78,7 @@ export default class ChainComponent extends Component<void> {
 	/**
 	 * Merges this component with another component
 	 * Puts the other component to the end of this one
-	 * 
+	 *
 	 */
 	mergeWith(other: ChainComponent): ChainComponent {
 		if (other.cmpState === ComponentState.RUNNING) {
@@ -175,7 +175,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	/**
-	 * Defines a set of commands that are to be executed if the condition 
+	 * Defines a set of commands that are to be executed if the condition
 	 * of the current beginIf() command is not met
 	 */
 	else(): ChainComponent {
@@ -300,7 +300,7 @@ export default class ChainComponent extends Component<void> {
 		return this;
 	}
 
-	
+
 	/**
 	 * Destroys given game object
 	 */
@@ -323,9 +323,9 @@ export default class ChainComponent extends Component<void> {
 		if (this.current && ((this.current.key === CMD_WAIT_FOR_MESSAGE && this.current.param1 === msg.action) || (
 			this.current.key === CMD_WAIT_FOR_MESSAGE_CONDITION && this.current.param1 === msg.action &&
 			queryConditionCheck(msg.gameObject, this.current.param2)))) {
-				// set a flag that the message just arrived
-				// it will be processed during the next loop
-				this.tmpParam2 = true;
+			// set a flag that the message just arrived
+			// it will be processed during the next loop
+			this.tmpParam2 = true;
 		}
 	}
 
@@ -600,7 +600,7 @@ export default class ChainComponent extends Component<void> {
 		let node = new CmdNode(key, param1, param2);
 
 		/*
-		  // update 200411: I must have been mad back then when I implemented this behavior... 
+		  // update 200411: I must have been mad back then when I implemented this behavior...
 		  // ALWAYS ADD A NEW NODE TO THE TAIL!
 		  if (this.current != null && this.current !== this.head) {
 			// already running -> append to the current node

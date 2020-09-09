@@ -2,6 +2,14 @@
 All notable changes to this project/subject will be documented in this file.
 
 
+## [0.2.5] - 2020-09-12
+### Added
+- Linter
+- Tests for async component
+
+### Changed
+- Updated libraries 
+
 ## [0.2.4] - 2020-09-08
 ### Changed
 - Improved component lifecycle

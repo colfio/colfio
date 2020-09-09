@@ -1,5 +1,6 @@
 import { Scene } from '..';
 import { Ticker } from 'pixi.js';
+import * as PIXI from 'pixi.js';
 
 
 // ====================================================
@@ -41,7 +42,7 @@ export class BaseTest {
 	}
 
 	/**
-	 * Function that is invoked before the test is executed 
+	 * Function that is invoked before the test is executed
 	 */
 	beforeTest(scene: Scene, ticker: Ticker) {
 		this.currentScene = scene;
@@ -50,7 +51,7 @@ export class BaseTest {
 	}
 
 	/**
-	 * Function that is invoked after the test is executed 
+	 * Function that is invoked after the test is executed
 	 */
 	afterTest() {
 		this.stopLoop();
@@ -128,7 +129,7 @@ export class TestRunner {
 		} catch (error) {
 			console.log(error.stack);
 			this.logResult(name, error, false);
-			// move on to another test if an error occurs 
+			// move on to another test if an error occurs
 			this.gotoNextTest();
 		}
 	}

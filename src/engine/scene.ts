@@ -66,10 +66,10 @@ export default class Scene {
 	width: number;
 	height: number;
 	resolution: number;
-	
+
 	// PIXI stage object
 	stage: Container = null;
-	
+
 	// collection of actions that should be invoked with a delay
 	private pendingInvocations: Invocation[];
 	// message action keys and all subscribers that listens to all these actions
@@ -289,19 +289,22 @@ export default class Scene {
 	/**
 	 * Sends message to all subscribers
 	 */
-	sendMessage(msg: Message) {
+	sendMessage(msg: Message, tagFilter?: string[]) {
 		const responses: MessageResponse[] = [];
 		this.subscribers.findAll(msg.action).forEach(ent => {
-			// don't send expired messages 
+			// don't send expired messages
 			// don't send message to its own sender
 			if (!msg.expired && (msg.component == null || msg.component.id !== ent.id)) {
-				// collect responses
-				const resp = ent.onMessage(msg);
-				if(resp) {
-					responses.push({
-						componentId: ent.id,
-						data: resp
-					});
+				// apply tagFilter
+				if (!tagFilter || tagFilter.find(tag => ent.owner.hasTag(tag))) {
+					// collect responses
+					const resp = ent.onMessage(msg);
+					if (resp) {
+						responses.push({
+							componentId: ent.id,
+							data: resp
+						});
+					}
 				}
 			}
 		});
@@ -310,8 +313,7 @@ export default class Scene {
 
 		// check global subscribers that are interested in all messages (usually for debugging)
 		this.subscribers.findAll(Messages.ANY).forEach(ent => ent.onMessage(msg));
-	
-		
+
 		if (this.config.debugEnabled) {
 			console.log(`MSG: ${msg.action}; ${msg.responses.isProcessed() ? 'PROCESSED' : 'IGNORED'} ${msg.responses.isError() ? 'ERROR' : 'SUCCESS'}`);
 		}
@@ -375,7 +377,7 @@ export default class Scene {
 		this._currentDelta = this._currentAbsolute = 0;
 
 		let newStage = new Container('stage');
-	
+
 		// stage doesn't have any parents, we need to remove its children recursively
 		for (let child of this.app.stage.children) {
 			child.destroy();

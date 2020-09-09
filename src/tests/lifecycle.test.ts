@@ -153,7 +153,7 @@ addTest('FinishWithoutRemovalTest', (scene, onFinish) => {
 		.doOnInit(() => initToken++)
 		.doOnAttach(() => attachToken++)
 		.doOnMessage('MSG_TEST', () => messageToken++)
-		.doOnDetach(() =>detachToken++)
+		.doOnDetach(() => detachToken++)
 		.doOnFinish(() => finishToken++)
 		.doOnRemove(() => removeToken++)
 		.doOnFixedUpdate(() => updateToken++);
@@ -178,20 +178,20 @@ addTest('FinishWithoutRemovalTest', (scene, onFinish) => {
 		scene.sendMessage(new Message('MSG_TEST'));
 		scene.callWithDelay(1000, () => {
 			// re-add the component to the scene
-			gfx.addComponent(component);  
-			
+			gfx.addComponent(component);
+
 			scene.callWithDelay(1000, () => { // init++ attach++
 				gfx.detach(); // detach++
 
 				// shouldn't accept messages
 				scene.sendMessage(new Message('MSG_TEST'));
-				scene.stage.addChild(gfx); // attach++ 
-	
-				let success = initToken === 2 && attachToken === 3 && messageToken === 1 && detachToken === 2 && finishToken === 1 && updateToken === 2 && removeToken == 1;
+				scene.stage.addChild(gfx); // attach++
+
+				let success = initToken === 2 && attachToken === 3 && messageToken === 1 && detachToken === 2 && finishToken === 1 && updateToken === 2 && removeToken === 1;
 				if (success) {
 					onFinish(true);
 				} else {
-					onFinish(false, 'Wrong token value: ' + initToken + ':' + attachToken + ':' + messageToken + ':' + detachToken + ':' + finishToken +':' + updateToken + ':' + removeToken);
+					onFinish(false, 'Wrong token value: ' + initToken + ':' + attachToken + ':' + messageToken + ':' + detachToken + ':' + finishToken + ':' + updateToken + ':' + removeToken);
 				}
 			});
 		});

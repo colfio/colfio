@@ -206,7 +206,7 @@ export class FuncComponent<T = void> extends Component<T> {
 	}
 
 	onRemove() {
-		if(this.onRemoveFunc != null) {
+		if (this.onRemoveFunc != null) {
 			this.onRemoveFunc(this);
 		}
 	}

@@ -115,10 +115,26 @@ export default class Flags {
 
 		if (index <= 3) {
 			switch (index) {
-				case 0: if (set) { (this.flags[0] |= binary); } else { (this.flags[0] &= ~binary); } break;
-				case 1: if (set) { (this.flags[1] |= binary); } else { (this.flags[1] &= ~binary); } break;
-				case 2: if (set) { (this.flags[2] |= binary); } else { (this.flags[2] &= ~binary); } break;
-				case 3: if (set) { (this.flags[3] |= binary); } else { (this.flags[3] &= ~binary); } break;
+				case 0: if (set) {
+					(this.flags[0] |= binary);
+				} else {
+					(this.flags[0] &= ~binary);
+				} break;
+				case 1: if (set) {
+					(this.flags[1] |= binary);
+				} else {
+					(this.flags[1] &= ~binary);
+				} break;
+				case 2: if (set) {
+					(this.flags[2] |= binary);
+				} else {
+					(this.flags[2] &= ~binary);
+				} break;
+				case 3: if (set) {
+					(this.flags[3] |= binary);
+				} else {
+					(this.flags[3] &= ~binary);
+				} break;
 			}
 		} else {
 			throw new Error('Flag at unsupported index');

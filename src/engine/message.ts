@@ -51,21 +51,6 @@ export class MessageResponses {
 export default class Message {
 
 	/**
-	 * Action type identifier
-	 */
-	private _action: string = null;
-
-	/**
-	 * Component that sent this message
-	 */
-	private _component: Component<any> = null;
-
-	/**
-	 * GameObject attached to this message
-	 */
-	private _gameObject: Container = null;
-	
-	/**
 	 * Data payload
 	 */
 	data: any = null;
@@ -80,8 +65,22 @@ export default class Message {
 	 */
 	responses: MessageResponses;
 
+	/**
+	 * Action type identifier
+	 */
+	private _action: string = null;
 
-	constructor(action: string, component?: Component<any>, gameObject?: Container, data: any = null) {
+	/**
+	 * Component that sent this message
+	 */
+	private _component: Component<any> = null;
+
+	/**
+	 * GameObject attached to this message
+	 */
+	private _gameObject: Container = null;
+
+	constructor(action: string, component?: Component<any>, gameObject?: Container, data?: any) {
 		this._action = action;
 		this._component = component;
 		this._gameObject = gameObject;

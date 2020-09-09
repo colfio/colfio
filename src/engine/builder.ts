@@ -37,12 +37,12 @@ enum ObjectType {
 }
 
 /**
- * Properties of all pixi objects that will eventually be passed 
+ * Properties of all pixi objects that will eventually be passed
  * to the constructors upon creation
  */
 type ObjectProps = {
 	type: ObjectType;
-	textures?: PIXI.Texture[] | PIXI.AnimatedSprite.FrameObject[]; // animatedsprite
+	textures?: PIXI.Texture[] | PIXI.FrameObject[]; // animatedsprite
 	texture?: PIXI.Texture; // sprite, tilingsprite, simpleplane, simplerope, nineSlicePlane
 	leftWidth?: number;
 	topHeight?: number;
@@ -106,7 +106,7 @@ export default class Builder {
 
 	/**
 	 * Sets an anchor
-	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x'
 	 */
 	anchor(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -125,7 +125,7 @@ export default class Builder {
 
 	/**
 	 * Sets a virtual anchor (it aligns the position but doesn't change the real pivot nor anchor)
-	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x'
 	 */
 	virtualAnchor(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -144,7 +144,7 @@ export default class Builder {
 
 	/**
 	 * Sets position relative to the screen ([0,0] for topleft corner, [1,1] for bottomright corner)
-	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x'
 	 */
 	relativePos(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -163,7 +163,7 @@ export default class Builder {
 
 	/**
 	 * Sets local position
-	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x'
 	 */
 	localPos(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -183,7 +183,7 @@ export default class Builder {
 
 	/**
 	 * Sets global position
-	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x'
 	 */
 	globalPos(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -203,7 +203,7 @@ export default class Builder {
 
 	/**
 	 * Sets local scale
-	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x' 
+	 * If you pass 'x' as a number and no 'y', it will have the same value as 'x'
 	 */
 	scale(x: number | Vector, y?: number): Builder {
 		if (typeof (x) === 'number') {
@@ -282,21 +282,21 @@ export default class Builder {
 		return this;
 	}
 
-	asAnimatedSprite(textures: PIXI.Texture[] | PIXI.AnimatedSprite.FrameObject[]): Builder {
-		this.objectProps = { 
-			type: ObjectType.AnimatedSprite, 
+	asAnimatedSprite(textures: PIXI.Texture[] | PIXI.FrameObject[]): Builder {
+		this.objectProps = {
+			type: ObjectType.AnimatedSprite,
 			textures
 		};
 		return this;
 	}
-	
+
 	asBitmapText(text: string = '', fontName: string, fontSize: number, fontColor: number): Builder {
 		this.objectProps = {
 			text, fontName, fontSize, fontColor, type: ObjectType.BitmapText
 		};
 		return this;
 	}
-	
+
 	asGraphics(): Builder {
 		this.objectProps = {
 			type: ObjectType.Graphics
@@ -345,7 +345,7 @@ export default class Builder {
 			texture,
 			verticesX,
 			verticesY,
-		}
+		};
 		return this;
 	}
 
@@ -354,7 +354,7 @@ export default class Builder {
 			type: ObjectType.SimpleRope,
 			texture,
 			points
-		}
+		};
 		return this;
 	}
 
@@ -405,7 +405,7 @@ export default class Builder {
 	build<T extends Container>(): T {
 		return this.process(true);
 	}
-	
+
 	/**
 	 * Builds a new object and keeps stored data
 	 */
@@ -427,7 +427,7 @@ export default class Builder {
 					object = new AnimatedSprite(this.props.name, this.objectProps.textures);
 					break;
 				case ObjectType.BitmapText:
-					object = new BitmapText(this.props.name, this.objectProps.text, this.objectProps.fontName, 
+					object = new BitmapText(this.props.name, this.objectProps.text, this.objectProps.fontName,
 						this.objectProps.fontSize, this.objectProps.fontColor);
 					break;
 				case ObjectType.Graphics:
@@ -437,11 +437,11 @@ export default class Builder {
 					object = new Mesh(this.props.name, this.objectProps.geometry, this.objectProps.shader);
 					break;
 				case ObjectType.NineSlicePlane:
-					object = new NineSlicePlane(this.props.name, this.objectProps.texture, this.objectProps.leftWidth, 
-						this.objectProps.topHeight, this.objectProps.rightWidth, this.objectProps.bottomHeight);	
+					object = new NineSlicePlane(this.props.name, this.objectProps.texture, this.objectProps.leftWidth,
+						this.objectProps.topHeight, this.objectProps.rightWidth, this.objectProps.bottomHeight);
 					break;
 				case ObjectType.ParticleContainer:
-					object = new ParticleContainer(this.props.name);
+					object = new ParticleContainer(this.props.name, 10000, { /* TODO */ });
 					break;
 				case ObjectType.SimpleMesh:
 					object = new SimpleMesh(this.props.name, this.objectProps.texture, this.objectProps.vertices);
@@ -450,7 +450,7 @@ export default class Builder {
 					object = new SimplePlane(this.props.name, this.objectProps.texture, this.objectProps.verticesX, this.objectProps.verticesY);
 					break;
 				case ObjectType.SimpleRope:
-					object = new SimpleRope(this.props.name, this.objectProps.texture, this.objectProps.points)
+					object = new SimpleRope(this.props.name, this.objectProps.texture, this.objectProps.points);
 					break;
 				case ObjectType.Sprite:
 					object = new Sprite(this.props.name, this.objectProps.texture.clone());
@@ -595,8 +595,7 @@ export default class Builder {
 
 		// now, when this object is already assigned to its parent, we can build children
 		for (let child of this.children) {
-			let newChild = child.withParent(<Container><any>object).process(clearData);
-			object.pixiObj.addChild(newChild.pixiObj);
+			child.withParent(<Container><any>object).process(clearData);
 		}
 
 		if (clearData) {

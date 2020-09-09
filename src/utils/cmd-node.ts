@@ -11,8 +11,8 @@ export default class CmdNode {
 	// cached custom parameters
 	param1C: any = null;
 	param2C: any = null;
-    // if true, params are already cached
-    cached: boolean = false;
+	// if true, params are already cached
+	cached: boolean = false;
 	// link to previous and next node
 	next: CmdNode = null;
 	previous: CmdNode = null;
@@ -32,8 +32,8 @@ export default class CmdNode {
 	cacheParams() {
 		if (!this.cached) {
 			if (this.param1 != null) {
-                // if the param is a function (we expect a factory pattern), store the result of the function
-                this.param1C = typeof (this.param1) === 'function' ? this.param1() : this.param1;
+				// if the param is a function (we expect a factory pattern), store the result of the function
+				this.param1C = typeof (this.param1) === 'function' ? this.param1() : this.param1;
 			}
 
 			if (this.param2 != null) {
@@ -52,7 +52,7 @@ export default class CmdNode {
 	}
 
 	setParam1(val: any) {
-        this.param1 = val;
+		this.param1 = val;
 		this.param1C = val;
 	}
 
@@ -64,7 +64,7 @@ export default class CmdNode {
 	}
 
 	setParam2(val: any) {
-        this.param2 = val;
+		this.param2 = val;
 		this.param2C = val;
 	}
 

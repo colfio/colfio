@@ -1,24 +1,23 @@
 {
-    "compilerOptions": {
-      "target": "es6",    
-      "lib": ["es6", "dom"], // we need this in order to use ES6 structures (e.g. Map)   
-      "module": "commonJS",  // will disable imports/exports. If you want to use them, use commonJS
-      "outDir": "./www",    
-      "sourceMap": true,
-      "inlineSources": true,
-      "declaration": true,
-      "removeComments": false,
-      "noImplicitAny": true,
-      "noLib": false,
-      "preserveConstEnums": true,
-      "moduleResolution": "node",
-      "noFallthroughCasesInSwitch": false,
-      "noImplicitReturns": true,
-      "allowUnreachableCode": true,
-      "downlevelIteration": true // this will enable us to iterate over map
-    },
-    "include": ["./src/**/*", "./examples/*"],
-    "exclude": [
-      "node_modules"
-    ]
+	"compilerOptions": {
+		"target": "es2017",
+		"skipLibCheck": true,
+		"lib": [
+			"es6",
+			"dom"
+		],
+		"moduleResolution": "node",
+		"allowSyntheticDefaultImports": true,
+		"module": "esnext",
+		"outDir": "./build",
+		"downlevelIteration": true
+	},
+	"include": [
+		"./src/**/*.ts",
+		"./libs/**/*.ts"
+	],
+	"exclude": [
+		"./node_modules",
+		"./scripts"
+	]
 }

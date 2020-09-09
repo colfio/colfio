@@ -5,7 +5,7 @@ import './lifecycle.test';
 import './messaging.test';
 import './misc.test';
 import './search.test';
-
+import './async.test';
 
 import { TestRunner } from './test-runner';
 import { allTests } from './test-collector';

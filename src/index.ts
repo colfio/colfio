@@ -30,7 +30,7 @@ import { QueryCondition } from './utils/query-condition';
 
 export {
 	Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage,
-	
+
 	Engine, GameLoopType, EngineConfig,
 	Component,
 	Flags,
@@ -38,14 +38,14 @@ export {
 	GameObjectProxy,
 	Builder,
 	Scene,
-	
+
 	GameObject, Container, ParticleContainer, Sprite, TilingSprite, Text, BitmapText, Graphics, Mesh, NineSlicePlane,
-	
-	AsyncComponent, ChainComponent, DebugComponent, FuncComponent, KeyInputComponent, Keys,
+	AsyncComponent,
+	ChainComponent, DebugComponent, FuncComponent, KeyInputComponent, Keys,
 	VirtualGamepadComponent, GamepadButtons, GamepadKeyMapper,
 	PointerInputComponent, PointerMessages,
-	
-	
+
+
 	Vector,
 	QueryCondition,
 };

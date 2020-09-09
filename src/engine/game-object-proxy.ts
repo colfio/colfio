@@ -297,7 +297,7 @@ export default class GameObjectProxy {
 	 * The child will initialize all components just here
 	 */
 	onChildAdded(object: GameObjectProxy) {
-		if(object.internalState === GameObjectState.ATTACHED) {
+		if (object.internalState === GameObjectState.ATTACHED) {
 			throw new Error(`This object has already been added to the scene: ${object.pixiObj.name}`);
 		}
 		object.scene = this.scene;
@@ -329,7 +329,7 @@ export default class GameObjectProxy {
 		for (let [, cmp] of this.components) {
 			if (cmp._cmpState === ComponentState.RUNNING) {
 				cmp.onUpdate(delta, absolute);
-				
+
 				// handle fixed update
 				if (cmp.fixedFrequency && ((absolute - cmp._lastFixedUpdate) >= 1000 / cmp.fixedFrequency)) { // fixed update
 					let delta = cmp._lastFixedUpdate === 0 ? 1000 / cmp.fixedFrequency : (absolute - cmp._lastFixedUpdate);
@@ -408,7 +408,7 @@ export default class GameObjectProxy {
 
 		// detach all components
 		this.components.forEach(cmp => {
-			if(cmp._cmpState !== ComponentState.DETACHED) {
+			if (cmp._cmpState !== ComponentState.DETACHED) {
 				this.scene._onComponentDetached(cmp);
 				cmp.onDetach();
 				cmp._cmpState = ComponentState.DETACHED;

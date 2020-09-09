@@ -1,8 +1,8 @@
 
 
 type StackNode = {
-    next;
-    previous;
+	next;
+	previous;
 }
 
 /**
