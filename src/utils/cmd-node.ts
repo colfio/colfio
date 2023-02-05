@@ -3,7 +3,7 @@
  * A generic node for chain of commands
  * Stores two parameters
  */
-export default class CmdNode {
+export class CmdNode {
 	key = 0;
 	// custom parameters
 	param1: any = null;
@@ -12,10 +12,10 @@ export default class CmdNode {
 	param1C: any = null;
 	param2C: any = null;
 	// if true, params are already cached
-	cached: boolean = false;
+	cached = false;
 	// link to previous and next node
-	next: CmdNode = null;
-	previous: CmdNode = null;
+	next: CmdNode | null = null;
+	previous: CmdNode | null = null;
 
 	constructor(key: number, param1: any = null, param2: any = null) {
 		this.key = key;

@@ -1,27 +1,27 @@
-import GameObjectProxy from './game-object-proxy';
-import Component from './component';
-import Scene from './scene';
+import type { GameObjectProxy } from './game-object-proxy';
+import type { Component } from './component';
+import type { Scene } from './scene';
 
-import AnimatedSprite from './game-objects/animated-sprite';
-import BitmapText from './game-objects/bitmap-text';
-import Container from './game-objects/container';
-import Graphics from './game-objects/graphics';
-import Mesh from './game-objects/mesh';
-import NineSlicePlane from './game-objects/nine-slice-plane';
-import ParticleContainer from './game-objects/particle-container';
-import SimpleMesh from './game-objects/simple-mesh';
-import SimplePlane from './game-objects/simple-plane';
-import SimpleRope from './game-objects/simple-rope';
-import Sprite from './game-objects/sprite';
-import Text from './game-objects/text';
-import TilingSprite from './game-objects/tiling-sprite';
+import type { AnimatedSprite } from './game-objects/animated-sprite';
+import type { BitmapText } from './game-objects/bitmap-text';
+import type { Container } from './game-objects/container';
+import type { Graphics } from './game-objects/graphics';
+import type { Mesh } from './game-objects/mesh';
+import type { NineSlicePlane } from './game-objects/nine-slice-plane';
+import type { ParticleContainer } from './game-objects/particle-container';
+import type { SimpleMesh } from './game-objects/simple-mesh';
+import type { SimplePlane } from './game-objects/simple-plane';
+import type { SimpleRope } from './game-objects/simple-rope';
+import type { Sprite } from './game-objects/sprite';
+import type { Text } from './game-objects/text';
+import type { TilingSprite } from './game-objects/tiling-sprite';
 
-import * as PIXI from 'pixi.js';
+import type * as PIXI from 'pixi.js';
 
 /**
  * Interface for PIXI objects attached to the component architecture
  */
-interface GameObject {
+export interface GameObject {
 	// unique identifier
 	id: number;
 	// name of the object
@@ -109,16 +109,16 @@ interface GameObject {
 	/**
 	 * Adds a new component
 	 */
-	addComponent(component: Component<any>);
+	addComponent(component: Component<any>): void;
 
 	/**
 	 * Adds a new component and runs it instantly
 	 */
-	addComponentAndRun(component: Component<any>);
+	addComponentAndRun(component: Component<any>): void;
 	/**
 	 * Tries to find a component by its class
 	 */
-	findComponentByName<T extends Component<any>>(name: string): T;
+	findComponentByName<T extends Component<any>>(name: string): T | null;
 	/**
 	 * Removes an existing component
 	 */
@@ -139,11 +139,11 @@ interface GameObject {
 	/**
 	 * Add a new tag
 	 */
-	addTag(tag: string);
+	addTag(tag: string): void;
 	/**
 	 * Removes tag
 	 */
-	removeTag(tag: string);
+	removeTag(tag: string): void;
 	/**
 	 * Returns true if given tag is set
 	 */
@@ -177,5 +177,3 @@ interface GameObject {
 	 */
 	destroyChildren(): void;
 }
-
-export default GameObject;

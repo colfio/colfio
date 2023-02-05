@@ -1,9 +1,8 @@
-import { Graphics, Container, FuncComponent, Message } from '..';
-import Builder from '../engine/builder';
-import { Messages } from '../engine/constants';
-import { addTest } from './test-collector';
+import { Graphics, FuncComponent, Message, Messages, Container, Builder } from '../src';
+import { testLooper } from './utils';
 
-addTest('MessageNotifyTest', (scene, onFinish, tick) => {
+test('MessageNotifyTest', async () => {
+	await testLooper((scene, finish, tick) => {
 	// enable everything
 	scene.clearScene({
 		notifyAttributeChanges: true,
@@ -38,15 +37,16 @@ addTest('MessageNotifyTest', (scene, onFinish, tick) => {
 		.withState(12).build();
 
 	scene.callWithDelay(500, () => { // wait a few frames
-		if (token === 2) { // we expect only two messages: OBJECT_ATTACHED and COMPONENT_ADDED
-			onFinish(true);
-		} else {
-			onFinish(false, 'Expected 2 message, given ' + token);
-		}
+		// we expect only two messages: OBJECT_ATTACHED and COMPONENT_ADDED
+		expect(token).toBe(2);
+		finish();
+	});
 	});
 });
 
-addTest('MessageNotifyTest2', (scene, onFinish, tick) => {
+
+test('MessageNotifyTest2', async () => {
+	await testLooper((scene, finish, tick) => {
 	// enable everything
 	scene.clearScene({
 		notifyAttributeChanges: true,
@@ -87,47 +87,45 @@ addTest('MessageNotifyTest2', (scene, onFinish, tick) => {
 	scene.stage.removeTag('tag1'); // tag removed
 	scene.stage.removeTag('tag2'); // doesn't exist, no message
 	scene.stage.asContainer().addChild(new Graphics('CHILD_2')); // object added
-	scene.stage.asContainer().destroyChild(scene.findObjectByName('CHILD').asContainer()); // object removed
+	scene.stage.asContainer().destroyChild(scene.findObjectByName('CHILD')!); // object removed
 	scene.stage.stateId = 12; // state changed
 	scene.stage.addComponent(new FuncComponent('GENERIC2')); // component added
-	scene.stage.removeComponent(scene.stage.findComponentByName('GENERIC1')); // component removed
+	scene.stage.removeComponent(scene.stage.findComponentByName('GENERIC1')!); // component removed
 
 	scene.callWithDelay(500, () => { // wait a few frames
-		if (token === 12) { // we expect all 12 messages
-			onFinish(true);
-		} else {
-			onFinish(false, 'Expected 12 messages, given ' + token);
-		}
+		// we expect all 12 messages
+		expect(token).toBe(12);
+		finish();
+	});
 	});
 });
 
-addTest('FinishedComponentMessageTest', (scene, onFinish) => {
-	let token = 0;
 
-	// component that will be reused by another object when removed from the first one
-	let recyclableComponent = new FuncComponent('recyclable')
-		.doOnMessage('TOKEN_MSG', () => token++);
+test('FinishedComponentMessageTest', async () => {
+	await testLooper((scene, finish) => {
+		let token = 0;
 
-	// add object
-	let container = new Container('');
-	scene.stage.pixiObj.addChild(container);
-	container.addComponent(recyclableComponent);
+		// component that will be reused by another object when removed from the first one
+		const recyclableComponent = new FuncComponent('recyclable')
+			.doOnMessage('TOKEN_MSG', () => token++);
 
-	scene.callWithDelay(100, () => { // wait 100s and send the first message
-		scene.sendMessage(new Message('TOKEN_MSG'));
-		recyclableComponent.finish(); // finish the component
-		container = new Container('');
+		// add object
+		let container = new Container('');
 		scene.stage.pixiObj.addChild(container);
 		container.addComponent(recyclableComponent);
 
-		scene.callWithDelay(200, () => {
-			scene.sendMessage(new Message('TOKEN_MSG')); // send another message -> should be captured and token should be increased
-			let success = token === 2;
-			if (success) {
-				onFinish(true);
-			} else {
-				onFinish(false, 'Wrong token value: ' + token);
-			}
+		scene.callWithDelay(100, () => { // wait 100s and send the first message
+			scene.sendMessage(new Message('TOKEN_MSG'));
+			recyclableComponent.finish(); // finish the component
+			container = new Container('');
+			scene.stage.pixiObj.addChild(container);
+			container.addComponent(recyclableComponent);
+
+			scene.callWithDelay(200, () => {
+				scene.sendMessage(new Message('TOKEN_MSG')); // send another message -> should be captured and token should be increased
+				expect(token).toBe(2);
+				finish();
+			});
 		});
 	});
 });

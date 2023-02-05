@@ -1,5 +1,5 @@
-import Component from '../engine/component';
-import Message from '../engine/message';
+import { Component } from '../engine/component';
+import { Message } from '../engine/message';
 
 export enum PointerMessages {
 	POINTER_TAP = 'pointer-tap',
@@ -21,8 +21,8 @@ export interface PointerInputComponentProps {
  */
 export class PointerInputComponent extends Component<PointerInputComponentProps> {
 
-	private lastTouch: Touch | MouseEvent = null;
-	private messagesToSend: Message[];
+	private lastTouch: Touch | MouseEvent | null = null;
+	private messagesToSend: Message[] = [];
 
 	constructor(props: PointerInputComponentProps) {
 		super({
@@ -38,7 +38,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		this.lastTouch = null;
 		this.messagesToSend = [];
 
-		let canvas = this.scene.app.view;
+		const canvas = this.scene.app.view;
 
 		canvas.addEventListener('touchstart', this.handleStart, false);
 		canvas.addEventListener('touchend', this.handleEnd, false);
@@ -53,14 +53,14 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 	}
 
 	onUpdate() {
-		for (let msg of this.messagesToSend) {
+		for (const msg of this.messagesToSend) {
 			this.scene.sendMessage(msg);
 		}
 		this.messagesToSend = [];
 	}
 
 	onDetach() {
-		let canvas = this.scene.app.view;
+		const canvas = this.scene.app.view;
 		canvas.removeEventListener('touchstart', this.handleStart);
 		canvas.removeEventListener('touchend', this.handleEnd);
 		canvas.removeEventListener('mousedown', this.handleStart);
@@ -75,7 +75,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		}
 	}
 
-	sendMessage(action: string, data: any = null): Message {
+	sendMessage(action: string, data: any = null): Message | null {
 		// wait for next update loop to send all the messages
 		this.messagesToSend.push(new Message(action, this, this.owner, data));
 		return null;
@@ -83,7 +83,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 	protected handleStart = (evt: TouchEvent | MouseEvent) => {
 		evt.preventDefault();
-		let isTouch = (window.TouchEvent && evt instanceof TouchEvent);
+		const isTouch = (window.TouchEvent && evt instanceof TouchEvent);
 		if (isTouch && (evt as TouchEvent).changedTouches.length === 1) {
 			// only single-touch
 			this.lastTouch = (evt as TouchEvent).changedTouches[0];
@@ -99,9 +99,9 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		}
 	}
 
-	protected handleMove = (evt: TouchEvent) => {
+	protected handleMove = (evt: TouchEvent | MouseEvent) => {
 		evt.preventDefault();
-		let isTouch = typeof (evt.changedTouches) !== 'undefined';
+		const isTouch = typeof ((evt as any).changedTouches) !== 'undefined';
 		this.sendMessage(PointerMessages.POINTER_OVER, {
 			mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
 			isTouch: isTouch
@@ -111,7 +111,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 	protected handleEnd = (evt: TouchEvent | MouseEvent) => {
 		evt.preventDefault();
 		let posX, posY;
-		let isTouch = (window.TouchEvent && evt instanceof TouchEvent);
+		const isTouch = (window.TouchEvent && evt instanceof TouchEvent);
 		if (this.lastTouch != null) {
 			if (isTouch && (evt as TouchEvent).changedTouches.length === 1) {
 				posX = (evt as TouchEvent).changedTouches[0].pageX;
@@ -142,10 +142,10 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 	// Get the mouse position
 	protected getMousePos(canvas: HTMLCanvasElement, evt: TouchEvent | MouseEvent, isTouch: boolean) {
-		let rect = canvas.getBoundingClientRect();
-		let res = this.scene.app.renderer.resolution;
-		let clientX = isTouch ? (evt as TouchEvent).changedTouches[0].clientX : (evt as MouseEvent).clientX;
-		let clientY = isTouch ? (evt as TouchEvent).changedTouches[0].clientY : (evt as MouseEvent).clientY;
+		const rect = canvas.getBoundingClientRect();
+		const res = this.scene.app.renderer.resolution;
+		const clientX = isTouch ? (evt as TouchEvent).changedTouches[0].clientX : (evt as MouseEvent).clientX;
+		const clientY = isTouch ? (evt as TouchEvent).changedTouches[0].clientY : (evt as MouseEvent).clientY;
 		return {
 			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene.app.view.width / res),
 			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene.app.view.height / res)

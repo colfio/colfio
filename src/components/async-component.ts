@@ -1,9 +1,10 @@
-import Message from '../engine/message';
-import Component from '../engine/component';
-import Container from '../engine/game-objects/container';
-import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
-import CmdNode from '../utils/cmd-node';
-import { Func } from '../utils/helpers';
+import type { Message } from '../engine/message';
+import { Component } from '../engine/component';
+import type { Container } from '../engine/game-objects/container';
+import type { QueryCondition} from '../utils/query-condition';
+import { queryConditionCheck } from '../utils/query-condition';
+import { CmdNode } from '../utils/cmd-node';
+import type { Func } from '../utils/helpers';
 
 const CMD_WAIT_TIME = 1;
 const CMD_ADD_COMPONENT_AND_WAIT = 2;
@@ -17,13 +18,13 @@ const CMD_ADD_COMPONENTS_AND_WAIT = 7;
  * Component that executes a chain of commands during the update loop by using JavaScript generators
  * =================================####### WARNING #######==========================================
  * This component is heavily experimental. If you wanna use chain of commands, use chain-component instead
- * =================================####### WARNING #######========================================== 
+ * =================================####### WARNING #######==========================================
  */
-export default class AsyncComponent<T> extends Component<T> {
+export class AsyncComponent<T> extends Component<T | void> {
 
 	// current node
-	protected current: CmdNode = null;
-	protected currentGenerator: Generator<any>;
+	protected current!: CmdNode;
+	protected currentGenerator!: Generator<any>;
 	// help parameters used for processing one node
 	protected tmpParam: any = null;
 	protected tmpParam2: any = null;
@@ -48,7 +49,7 @@ export default class AsyncComponent<T> extends Component<T> {
 	 * @param component component or function that returns a component
 	 * @param gameObj game object or function that returns a game object
 	 */
-	addComponentAndWait(component: Component<any> | Func<void, Component<any>>, gameObj: Container | Func<void, Container> = null): IterableIterator<void> {
+	addComponentAndWait(component: Component<any> | Func<void, Component<any>>, gameObj: Container | Func<void, Container> | null = null): IterableIterator<void> {
 		this.currentGenerator = this.createGenerator();
 		this.enqueue(CMD_ADD_COMPONENT_AND_WAIT, component, gameObj);
 		return this.currentGenerator;
@@ -60,7 +61,7 @@ export default class AsyncComponent<T> extends Component<T> {
 	 * @param components list of components
 	 * @param gameObj game object or function that returns a game object
 	 */
-	addComponentsAndWait(components: Component<any>[], gameObj: Container | Func<void, Container> = null): IterableIterator<void> {
+	addComponentsAndWait(components: Component<any>[], gameObj: Container | Func<void, Container> | null = null): IterableIterator<void> {
 		this.currentGenerator = this.createGenerator();
 		this.enqueue(CMD_ADD_COMPONENTS_AND_WAIT, components, gameObj);
 		return this.currentGenerator;
@@ -118,7 +119,7 @@ export default class AsyncComponent<T> extends Component<T> {
 	onMessage(msg: Message) {
 		if (this.current && ((this.current.key === CMD_WAIT_FOR_MESSAGE && this.current.param1 === msg.action) || (
 			this.current.key === CMD_WAIT_FOR_MESSAGE_CONDITION && this.current.param1 === msg.action &&
-			queryConditionCheck(msg.gameObject, this.current.param2)))) {
+			queryConditionCheck(msg.gameObject!, this.current.param2)))) {
 			this.tmpParam2 = true; // set a flag that the message just arrived
 		}
 	}
@@ -155,7 +156,7 @@ export default class AsyncComponent<T> extends Component<T> {
 				if (!this.current.cached) {
 					// add only once
 					this.current.cacheParams();
-					let gameObj = this.current.param2C != null ? this.current.param2C : this.owner;
+					const gameObj = this.current.param2C != null ? this.current.param2C : this.owner;
 					gameObj.addComponent(this.current.param1C);
 				}
 				// wait for finish
@@ -169,13 +170,13 @@ export default class AsyncComponent<T> extends Component<T> {
 				if (!this.current.cached) {
 					// add only once
 					this.current.cacheParams();
-					let gameObj = this.current.param2C != null ? this.current.param2C : this.owner;
-					for (let component of this.current.param1C) {
+					const gameObj = this.current.param2C != null ? this.current.param2C : this.owner;
+					for (const component of this.current.param1C) {
 						gameObj.addComponent(component);
 					}
 				}
 				// wait for finish
-				if (!(this.current.getParam1()).find(cmp => cmp.isRunning)) {
+				if (!(this.current.getParam1()).find((cmp: any) => cmp.isRunning)) {
 					this.tmpParam = null;
 					this.current.resetCache();
 					this.gotoNextImmediately(delta, absolute);
@@ -225,7 +226,7 @@ export default class AsyncComponent<T> extends Component<T> {
 	}
 
 	protected enqueue(key: number, param1: any = null, param2: any = null) {
-		let node = new CmdNode(key, param1, param2);
+		const node = new CmdNode(key, param1, param2);
 		this.current = node;
 	}
 
@@ -233,10 +234,10 @@ export default class AsyncComponent<T> extends Component<T> {
 	// goes to the next node and re-executes the update loop
 	protected gotoNextImmediately(delta: number, absolute: number) {
 		// generator created by createGenerator() function will obtain TRUE and exits its loop
-		this.currentGenerator.next(); // execute generator for the first time
-		const newVal = this.currentGenerator.next(true); // finish it
+		this.currentGenerator?.next(); // execute generator for the first time
+		const newVal = this.currentGenerator?.next(true); // finish it
 
-		if (newVal.done) {
+		if (newVal?.done) {
 			const res = this.rootGenerator.next();
 			if (res.done) {
 				this.finish();
@@ -248,7 +249,7 @@ export default class AsyncComponent<T> extends Component<T> {
 		this.onUpdate(delta, absolute);
 	}
 
-	protected *createGenerator() {
+	protected *createGenerator(): Generator<any> {
 		while (true) {
 			const result = yield;
 			if (result) {

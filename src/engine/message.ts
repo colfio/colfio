@@ -1,5 +1,5 @@
-import Component from './component';
-import Container from './game-objects/container';
+import type { Component } from './component';
+import type { Container } from './game-objects/container';
 
 /**
  * Response collected when a message is sent
@@ -28,7 +28,7 @@ export class MessageResponses {
 	/**
 	 * Gets data of the first response
 	 */
-	getData<T>(): T {
+	getData<T>(): T | null {
 		return (this.responses && this.responses.length > 0) ? this.responses[0].data as T : null;
 	}
 
@@ -48,7 +48,7 @@ export class MessageResponses {
 /**
  * Messaging entity, informs who has sent it and from which component
  */
-export default class Message {
+export class Message {
 
 	/**
 	 * Data payload
@@ -58,7 +58,7 @@ export default class Message {
 	/*
 	 * If any handler sets this flag to true, the message will not be sent further
 	 */
-	expired: boolean = false;
+	expired = false;
 
 	/**
 	 * Stores any response along the way
@@ -68,17 +68,17 @@ export default class Message {
 	/**
 	 * Action type identifier
 	 */
-	private _action: string = null;
+	private _action!: string;
 
 	/**
 	 * Component that sent this message
 	 */
-	private _component: Component<any> = null;
+	private _component?: Component<any>;
 
 	/**
 	 * GameObject attached to this message
 	 */
-	private _gameObject: Container = null;
+	private _gameObject?: Container;
 
 	constructor(action: string, component?: Component<any>, gameObject?: Container, data?: any) {
 		this._action = action;

@@ -1,4 +1,4 @@
-import Container from '../engine/game-objects/container';
+import type { Container } from '../engine/game-objects/container';
 
 /**
  * Condition for generic object queries

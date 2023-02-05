@@ -1,29 +1,69 @@
 {
-  "name": "ecs-lite",
-	"version": "0.2.5",
+	"name": "colfio",
+	"version": "0.3.0",
+	"description": "A component-oriented library for casual games using PixiJS",
 	"license": "MIT",
-  "scripts": {
-    "start": "parcel examples/*.html --out-dir www --open",
-    "start_no_map": "parcel examples/*.html --out-dir www --open --no-source-maps",
-    "deploy": "parcel build examples/*.html --no-source-maps",
-    "tests": "parcel examples/tests.html --out-dir www --open"
-  },
-  "dependencies": {
-    "eventemitter3": "^4.0.7",
-    "pixi.js": "^6.1.2"
-  },
-  "devDependencies": {
-    "@types/offscreencanvas": "^2019.6.4",
-    "@typescript-eslint/eslint-plugin": "^4.29.3",
-    "@typescript-eslint/eslint-plugin-tslint": "^5.1.0",
-    "@typescript-eslint/parser": "^4.29.3",
-    "eslint": "^7.32.0",
-    "eslint-plugin-babel": "^5.3.1",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prefer-arrow": "^1.2.3",
-    "eslint-plugin-standard": "^5.0.0",
-    "parcel": "1.12.3",
-    "typescript": "^4.3.5"
-  }
+	"main": "./dist/cjs/index.js",
+	"module": "./dist/esm/index.js",
+	"types": "./dist/esm/index.d.ts",
+	"homepage": "https://colf.io",
+	"files": [
+		"docs/",
+		"dist/",
+		"src/",
+		"LICENSE",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/colfio/colfio.git"
+	},
+	"author": {
+		"name": "Adam Vesecký",
+		"email": "vesecky.adam@gmail.com",
+		"web": "https://dodo.me"
+	},
+	"engines": {
+		"node": ">=16.0.0",
+		"npm": ">=8"
+	},
+	"keywords": [
+		"colfio",
+		"pixi",
+		"games"
+	],
+	"scripts": {
+		"clean": "rimraf dist coverage",
+		"prepare": "npm run build",
+		"prepublishOnly": "npm run clean && npm run lint && npm run test",
+		"lint": "eslint \"{src,tests}/**/*.{js,ts}\"",
+		"test": "jest",
+		"test:cov": "jest --coverage",
+		"test:typescript": "tsc --noEmit",
+		"build:cjs": "tsc --module commonjs --outdir dist/cjs ",
+		"build:esm": "tsc --outdir dist/esm",
+		"build": "rimraf dist && npm run build:cjs && npm run build:esm",
+		"typedoc": "typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts"
+	},
+	"peerDependencies": {
+		"pixi.js": ">=6.1.2"
+	},
+	"devDependencies": {
+		"@types/jest": "^27.0.2",
+		"@typescript-eslint/eslint-plugin": "^5.1.0",
+		"@typescript-eslint/parser": "^5.1.0",
+		"canvas": "^2.11.0",
+		"eslint": "^7.32.0",
+		"eslint-plugin-import": "^2.22.1",
+		"jest": "^27.3.1",
+		"jest-webgl-canvas-mock": "^0.2.3",
+		"pixi.js": "^6.1.2",
+		"rimraf": "^3.0.2",
+		"ts-jest": "27.0.7",
+		"tslib": "^2.5.0",
+		"typedoc": "^0.23.24",
+		"typedoc-plugin-markdown": "^3.14.0",
+		"typescript": "^4.4"
+	}
 }

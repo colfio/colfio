@@ -1,13 +1,15 @@
-import GameObjectProxy from './game-object-proxy';
-import Message from './message';
-import Component from './component';
-import * as PIXI from 'pixi.js';
-import { Messages, AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './constants';
-import Container from './game-objects/container';
+import type { GameObjectProxy } from './game-object-proxy';
+import { Message } from './message';
+import type { Component } from './component';
+import type * as PIXI from 'pixi.js';
+import type { AttributeChangeMessage, StateChangeMessage, FlagChangeMessage, TagChangeMessage } from './constants';
+import { Messages } from './constants';
+import { Container } from './game-objects/container';
 import { LookupMap } from '../utils/lookup-map';
-import DebugComponent from '../components/debug-component';
-import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
-import { MessageResponse } from './message';
+import { DebugComponent } from '../components/debug-component';
+import type { QueryCondition} from '../utils/query-condition';
+import { queryConditionCheck } from '../utils/query-condition';
+import type { MessageResponse } from './message';
 
 
 /**
@@ -16,7 +18,7 @@ import { MessageResponse } from './message';
 class Invocation {
 	delay = 0; // time of invocation
 	time = 0; // time of creation
-	action: () => void = null; // action to execute
+	action!: () => void; // action to execute
 }
 
 /**
@@ -60,7 +62,7 @@ export const defaultConfig: SceneConfig = {
 /**
  * Scene that keeps a collection of all game objects and component listeners
  */
-export default class Scene {
+export class Scene {
 	app: PIXI.Application;
 	name: string;
 	width: number;
@@ -68,30 +70,30 @@ export default class Scene {
 	resolution: number;
 
 	// PIXI stage object
-	stage: Container = null;
+	stage!: Container;
 
 	// collection of actions that should be invoked with a delay
-	private pendingInvocations: Invocation[];
+	private pendingInvocations: Invocation[] = [];
 	// message action keys and all subscribers that listens to all these actions
 	private subscribers: LookupMap<string, Component<any>>;
 	// game objects mapped by their flags
-	private gameObjectFlags: LookupMap<number, Container>;
+	private gameObjectFlags!: LookupMap<number, Container>;
 	// game objects mapped by their state
-	private gameObjectStates: LookupMap<number, Container>;
+	private gameObjectStates!: LookupMap<number, Container>;
 	// game objects mapped by their tags
-	private gameObjectTags: LookupMap<string, Container>;
+	private gameObjectTags!: LookupMap<string, Container>;
 	// game objects mapped by their names
-	private gameObjectNames: LookupMap<string, Container>;
+	private gameObjectNames!: LookupMap<string, Container>;
 	// collection of ALL game objects, mapped by their ids
 	private gameObjects: Map<number, Container>;
 	// indicator if the scene is just being updated
-	private isUpdating: boolean;
-	private _currentDelta: number;
-	private _currentAbsolute: number;
+	private isUpdating!: boolean;
+	private _currentDelta!: number;
+	private _currentAbsolute!: number;
 
-	private _config: SceneConfig;
+	private _config!: SceneConfig;
 	// indicator that will be reset upon first update
-	private sceneCleared: boolean;
+	private sceneCleared!: boolean;
 
 	constructor(name: string, app: PIXI.Application, config?: SceneConfig) {
 		this.name = name;
@@ -149,7 +151,7 @@ export default class Scene {
 	/**
 	 * Tries to find a global component by its class
 	 */
-	findGlobalComponentByName<T extends Component<any>>(className: string): T {
+	findGlobalComponentByName<T extends Component<any>>(className: string): T | null {
 		return this.stage.findComponentByName<T>(className);
 	}
 
@@ -184,9 +186,9 @@ export default class Scene {
 	/**
 	 * Gets object by its id
 	 */
-	findObjectById(id: number): Container {
+	findObjectById(id: number): Container | null {
 		if (this.gameObjects.has(id)) {
-			return this.gameObjects.get(id);
+			return this.gameObjects.get(id) || null;
 		}
 		return null;
 	}
@@ -195,9 +197,9 @@ export default class Scene {
 	 * Finds all objects that meet specific condition
 	 */
 	findObjectsByQuery(query: QueryCondition): Array<Container> {
-		let result: Container[] = [];
+		const result: Container[] = [];
 		// linear complexity
-		for (let [, object] of this.gameObjects) {
+		for (const [, object] of this.gameObjects) {
 			if (queryConditionCheck(object, query)) {
 				result.push(object);
 			}
@@ -218,7 +220,7 @@ export default class Scene {
 	/**
 	 * Finds a first object of a given name
 	 */
-	findObjectByName(name: string): Container {
+	findObjectByName(name: string): Container | null {
 		if (!this.config.namesSearchEnabled) {
 			throw new Error('Searching by name is not enabled. See SceneConfig');
 		}
@@ -238,7 +240,7 @@ export default class Scene {
 	/**
 	 * Finds a first object with a given tag
 	 */
-	findObjectByTag(tag: string): Container {
+	findObjectByTag(tag: string): Container | null {
 		if (!this.config.tagsSearchEnabled) {
 			throw new Error('Searching by tag is not enabled. See SceneConfig');
 		}
@@ -258,7 +260,7 @@ export default class Scene {
 	/**
 	 * Finds a first object with a given flag
 	 */
-	findObjectByFlag(flag: number): Container {
+	findObjectByFlag(flag: number): Container | null {
 		if (!this.config.flagsSearchEnabled) {
 			throw new Error('Searching by flags is not enabled. See SceneConfig');
 		}
@@ -278,7 +280,7 @@ export default class Scene {
 	/**
 	 * Finds a first object of a given state
 	 */
-	findObjectByState(state: number): Container {
+	findObjectByState(state: number): Container | null {
 		if (!this.config.statesSearchEnabled) {
 			throw new Error('Searching by states is not enabled. See SceneConfig');
 		}
@@ -334,7 +336,7 @@ export default class Scene {
 			throw new Error('Scene can\'t be cleared during update loop. Use clearSceneAsync() instead!');
 		}
 
-		this.sendMessage(new Message(Messages.SCENE_CLEAR, null, null, this.name));
+		this.sendMessage(new Message(Messages.SCENE_CLEAR, undefined, undefined, this.name));
 
 		if (newConfig) {
 			this.initConfig(newConfig);
@@ -376,10 +378,10 @@ export default class Scene {
 		this.pendingInvocations = [];
 		this._currentDelta = this._currentAbsolute = 0;
 
-		let newStage = new Container('stage');
+		const newStage = new Container('stage');
 
 		// stage doesn't have any parents, we need to remove its children recursively
-		for (let child of this.app.stage.children) {
+		for (const child of this.app.stage.children) {
 			child.destroy();
 		}
 		this.app.stage.destroy();
@@ -416,7 +418,7 @@ export default class Scene {
 		// execute pending invocations
 		let i = this.pendingInvocations.length;
 		while (i--) {
-			let invocation = this.pendingInvocations[i];
+			const invocation = this.pendingInvocations[i];
 			invocation.time += delta;
 
 			if (invocation.time >= invocation.delay) {
@@ -444,7 +446,7 @@ export default class Scene {
 	}
 
 	_onObjectAdded(obj: GameObjectProxy) {
-		let pixiObj = obj.pixiObj;
+		const pixiObj = obj.pixiObj!;
 		// fill all collections
 		if (this.config.namesSearchEnabled) {
 			this.gameObjectNames.insert(pixiObj.name, pixiObj);
@@ -462,12 +464,12 @@ export default class Scene {
 			this.gameObjectStates.insert(pixiObj.stateId, pixiObj);
 		}
 
-		this.gameObjects.set(obj.id, obj.pixiObj);
-		this.sendMessage(new Message(Messages.OBJECT_ADDED, null, obj.pixiObj));
+		this.gameObjects.set(obj.id, pixiObj);
+		this.sendMessage(new Message(Messages.OBJECT_ADDED, undefined, obj.pixiObj!));
 	}
 
 	_onObjectRemoved(obj: GameObjectProxy) {
-		let gameObj = obj.pixiObj;
+		const gameObj = obj.pixiObj!;
 
 		if (this.config.namesSearchEnabled) {
 			this.gameObjectNames.remove(gameObj.name, gameObj);
@@ -488,12 +490,12 @@ export default class Scene {
 		this.gameObjects.delete(obj.id);
 
 		// notify listeners
-		this.sendMessage(new Message(Messages.OBJECT_REMOVED, null, gameObj));
+		this.sendMessage(new Message(Messages.OBJECT_REMOVED, undefined, gameObj));
 	}
 
 	_onComponentAdded(component: Component<any>, obj: GameObjectProxy) {
 		component.scene = this;
-		this.sendMessage(new Message(Messages.COMPONENT_ADDED, component, obj.pixiObj));
+		this.sendMessage(new Message(Messages.COMPONENT_ADDED, component, obj.pixiObj!));
 	}
 
 	_onComponentDetached(component: Component<any>) {
@@ -503,87 +505,87 @@ export default class Scene {
 
 	_onComponentRemoved(component: Component<any>, obj: GameObjectProxy) {
 		this.subscribers.removeItem(component);
-		this.sendMessage(new Message(Messages.COMPONENT_REMOVED, component, obj.pixiObj));
+		this.sendMessage(new Message(Messages.COMPONENT_REMOVED, component, obj.pixiObj!));
 	}
 
 	_onStateChanged(previous: number, current: number, obj: GameObjectProxy) {
 		if (this.config.statesSearchEnabled) {
-			this.gameObjectStates.remove(previous, obj.pixiObj);
-			this.gameObjectStates.insert(current, obj.pixiObj);
+			this.gameObjectStates.remove(previous, obj.pixiObj!);
+			this.gameObjectStates.insert(current, obj.pixiObj!);
 		}
 		if (this.config.notifyStateChanges) {
-			let data: StateChangeMessage = { previous, current };
-			this.sendMessage(new Message(Messages.STATE_CHANGED, null, obj.pixiObj, data));
+			const data: StateChangeMessage = { previous, current };
+			this.sendMessage(new Message(Messages.STATE_CHANGED, undefined, obj.pixiObj!, data));
 		}
 	}
 
 	_onAttributeAdded(key: string, value: any, obj: GameObjectProxy) {
 		if (this.config.notifyAttributeChanges) {
-			let data: AttributeChangeMessage = {
+			const data: AttributeChangeMessage = {
 				key: key,
 				type: Messages.ATTRIBUTE_ADDED,
 				previousValue: null,
 				currentValue: value
 			};
-			this.sendMessage(new Message(Messages.ATTRIBUTE_ADDED, null, obj.pixiObj, data));
+			this.sendMessage(new Message(Messages.ATTRIBUTE_ADDED, undefined, obj.pixiObj!, data));
 		}
 	}
 
 	_onAttributeChanged(key: string, previousValue: any, currentValue: any, obj: GameObjectProxy) {
 		if (this.config.notifyAttributeChanges) {
-			let data: AttributeChangeMessage = {
+			const data: AttributeChangeMessage = {
 				key: key,
 				type: Messages.ATTRIBUTE_CHANGED,
 				previousValue: previousValue,
 				currentValue: currentValue
 			};
-			this.sendMessage(new Message(Messages.ATTRIBUTE_CHANGED, null, obj.pixiObj, data));
+			this.sendMessage(new Message(Messages.ATTRIBUTE_CHANGED, undefined, obj.pixiObj!, data));
 		}
 	}
 
 	_onAttributeRemoved(key: string, value: any, obj: GameObjectProxy) {
 		if (this.config.notifyAttributeChanges) {
-			let data: AttributeChangeMessage = {
+			const data: AttributeChangeMessage = {
 				key: key,
 				type: Messages.ATTRIBUTE_REMOVED,
 				previousValue: value,
 				currentValue: null
 			};
-			this.sendMessage(new Message(Messages.ATTRIBUTE_REMOVED, null, obj.pixiObj, data));
+			this.sendMessage(new Message(Messages.ATTRIBUTE_REMOVED, undefined, obj.pixiObj!, data));
 		}
 	}
 
 	_onFlagChanged(flag: number, set: boolean, obj: GameObjectProxy) {
 		if (this.config.flagsSearchEnabled) {
 			if (set) {
-				this.gameObjectFlags.insert(flag, obj.pixiObj);
+				this.gameObjectFlags.insert(flag, obj.pixiObj!);
 			} else {
-				this.gameObjectFlags.remove(flag, obj.pixiObj);
+				this.gameObjectFlags.remove(flag, obj.pixiObj!);
 			}
 		}
 		if (this.config.notifyFlagChanges) {
-			let data: FlagChangeMessage = { flag, isSet: set };
-			this.sendMessage(new Message(Messages.FLAG_CHANGED, null, obj.pixiObj, data));
+			const data: FlagChangeMessage = { flag, isSet: set };
+			this.sendMessage(new Message(Messages.FLAG_CHANGED, undefined, obj.pixiObj!, data));
 		}
 	}
 
 	_onTagAdded(tag: string, obj: GameObjectProxy) {
 		if (this.config.tagsSearchEnabled) {
-			this.gameObjectTags.insert(tag, obj.pixiObj);
+			this.gameObjectTags.insert(tag, obj.pixiObj!);
 		}
 		if (this.config.notifyTagChanges) {
-			let data: TagChangeMessage = { tag, type: Messages.TAG_ADDED };
-			this.sendMessage(new Message(Messages.TAG_ADDED, null, obj.pixiObj, data));
+			const data: TagChangeMessage = { tag, type: Messages.TAG_ADDED };
+			this.sendMessage(new Message(Messages.TAG_ADDED, undefined, obj.pixiObj!, data));
 		}
 	}
 
 	_onTagRemoved(tag: string, obj: GameObjectProxy) {
 		if (this.config.tagsSearchEnabled) {
-			this.gameObjectTags.remove(tag, obj.pixiObj);
+			this.gameObjectTags.remove(tag, obj.pixiObj!);
 		}
 		if (this.config.notifyTagChanges) {
-			let data: TagChangeMessage = { tag, type: Messages.TAG_REMOVED };
-			this.sendMessage(new Message(Messages.TAG_REMOVED, null, obj.pixiObj, data));
+			const data: TagChangeMessage = { tag, type: Messages.TAG_REMOVED };
+			this.sendMessage(new Message(Messages.TAG_REMOVED, undefined, obj.pixiObj!, data));
 		}
 	}
 

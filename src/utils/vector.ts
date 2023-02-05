@@ -3,7 +3,7 @@
  * operations. All operations on this class produce a new copy of the vector
  * instead of modifying the vector in place.
  */
-export default class Vector {
+export class Vector {
 	/** The x-coordinate of the vector */
 	private _x: number;
 
@@ -89,7 +89,7 @@ export default class Vector {
 	 * best to cache the result when possible.
 	 */
 	normalize(): Vector {
-		let magnitude = this.magnitude();
+		const magnitude = this.magnitude();
 		return new Vector(this.x / magnitude, this.y / magnitude);
 	}
 
@@ -131,7 +131,7 @@ export default class Vector {
 	 * Limits the vector size
 	 */
 	limit(magnitude: number): Vector {
-		let mag = this.magnitudeSquared();
+		const mag = this.magnitudeSquared();
 		if (magnitude < mag) {
 			return new Vector(this.x / Math.sqrt(mag / magnitude), this.y / Math.sqrt(mag / magnitude));
 		} else {

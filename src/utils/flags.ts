@@ -2,7 +2,7 @@
 /**
  * Slightly optimized bit array for flags
  */
-export default class Flags {
+export class Flags {
 	// flag array 1-128
 	flags = new Uint32Array(4);
 
@@ -13,9 +13,9 @@ export default class Flags {
 		if (flag < 1 || flag > 128) {
 			throw new Error('Only flag values between 1-128 are supported');
 		}
-		let index = this.getFlagIndex(flag);
-		let offset = this.getFlagOffset(flag);
-		let binary = 1 << offset;
+		const index = this.getFlagIndex(flag);
+		const offset = this.getFlagOffset(flag);
+		const binary = 1 << offset;
 
 		if (index <= 3) {
 			switch (index) {
@@ -45,7 +45,7 @@ export default class Flags {
 	 * Will switch two flags
 	 */
 	switchFlag(flag1: number, flag2: number) {
-		let hasFlag2 = this.hasFlag(flag2);
+		const hasFlag2 = this.hasFlag(flag2);
 
 		if (this.hasFlag(flag1)) {
 			this.setFlag(flag2);
@@ -78,16 +78,16 @@ export default class Flags {
 	 * Gets set of all flags in numeric values (1-128)
 	 */
 	getAllFlags(): Set<number> {
-		let output = new Set<number>();
+		const output = new Set<number>();
 		let counter = 0;
 		for (let i = 0; i < this.flags.length; i++) {
-			let flg = this.flags[i];
+			const flg = this.flags[i];
 			counter++;
 			if (flg === 0) {
 				continue; // skip unassigned flags
 			}
 			for (let j = 1; j <= 32; j++) {
-				let binary = 1 << (j - 1);
+				const binary = 1 << (j - 1);
 				if ((flg & binary) === binary) {
 					output.add(j + (counter - 1) * 32);
 				}
@@ -109,9 +109,9 @@ export default class Flags {
 		if (flag < 1 || flag > 128) {
 			throw new Error('Flag at unsupported index');
 		}
-		let index = this.getFlagIndex(flag);
-		let offset = this.getFlagOffset(flag);
-		let binary = 1 << offset;
+		const index = this.getFlagIndex(flag);
+		const offset = this.getFlagOffset(flag);
+		const binary = 1 << offset;
 
 		if (index <= 3) {
 			switch (index) {

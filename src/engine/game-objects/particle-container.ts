@@ -1,30 +1,30 @@
-import GameObjectProxy from '../game-object-proxy';
-import Component from '../component';
-import Scene from '../scene';
-import GameObject from '../game-object';
+import { GameObjectProxy } from '../game-object-proxy';
+import type { Component } from '../component';
+import type { Scene } from '../scene';
+import type { GameObject } from '../game-object';
 
-import AnimatedSprite from './animated-sprite';
-import BitmapText from './bitmap-text';
-import Container from './container';
-import Graphics from './graphics';
-import Mesh from './mesh';
-import NineSlicePlane from './nine-slice-plane';
-import SimpleMesh from './simple-mesh';
-import SimplePlane from './simple-plane';
-import SimpleRope from './simple-rope';
-import Sprite from './sprite';
-import Text from './text';
-import TilingSprite from './tiling-sprite';
+import type { AnimatedSprite } from './animated-sprite';
+import type { BitmapText } from './bitmap-text';
+import type { Graphics } from './graphics';
+import type { Mesh } from './mesh';
+import type { NineSlicePlane } from './nine-slice-plane';
+import type { Container } from './container';
+import type { SimpleMesh } from './simple-mesh';
+import type { SimplePlane } from './simple-plane';
+import type { SimpleRope } from './simple-rope';
+import type { Sprite } from './sprite';
+import type { Text } from './text';
+import type { TilingSprite } from './tiling-sprite';
 
 import * as PIXI from 'pixi.js';
 
 /**
  * Wrapper for PIXI.ParticleContainer
  */
-export default class ParticleContainer extends PIXI.ParticleContainer implements GameObject {
+export class ParticleContainer extends PIXI.ParticleContainer implements GameObject {
 	_proxy: GameObjectProxy;
 
-	constructor(name: string = '', maxSize: number, properties: PIXI.IParticleProperties) {
+	constructor(name = '', maxSize: number, properties: PIXI.IParticleProperties) {
 		super(maxSize, properties);
 		this._proxy = new GameObjectProxy(name, this);
 	}
@@ -87,9 +87,9 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 
 	// overrides pixijs function
 	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		let newChild = super.addChild(...children);
-		for (let child of children) {
-			let cmpObj = <GameObject><any>child;
+		const newChild = super.addChild(...children as any);
+		for (const child of children) {
+			const cmpObj = <GameObject><any>child;
 			if (cmpObj && cmpObj._proxy) {
 				this._proxy.onChildAdded(cmpObj._proxy);
 			}
@@ -100,8 +100,8 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 
 	// overrides pixijs function
 	addChildAt<T extends PIXI.DisplayObject>(child: T, index: number): T {
-		let newChild = super.addChildAt(child, index);
-		let cmpObj = <GameObject><any>newChild;
+		const newChild = super.addChildAt(child as any, index);
+		const cmpObj = <GameObject><any>newChild;
 		if (cmpObj && cmpObj._proxy) {
 			this._proxy.onChildAdded(cmpObj._proxy);
 		}
@@ -110,9 +110,9 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 
 	// overrides pixijs function
 	removeChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		let removed = super.removeChild(...children);
-		for (let child of children) {
-			let cmpObj = <GameObject><any>child;
+		const removed = super.removeChild(...children as any);
+		for (const child of children) {
+			const cmpObj = <GameObject><any>child;
 			if (cmpObj && cmpObj._proxy) {
 				this._proxy.onChildDetached(cmpObj._proxy);
 			}
@@ -122,9 +122,9 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 	}
 
 	// overrides pixijs function
-	removeChildAt(index: number): PIXI.DisplayObject {
-		let removed = super.removeChildAt(index);
-		let cmpObj = <GameObject><any>removed;
+	removeChildAt(index: number): PIXI.Sprite {
+		const removed = super.removeChildAt(index);
+		const cmpObj = <GameObject><any>removed;
 		if (cmpObj && cmpObj._proxy) {
 			this._proxy.onChildDetached(cmpObj._proxy);
 		}
@@ -132,10 +132,10 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 	}
 
 	// overrides pixijs function
-	removeChildren(beginIndex?: number, endIndex?: number): PIXI.DisplayObject[] {
-		let removed = super.removeChildren(beginIndex, endIndex);
-		for (let removedObj of removed) {
-			let cmpObj = <GameObject><any>removedObj;
+	removeChildren(beginIndex?: number, endIndex?: number): PIXI.Sprite[] {
+		const removed = super.removeChildren(beginIndex, endIndex);
+		for (const removedObj of removed) {
+			const cmpObj = <GameObject><any>removedObj;
 			if (cmpObj && cmpObj._proxy) {
 				this._proxy.onChildDetached(cmpObj._proxy);
 			}
@@ -144,8 +144,8 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 	}
 
 	destroyChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		let removed = super.removeChild(...children);
-		let cmpObj = <GameObject><any>removed;
+		const removed = super.removeChild(...children as any);
+		const cmpObj = <GameObject><any>removed;
 		if (cmpObj && cmpObj._proxy) {
 			this._proxy.onChildDestroyed(cmpObj._proxy);
 		}
@@ -158,7 +158,7 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 	addComponentAndRun(component: Component<any>) {
 		this._proxy.addComponent(component, true);
 	}
-	findComponentByName<T extends Component<any>>(name: string): T {
+	findComponentByName<T extends Component<any>>(name: string): T | null {
 		return this._proxy.findComponentByName<T>(name);
 	}
 	removeComponent(component: Component<any>) {
@@ -213,7 +213,7 @@ export default class ParticleContainer extends PIXI.ParticleContainer implements
 		super.destroy({ children: true, texture: true, baseTexture: false });
 	}
 	destroyChildren(): void {
-		for (let child of [...this.children]) {
+		for (const child of [...this.children]) {
 			child.destroy();
 		}
 	}

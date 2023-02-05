@@ -1,6 +1,7 @@
-import Message from '../engine/message';
-import Component from '../engine/component';
-import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
+import type { Message } from '../engine/message';
+import { Component } from '../engine/component';
+import type { QueryCondition} from '../utils/query-condition';
+import { queryConditionCheck } from '../utils/query-condition';
 
 
 interface MessageCaptureContext<T> {
@@ -13,18 +14,18 @@ interface MessageCaptureContext<T> {
  * Functional component
  */
 export class FuncComponent<T = void> extends Component<T> {
-	protected duration: number = 0;
-	protected firstRun: number = 0;
+	protected duration = 0;
+	protected firstRun = 0;
 
-	private onInitFunc: (cmp: Component<T>) => void = null;
-	private onAttachFunc: (cmp: Component<T>) => void = null;
+	private onInitFunc: ((cmp: FuncComponent<T>) => void) | null = null;
+	private onAttachFunc: ((cmp: FuncComponent<T>) => void) | null = null;
 	private onMessageHandlers = new Map<string, MessageCaptureContext<T>>();
 	private onMessageConditionalHandlers = new Map<string, Set<MessageCaptureContext<T>>>();
-	private onUpdateFunc: (cmp: Component<T>, delta: number, absolute: number) => void = null;
-	private onFixedUpdateFunc: (cmp: Component<T>, delta: number, absolute: number) => void = null;
-	private onDetachFunc: (cmp: Component<T>) => void = null;
-	private onRemoveFunc: (cmp: Component<T>) => void = null;
-	private onFinishFunc: (cmp: Component<T>) => void = null;
+	private onUpdateFunc: ((cmp: FuncComponent<T>, delta: number, absolute: number) => void) | null = null;
+	private onFixedUpdateFunc: ((cmp: FuncComponent<T>, delta: number, absolute: number) => void) | null = null;
+	private onDetachFunc: ((cmp: FuncComponent<T>) => void) | null = null;
+	private onRemoveFunc: ((cmp: FuncComponent<T>) => void) | null = null;
+	private onFinishFunc: ((cmp: FuncComponent<T>) => void) | null = null;
 
 	/**
 	 * Creates a new functional component
@@ -36,7 +37,7 @@ export class FuncComponent<T = void> extends Component<T> {
 	}
 
 	public get name() {
-		return this._name;
+		return this._name || '';
 	}
 
 	/**
@@ -58,15 +59,15 @@ export class FuncComponent<T = void> extends Component<T> {
 	/**
 	 * Registers a function that will be invoked when a specific message arrives
 	 */
-	doOnMessage(action: string, handler: (cmp: FuncComponent<T>, msg: Message) => void): FuncComponent<T> {
-		this.onMessageHandlers.set(action, { handler: handler, onlyOnce: false });
+	doOnMessage(action: string, handler: (cmp: Component<T>, msg: Message) => void): FuncComponent<T> {
+		this.onMessageHandlers.set(action, { handler, onlyOnce: false });
 		return this;
 	}
 
 	/**
 	 * Registers a function that will be invoked when a specific message arrives, but only once
 	 */
-	doOnMessageOnce(action: string, handler: (cmp: FuncComponent<T>, msg: Message) => void): FuncComponent<T> {
+	doOnMessageOnce(action: string, handler: (cmp: Component<T>, msg: Message) => void): FuncComponent<T> {
 		this.onMessageHandlers.set(action, { handler: handler, onlyOnce: true });
 		return this;
 	}
@@ -75,11 +76,11 @@ export class FuncComponent<T = void> extends Component<T> {
 	 * Registers a function that will be invoked when a specific message arrives and given conditions are met
 	 * Can be used to listen only for a group of objects
 	 */
-	doOnMessageConditional(action: string, condition: QueryCondition, handler: (cmp: FuncComponent<T>, msg: Message) => void) {
+	doOnMessageConditional(action: string, condition: QueryCondition, handler: (cmp: Component<T>, msg: Message) => void) {
 		if (!this.onMessageConditionalHandlers.has(action)) {
 			this.onMessageConditionalHandlers.set(action, new Set());
 		}
-		this.onMessageConditionalHandlers.get(action).add({ onlyOnce: false, handler: handler, condition: condition });
+		this.onMessageConditionalHandlers.get(action)?.add({ onlyOnce: false, handler: handler, condition: condition });
 		return this;
 	}
 
@@ -151,29 +152,31 @@ export class FuncComponent<T = void> extends Component<T> {
 			this.onAttachFunc(this);
 		}
 		// register all messages
-		for (let [key] of this.onMessageHandlers) {
+		for (const [key] of this.onMessageHandlers) {
 			this.subscribe(key);
 		}
-		for (let [key] of this.onMessageConditionalHandlers) {
+		for (const [key] of this.onMessageConditionalHandlers) {
 			this.subscribe(key);
 		}
 	}
 
 	onMessage(msg: Message) {
 		if (this.onMessageHandlers.has(msg.action)) {
-			let handler = this.onMessageHandlers.get(msg.action);
-			handler.handler(this, msg); // invoke handler
-			if (handler.onlyOnce) { // if true, the handler should be invoked only once
+			const handler = this.onMessageHandlers.get(msg.action);
+			handler?.handler(this, msg); // invoke handler
+			if (handler?.onlyOnce) { // if true, the handler should be invoked only once
 				this.onMessageHandlers.delete(msg.action);
 				this.unsubscribe(msg.action);
 			}
 		}
 
 		if (this.onMessageConditionalHandlers.has(msg.action)) {
-			let set = this.onMessageConditionalHandlers.get(msg.action);
-			for (let handler of set) {
-				if (msg.gameObject && queryConditionCheck(msg.gameObject, handler.condition)) {
-					handler.handler(this, msg);
+			const set = this.onMessageConditionalHandlers.get(msg.action);
+			if(set) {
+				for (const handler of set) {
+					if (handler.condition && msg.gameObject && queryConditionCheck(msg.gameObject, handler.condition)) {
+						handler.handler(this, msg);
+					}
 				}
 			}
 		}

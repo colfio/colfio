@@ -1,10 +1,11 @@
-import Message from '../engine/message';
-import Component, { ComponentState } from '../engine/component';
-import Container from '../engine/game-objects/container';
-import { QueryCondition, queryConditionCheck } from '../utils/query-condition';
-import Stack from '../utils/stack';
-import CmdNode from '../utils/cmd-node';
-import { Func, Action } from '../utils/helpers';
+import type { Message } from '../engine/message';
+import { Component, ComponentState } from '../engine/component';
+import type { Container } from '../engine/game-objects/container';
+import type { QueryCondition} from '../utils/query-condition';
+import { queryConditionCheck } from '../utils/query-condition';
+import { Stack } from '../utils/stack';
+import { CmdNode } from '../utils/cmd-node';
+import type { Func, Action } from '../utils/helpers';
 
 // ============= COMMANDS ===========
 const CMD_BEGIN_REPEAT = 1;
@@ -34,15 +35,15 @@ const CMD_DESTROY_GAME_OBJECT = 23;
 /**
  * Component that executes a chain of commands during the update loop
  */
-export default class ChainComponent extends Component<void> {
+export class ChainComponent extends Component<void> {
 
 	// stack of current scope
 	protected scopeStack = new Stack<CmdNode>();
 	// current node
-	protected current: CmdNode = null;
+	protected current: CmdNode | null = null;
 	// linked list
-	protected head: CmdNode = null;
-	protected tail: CmdNode = null;
+	protected head: CmdNode | null = null;
+	protected tail: CmdNode | null = null;
 
 	// helping parameters used for processing the current node
 	protected tmpParam: any = null;
@@ -50,7 +51,7 @@ export default class ChainComponent extends Component<void> {
 
 	protected abortIfChecks: Func<void, boolean>[] = [];
 
-	constructor(name: string = 'Chain') {
+	constructor(name = 'Chain') {
 		super();
 		this._name = name;
 	}
@@ -63,7 +64,7 @@ export default class ChainComponent extends Component<void> {
 		if (other.cmpState === ComponentState.RUNNING) {
 			throw new Error('Can\'t merge running component!');
 		}
-		if (this.head) {
+		if (this.head && other.tail) {
 			other.tail.next = this.head;
 			this.head = other.head;
 		} else {
@@ -196,7 +197,7 @@ export default class ChainComponent extends Component<void> {
 	 * @param component component or function that returns a component
 	 * @param gameObj game object or function that returns a game object
 	 */
-	addComponent(component: Component<any> | Func<void, Component<any>>, gameObj: Container | Func<void, Container> = null): ChainComponent {
+	addComponent(component: Component<any> | Func<void, Component<any>>, gameObj: Container | Func<void, Container> | null = null): ChainComponent {
 		this.enqueue(CMD_ADD_COMPONENT, component, gameObj);
 		return this;
 	}
@@ -271,7 +272,7 @@ export default class ChainComponent extends Component<void> {
 	 * @param cmp name of the component or the component itself
 	 * @param gameObj object from which the component should be removed
 	 */
-	removeComponent(cmp: string, gameObj: Container = null): ChainComponent {
+	removeComponent(cmp: string, gameObj: Container | null = null): ChainComponent {
 		this.enqueue(CMD_REMOVE_COMPONENT, cmp, gameObj);
 		return this;
 	}
@@ -322,7 +323,7 @@ export default class ChainComponent extends Component<void> {
 	onMessage(msg: Message) {
 		if (this.current && ((this.current.key === CMD_WAIT_FOR_MESSAGE && this.current.param1 === msg.action) || (
 			this.current.key === CMD_WAIT_FOR_MESSAGE_CONDITION && this.current.param1 === msg.action &&
-			queryConditionCheck(msg.gameObject, this.current.param2)))) {
+			queryConditionCheck(msg.gameObject!, this.current.param2)))) {
 			// set a flag that the message just arrived
 			// it will be processed during the next loop
 			this.tmpParam2 = true;
@@ -338,7 +339,7 @@ export default class ChainComponent extends Component<void> {
 
 		if (this.abortIfChecks.length !== 0) {
 			// always check for conditions for interrupt
-			for (let check of this.abortIfChecks) {
+			for (const check of this.abortIfChecks) {
 				if (check()) {
 					this.finish();
 					return;
@@ -366,7 +367,7 @@ export default class ChainComponent extends Component<void> {
 				break;
 			case CMD_END_REPEAT:
 				// pop context and jump
-				let temp = this.scopeStack.pop();
+				const temp = this.scopeStack.pop()!;
 
 				temp.setParam1(temp.getParam1() - 1); // decrement number of repetitions
 				if (temp.getParam2() === true || // infinite loop check
@@ -392,7 +393,7 @@ export default class ChainComponent extends Component<void> {
 				break;
 			case CMD_END_WHILE:
 				// pop contex and check condition
-				let temp2 = this.scopeStack.pop();
+				const temp2 = this.scopeStack.pop()!;
 				if (temp2.param1()) { // check condition inside while()
 					// condition is true -> jump to the beginning
 					this.current = temp2;
@@ -433,16 +434,16 @@ export default class ChainComponent extends Component<void> {
 				while (true) {
 					// search for the next node we might jump into
 					this.current = this.dequeue();
-					if (this.current.key === CMD_BEGIN_IF) {
+					if (this.current?.key === CMD_BEGIN_IF) {
 						deepCounter++;
 					}
-					if (this.current.key === CMD_END_IF) {
+					if (this.current?.key === CMD_END_IF) {
 						deepCounter--;
 					}
 					// we need to find the next ELSE of END of the current scope
 					// thus, we have to skip all inner IF-ELSE branches
-					if ((deepCounter === 1 && this.current.key === CMD_ELSE) ||
-						deepCounter === 0 && this.current.key === CMD_END_IF) {
+					if ((deepCounter === 1 && this.current?.key === CMD_ELSE) ||
+						deepCounter === 0 && this.current?.key === CMD_END_IF) {
 						this.gotoNext();
 						break;
 					}
@@ -454,13 +455,13 @@ export default class ChainComponent extends Component<void> {
 				let deepCounter2 = 1;
 				while (true) {
 					this.current = this.dequeue();
-					if (this.current.key === CMD_BEGIN_IF) {
+					if (this.current?.key === CMD_BEGIN_IF) {
 						deepCounter2++;
 					}
-					if (this.current.key === CMD_END_IF) {
+					if (this.current?.key === CMD_END_IF) {
 						deepCounter2--;
 					}
-					if (deepCounter2 === 0 && this.current.key === CMD_END_IF) {
+					if (deepCounter2 === 0 && this.current?.key === CMD_END_IF) {
 						this.gotoNext();
 						break;
 					}
@@ -488,7 +489,7 @@ export default class ChainComponent extends Component<void> {
 				break;
 			case CMD_ADD_COMPONENT:
 				// pop the object and its component, do the zamazingo thingy and go to the next item
-				let gameObj = (this.current.getParam2() != null ? this.current.getParam2() : this.owner) as Container;
+				const gameObj = (this.current.getParam2() != null ? this.current.getParam2() : this.owner) as Container;
 				gameObj.addComponent(this.current.getParam1());
 				this.gotoNextImmediately(delta, absolute);
 				break;
@@ -567,20 +568,20 @@ export default class ChainComponent extends Component<void> {
 				break;
 			case CMD_REMOVE_COMPONENT:
 				// pop the object, the name of the component, remove it and go to the next item
-				let gameObj2 = (this.current.param2 != null ? this.current.param2 : this.owner) as Container;
-				gameObj2.removeComponent(gameObj2.findComponentByName(this.current.param1));
+				const gameObj2 = (this.current.param2 != null ? this.current.param2 : this.owner) as Container;
+				gameObj2.removeComponent(gameObj2.findComponentByName(this.current.param1)!);
 				this.gotoNextImmediately(delta, absolute);
 				break;
 			case CMD_DETACH_GAME_OBJECTS_BY_QUERY:
-				let objectsToDetach = this.scene.findObjectsByQuery(this.current.param1);
-				for (let obj of objectsToDetach) {
+				const objectsToDetach = this.scene.findObjectsByQuery(this.current.param1);
+				for (const obj of objectsToDetach) {
 					obj.detach();
 				}
 				this.gotoNextImmediately(delta, absolute);
 				break;
 			case CMD_DESTROY_GAME_OBJECTS_BY_QUERY:
-				let objectsToDestroy = this.scene.findObjectsByQuery(this.current.param1);
-				for (let obj of objectsToDestroy) {
+				const objectsToDestroy = this.scene.findObjectsByQuery(this.current.param1);
+				for (const obj of objectsToDestroy) {
 					obj.detach();
 				}
 				this.gotoNextImmediately(delta, absolute);
@@ -597,7 +598,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	protected enqueue(key: number, param1: any = null, param2: any = null) {
-		let node = new CmdNode(key, param1, param2);
+		const node = new CmdNode(key, param1, param2);
 
 		/*
 		  // update 200411: I must have been mad back then when I implemented this behavior...
@@ -613,7 +614,7 @@ export default class ChainComponent extends Component<void> {
 
 		if (this.head == null) {
 			this.head = this.tail = node;
-		} else {
+		} else if(this.tail) {
 			this.tail.next = node;
 			node.previous = this.tail;
 			this.tail = node;
@@ -625,7 +626,7 @@ export default class ChainComponent extends Component<void> {
 	}
 
 	// dequeues a next node
-	protected dequeue(): CmdNode {
+	protected dequeue(): CmdNode | null {
 		if (this.current == null || this.current.next == null) {
 			return null;
 		} else {
@@ -636,12 +637,12 @@ export default class ChainComponent extends Component<void> {
 
 	// goes to the next node
 	protected gotoNext() {
-		this.current = this.current.next;
+		this.current = this.current?.next || null;
 	}
 
 	// goes to the next node and re-executes the update loop
 	protected gotoNextImmediately(delta: number, absolute: number) {
-		this.current = this.current.next;
+		this.current = this.current?.next || null;
 		this.onUpdate(delta, absolute);
 	}
 }

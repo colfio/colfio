@@ -15,7 +15,7 @@ export const resizeContainer = (container: HTMLElement, virtualWidth: number, vi
 
 	// On some mobile devices '100vh' is taller than the visible
 	// viewport which leads to part of the presentation being
-	let hideAddressBar = () => setTimeout(() => {
+	const hideAddressBar = () => setTimeout(() => {
 		window.scrollTo(0, 1);
 	}, 10);
 
@@ -26,8 +26,8 @@ export const resizeContainer = (container: HTMLElement, virtualWidth: number, vi
 		window.addEventListener('orientationchange', hideAddressBar, false);
 	}
 
-	let transform = `scale(${scale})`;
-	let topPos = isVertical ? window.innerHeight / 2 - virtualHeight / 2 : ((scale - 1) * virtualHeight / 2);
+	const transform = `scale(${scale})`;
+	const topPos = isVertical ? window.innerHeight / 2 - virtualHeight / 2 : ((scale - 1) * virtualHeight / 2);
 	container.style.setProperty('position', 'absolute');
 	container.style.setProperty('MozTransform', transform);
 	container.style.setProperty('transform', transform);

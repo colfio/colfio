@@ -1,9 +1,10 @@
 import * as PIXI from 'pixi.js';
 (window as any).PIXI = PIXI; // workaround for PIXISound
 
-import Scene from './scene';
+import { Scene } from './scene';
 import { resizeContainer } from '../utils/helpers';
-import { SceneConfig, defaultConfig as sceneDefaultConfig } from './scene';
+import type { SceneConfig} from './scene';
+import { defaultConfig as sceneDefaultConfig } from './scene';
 
 /**
  * Type of the game loop
@@ -52,23 +53,23 @@ const defaultConfig: EngineConfig = {
 	gameLoopFixedTick: 16,
 	speed: 1,
 	gameLoopType: GameLoopType.VARIABLE
-};
+} as const;
 
 /**
  * Entry point to PIXI
  */
-export default class Engine {
-	app: PIXI.Application = null;
+export class Engine {
+	app: PIXI.Application | null = null;
 
 	lastFrameTime = 0;
 	gameTime = 0;
-	scene: Scene = null;
-	ticker: PIXI.Ticker = null;
+	scene: Scene | null = null;
+	ticker: PIXI.Ticker | null = null;
 	// virtual size of the game (regardless of the canvas size)
-	virtualWidth: number;
-	virtualHeight: number;
-	_running: boolean;
-	config: EngineConfig;
+	virtualWidth = 0;
+	virtualHeight = 0;
+	_running = false;
+	config: EngineConfig = {};
 
 
 	init(canvas: HTMLCanvasElement, engineConfig?: EngineConfig) {
@@ -89,8 +90,8 @@ export default class Engine {
 		this.virtualHeight = this.config.height || canvas.height;
 
 		this.app = new PIXI.Application({
-			width: this.virtualWidth / this.config.resolution,
-			height: this.virtualHeight / this.config.resolution,
+			width: this.virtualWidth / (this.config?.resolution || 1),
+			height: this.virtualHeight / (this.config?.resolution || 1),
 			view: canvas,
 			resolution: this.config.resolution, // resolution/device pixel ratio
 			transparent: this.config.transparent,
@@ -117,7 +118,7 @@ export default class Engine {
 	}
 
 	destroy() {
-		this.app.destroy(false);
+		this.app?.destroy(false);
 		this._running = false;
 		if (this.config.resizeToScreen) {
 			window.removeEventListener('resize', this.resizeHandler);
@@ -126,30 +127,30 @@ export default class Engine {
 
 	private loop(time: number) {
 
-		let dt = Math.min(time - this.lastFrameTime, this.config.gameLoopThreshold) * this.config.speed;
+		const dt = Math.min(time - this.lastFrameTime, this.config.gameLoopThreshold || 1) * (this.config.speed || 1);
 		this.lastFrameTime = time;
 
 		if (this.config.gameLoopType === GameLoopType.FIXED) {
 			// fixed game loop
-			this.gameTime += this.config.gameLoopFixedTick * this.config.speed;
-			this.scene._update(this.config.gameLoopFixedTick * this.config.speed, this.gameTime);
+			this.gameTime += (this.config.gameLoopFixedTick || 1) * (this.config.speed || 1);
+			this.scene?._update((this.config.gameLoopFixedTick || 1) * (this.config.speed || 1), this.gameTime);
 		} else {
 			// variable game loop
 			this.gameTime += dt;
-			this.scene._update(dt, this.gameTime);
+			this.scene?._update(dt, this.gameTime);
 		}
 
 		// update PIXI
 		if (this._running) {
-			this.ticker.update(this.gameTime);
+			this.ticker?.update(this.gameTime);
 			requestAnimationFrame((time) => this.loop(time));
 		}
 	}
 
 	private initResizeHandler() {
-		resizeContainer(this.app.view, this.virtualWidth, this.virtualHeight);
+		resizeContainer((this.app as any).view, this.virtualWidth, this.virtualHeight);
 		window.addEventListener('resize', this.resizeHandler);
 	}
 
-	private resizeHandler = () => resizeContainer(this.app.view, this.virtualWidth, this.virtualHeight);
+	private resizeHandler = () => resizeContainer((this.app as any).view, this.virtualWidth, this.virtualHeight);
 }

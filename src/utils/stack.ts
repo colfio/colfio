@@ -1,15 +1,15 @@
 
 
 type StackNode = {
-	next;
-	previous;
+	next: any;
+	previous: any;
 }
 
 /**
  * Simple stack for chain-of-commands pattern
  */
-export default class Stack<T extends StackNode> {
-	protected topNode: T = null;
+export class Stack<T extends StackNode> {
+	protected topNode: T | null = null;
 	protected size = 0;
 
 	constructor() {
@@ -28,9 +28,9 @@ export default class Stack<T extends StackNode> {
 	/**
 	 * Pops the current node from the stack
 	 */
-	pop(): T {
-		let temp = this.topNode;
-		this.topNode = this.topNode.previous;
+	pop(): T | null {
+		const temp = this.topNode;
+		this.topNode = this.topNode?.previous;
 		this.size -= 1;
 		return temp;
 	}
@@ -38,7 +38,7 @@ export default class Stack<T extends StackNode> {
 	/**
 	 * Returns the node on the top
 	 */
-	top(): T {
+	top(): T | null {
 		return this.topNode;
 	}
 }

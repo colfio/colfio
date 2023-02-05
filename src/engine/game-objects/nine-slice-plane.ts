@@ -1,30 +1,30 @@
-import GameObjectProxy from '../game-object-proxy';
-import Component from '../component';
-import Scene from '../scene';
-import GameObject from '../game-object';
+import { GameObjectProxy } from '../game-object-proxy';
+import type { Component } from '../component';
+import type { Scene } from '../scene';
+import type { GameObject } from '../game-object';
 
-import AnimatedSprite from './animated-sprite';
-import BitmapText from './bitmap-text';
-import Container from './container';
-import Graphics from './graphics';
-import Mesh from './mesh';
-import ParticleContainer from './particle-container';
-import SimpleMesh from './simple-mesh';
-import SimplePlane from './simple-plane';
-import SimpleRope from './simple-rope';
-import Sprite from './sprite';
-import Text from './text';
-import TilingSprite from './tiling-sprite';
+import type { AnimatedSprite } from './animated-sprite';
+import type { BitmapText } from './bitmap-text';
+import type { Graphics } from './graphics';
+import type { Mesh } from './mesh';
+import type { Container } from './container';
+import type { ParticleContainer } from './particle-container';
+import type { SimpleMesh } from './simple-mesh';
+import type { SimplePlane } from './simple-plane';
+import type { SimpleRope } from './simple-rope';
+import type { Sprite } from './sprite';
+import type { Text } from './text';
+import type { TilingSprite } from './tiling-sprite';
 
 import * as PIXI from 'pixi.js';
 
 /**
  * Wrapper for PIXI.NineSlicePlane
  */
-export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameObject {
+export class NineSlicePlane extends PIXI.NineSlicePlane implements GameObject {
 	_proxy: GameObjectProxy;
 
-	constructor(name: string = '', texture: PIXI.Texture, leftWidth: number, topHeight: number, rightWidth: number, bottomHeight: number) {
+	constructor(name = '', texture: PIXI.Texture, leftWidth: number, topHeight: number, rightWidth: number, bottomHeight: number) {
 		super(texture, leftWidth, topHeight, rightWidth, bottomHeight);
 		this._proxy = new GameObjectProxy(name, this);
 	}
@@ -87,9 +87,9 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 
 	// overrides pixijs function
 	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		let newChild = super.addChild(...children);
-		for (let child of children) {
-			let cmpObj = <GameObject><any>child;
+		const newChild = super.addChild(...children);
+		for (const child of children) {
+			const cmpObj = <GameObject><any>child;
 			if (cmpObj && cmpObj._proxy) {
 				this._proxy.onChildAdded(cmpObj._proxy);
 			}
@@ -100,8 +100,8 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 
 	// overrides pixijs function
 	addChildAt<T extends PIXI.DisplayObject>(child: T, index: number): T {
-		let newChild = super.addChildAt(child, index);
-		let cmpObj = <GameObject><any>newChild;
+		const newChild = super.addChildAt(child, index);
+		const cmpObj = <GameObject><any>newChild;
 		if (cmpObj && cmpObj._proxy) {
 			this._proxy.onChildAdded(cmpObj._proxy);
 		}
@@ -110,9 +110,9 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 
 	// overrides pixijs function
 	removeChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		let removed = super.removeChild(...children);
-		for (let child of children) {
-			let cmpObj = <GameObject><any>child;
+		const removed = super.removeChild(...children);
+		for (const child of children) {
+			const cmpObj = <GameObject><any>child;
 			if (cmpObj && cmpObj._proxy) {
 				this._proxy.onChildDetached(cmpObj._proxy);
 			}
@@ -123,8 +123,8 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 
 	// overrides pixijs function
 	removeChildAt(index: number): PIXI.DisplayObject {
-		let removed = super.removeChildAt(index);
-		let cmpObj = <GameObject><any>removed;
+		const removed = super.removeChildAt(index);
+		const cmpObj = <GameObject><any>removed;
 		if (cmpObj && cmpObj._proxy) {
 			this._proxy.onChildDetached(cmpObj._proxy);
 		}
@@ -133,9 +133,9 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 
 	// overrides pixijs function
 	removeChildren(beginIndex?: number, endIndex?: number): PIXI.DisplayObject[] {
-		let removed = super.removeChildren(beginIndex, endIndex);
-		for (let removedObj of removed) {
-			let cmpObj = <GameObject><any>removedObj;
+		const removed = super.removeChildren(beginIndex, endIndex);
+		for (const removedObj of removed) {
+			const cmpObj = <GameObject><any>removedObj;
 			if (cmpObj && cmpObj._proxy) {
 				this._proxy.onChildDetached(cmpObj._proxy);
 			}
@@ -144,8 +144,8 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 	}
 
 	destroyChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		let removed = super.removeChild(...children);
-		let cmpObj = <GameObject><any>removed;
+		const removed = super.removeChild(...children);
+		const cmpObj = <GameObject><any>removed;
 		if (cmpObj && cmpObj._proxy) {
 			this._proxy.onChildDestroyed(cmpObj._proxy);
 		}
@@ -158,7 +158,7 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 	addComponentAndRun(component: Component<any>) {
 		this._proxy.addComponent(component, true);
 	}
-	findComponentByName<T extends Component<any>>(name: string): T {
+	findComponentByName<T extends Component<any>>(name: string): T | null {
 		return this._proxy.findComponentByName<T>(name);
 	}
 	removeComponent(component: Component<any>) {
@@ -213,7 +213,7 @@ export default class NineSlicePlane extends PIXI.NineSlicePlane implements GameO
 		super.destroy({ children: true });
 	}
 	destroyChildren(): void {
-		for (let child of [...this.children]) {
+		for (const child of [...this.children]) {
 			child.destroy();
 		}
 	}

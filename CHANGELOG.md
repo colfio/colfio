@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+## [0.3.0] - 2023-02-05
+
+
+### Changed
+- renamed library to COLF.IO
+- transformed to a fully-fledged library
+- integrated JEST tests
+
+### Removed
+- README docs, as the content will be available online
+
 
 ## [0.2.5] - 2020-09-12
 ### Added

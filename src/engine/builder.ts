@@ -1,22 +1,22 @@
-import Scene from './scene';
+import type { Scene } from './scene';
 
-import AnimatedSprite from './game-objects/animated-sprite';
-import BitmapText from './game-objects/bitmap-text';
-import Container from './game-objects/container';
-import Graphics from './game-objects/graphics';
-import Mesh from './game-objects/mesh';
-import NineSlicePlane from './game-objects/nine-slice-plane';
-import ParticleContainer from './game-objects/particle-container';
-import SimpleMesh from './game-objects/simple-mesh';
-import SimplePlane from './game-objects/simple-plane';
-import SimpleRope from './game-objects/simple-rope';
-import Sprite from './game-objects/sprite';
-import Text from './game-objects/text';
-import TilingSprite from './game-objects/tiling-sprite';
+import { AnimatedSprite } from './game-objects/animated-sprite';
+import { BitmapText } from './game-objects/bitmap-text';
+import { Container } from './game-objects/container';
+import { Graphics } from './game-objects/graphics';
+import { Mesh } from './game-objects/mesh';
+import { NineSlicePlane } from './game-objects/nine-slice-plane';
+import { ParticleContainer } from './game-objects/particle-container';
+import { SimpleMesh } from './game-objects/simple-mesh';
+import { SimplePlane } from './game-objects/simple-plane';
+import { SimpleRope } from './game-objects/simple-rope';
+import { Sprite } from './game-objects/sprite';
+import { Text } from './game-objects/text';
+import { TilingSprite } from './game-objects/tiling-sprite';
 
-import Component from './component';
-import Vector from '../utils/vector';
-import { Func } from '../utils/helpers';
+import { Component } from './component';
+import type { Vector } from '../utils/vector';
+import type { Func } from '../utils/helpers';
 
 import * as PIXI from 'pixi.js';
 
@@ -91,12 +91,12 @@ type BuilderProps = {
 /**
  * Builder for Game Objects
  */
-export default class Builder {
+export class Builder {
 
 	private scene: Scene;
-	private children: Builder[];
-	private props: BuilderProps;
-	private objectProps: ObjectProps;
+	private children: Builder[] = [];
+	private props!: BuilderProps;
+	private objectProps!: ObjectProps;
 	private objectToBuild?: Container;
 
 	constructor(scene: Scene) {
@@ -290,7 +290,7 @@ export default class Builder {
 		return this;
 	}
 
-	asBitmapText(text: string = '', fontName: string, fontSize: number, fontColor: number): Builder {
+	asBitmapText(text = '', fontName: string, fontSize: number, fontColor: number): Builder {
 		this.objectProps = {
 			text, fontName, fontSize, fontColor, type: ObjectType.BitmapText
 		};
@@ -373,7 +373,7 @@ export default class Builder {
 		return this;
 	}
 
-	asText(text: string = '', fontStyle?: PIXI.TextStyle): Builder {
+	asText(text = '', fontStyle?: PIXI.TextStyle): Builder {
 		this.objectProps = {
 			text, fontStyle, type: ObjectType.Text
 		};
@@ -413,10 +413,10 @@ export default class Builder {
 		return this.process(false);
 	}
 
-	private process<T extends Container>(clearData: boolean = true): T {
-		let object: Container;
+	private process<T extends Container>(clearData = true): T {
+		let object: Container | undefined;
 
-		if (this.objectToBuild !== null) {
+		if (this.objectToBuild) {
 			object = this.objectToBuild;
 		} else {
 			switch (this.objectProps.type) {
@@ -424,21 +424,21 @@ export default class Builder {
 					object = new Container(this.props.name);
 					break;
 				case ObjectType.AnimatedSprite:
-					object = new AnimatedSprite(this.props.name, this.objectProps.textures);
+					object = new AnimatedSprite(this.props.name, this.objectProps.textures!);
 					break;
 				case ObjectType.BitmapText:
-					object = new BitmapText(this.props.name, this.objectProps.text, this.objectProps.fontName,
-						this.objectProps.fontSize, this.objectProps.fontColor);
+					object = new BitmapText(this.props.name, this.objectProps.text, this.objectProps.fontName!,
+						this.objectProps.fontSize!, this.objectProps.fontColor);
 					break;
 				case ObjectType.Graphics:
 					object = new Graphics(this.props.name);
 					break;
 				case ObjectType.Mesh:
-					object = new Mesh(this.props.name, this.objectProps.geometry, this.objectProps.shader);
+					object = new Mesh(this.props.name, this.objectProps.geometry!, this.objectProps.shader!);
 					break;
 				case ObjectType.NineSlicePlane:
-					object = new NineSlicePlane(this.props.name, this.objectProps.texture, this.objectProps.leftWidth,
-						this.objectProps.topHeight, this.objectProps.rightWidth, this.objectProps.bottomHeight);
+					object = new NineSlicePlane(this.props.name, this.objectProps.texture!, this.objectProps.leftWidth!,
+						this.objectProps.topHeight!, this.objectProps.rightWidth!, this.objectProps.bottomHeight!);
 					break;
 				case ObjectType.ParticleContainer:
 					object = new ParticleContainer(this.props.name, 10000, { /* TODO */ });
@@ -447,29 +447,31 @@ export default class Builder {
 					object = new SimpleMesh(this.props.name, this.objectProps.texture, this.objectProps.vertices);
 					break;
 				case ObjectType.SimplePlane:
-					object = new SimplePlane(this.props.name, this.objectProps.texture, this.objectProps.verticesX, this.objectProps.verticesY);
+					object = new SimplePlane(this.props.name, this.objectProps.texture!, this.objectProps.verticesX!, this.objectProps.verticesY!);
 					break;
 				case ObjectType.SimpleRope:
-					object = new SimpleRope(this.props.name, this.objectProps.texture, this.objectProps.points);
+					object = new SimpleRope(this.props.name, this.objectProps.texture!, this.objectProps.points!);
 					break;
 				case ObjectType.Sprite:
-					object = new Sprite(this.props.name, this.objectProps.texture.clone());
+					object = new Sprite(this.props.name, this.objectProps.texture?.clone());
 					break;
 				case ObjectType.Text:
 					object = new Text(this.props.name, this.objectProps.text);
-					(object as Text).style = this.objectProps.fontStyle;
+					(object as Text).style = this.objectProps.fontStyle!;
 					break;
 				case ObjectType.TilingSprite:
-					object = new TilingSprite(this.props.name, this.objectProps.texture.clone(), this.objectProps.width, this.objectProps.height);
+					object = new TilingSprite(this.props.name, this.objectProps.texture!.clone(), this.objectProps.width, this.objectProps.height);
 					break;
+				default:
+					throw new Error('Unsupported object type');
 			}
 		}
 
 
 		// add all components and attributes before the object is added to the scene
 		// this means that we won't get any notification that attributes/components have been added
-		for (let component of this.props.components) {
-			object.addComponent(component);
+		for (const component of this.props.components) {
+			object?.addComponent(component);
 		}
 
 		// for safety -> we can't use the same components for more than one object
@@ -477,124 +479,122 @@ export default class Builder {
 
 		// consider also component builders
 		// this is very useful if this builder is used more than once
-		for (let builder of this.props.componentBuilders) {
-			object.addComponent(builder());
+		for (const builder of this.props.componentBuilders) {
+			object?.addComponent(builder());
 		}
 
-		for (let [key, val] of this.props.attributes) {
-			object.assignAttribute(key, val);
+		for (const [key, val] of this.props.attributes) {
+			object?.assignAttribute(key, val);
 		}
 
-		for (let flag of this.props.flags) {
-			object.setFlag(flag);
+		for (const flag of this.props.flags) {
+			object?.setFlag(flag);
 		}
 
 		if (this.props.state != null) {
-			object.stateId = this.props.state;
+			object!.stateId = this.props.state;
 		}
 
 		if (this.props.tags.size !== 0) {
-			this.props.tags.forEach(tag => object.addTag(tag));
+			this.props.tags.forEach(tag => object?.addTag(tag));
 		}
 
 
-		let pixiObj = object.pixiObj;
-
 		if (this.props.scaleX != null) {
-			pixiObj.scale.x = this.props.scaleX;
+			object!.scale.x = this.props.scaleX;
 		}
 
 		if (this.props.scaleY != null) {
-			pixiObj.scale.y = this.props.scaleY;
+			object!.scale.y = this.props.scaleY;
 		}
 
 		if (this.props.relPosX != null) {
-			let point = new PIXI.Point();
+			const point = new PIXI.Point();
 			point.x = this.props.relPosX * (this.scene.width) / this.scene.stage.scale.x;
-			pixiObj.position.x = pixiObj.toLocal(point).x;
+			object!.position.x = object!.toLocal(point).x;
 			if (this.props.scaleX != null) {
-				pixiObj.position.x *= this.props.scaleX;
+				object!.position.x *= this.props.scaleX;
 			}
 		}
 
 		if (this.props.relPosY != null) {
-			let point = new PIXI.Point();
+			const point = new PIXI.Point();
 			point.y = this.props.relPosY * this.scene.height / this.scene.stage.scale.y;
-			pixiObj.position.y = pixiObj.toLocal(point).y;
+			object!.position.y = object!.toLocal(point).y;
 			if (this.props.scaleY != null) {
-				pixiObj.position.y *= this.props.scaleY;
+				object!.position.y *= this.props.scaleY;
 			}
 		}
 
 		// if the local position is set along with relative position, it will be treated as an offset
 		if (this.props.locPosX != null) {
 			if (this.props.relPosX != null) {
-				pixiObj.position.x += this.props.locPosX;
+				object!.position.x += this.props.locPosX;
 			} else {
-				pixiObj.position.x = this.props.locPosX;
+				object!.position.x = this.props.locPosX;
 			}
 		}
 
 		if (this.props.locPosY != null) {
 			if (this.props.relPosY != null) {
-				pixiObj.position.y += this.props.locPosY;
+				object!.position.y += this.props.locPosY;
 			} else {
-				pixiObj.position.y = this.props.locPosY;
+				object!.position.y = this.props.locPosY;
 			}
 		}
 
 		if (this.props.absPosX != null) {
-			let point = new PIXI.Point();
+			const point = new PIXI.Point();
 			point.x = this.props.absPosX;
-			pixiObj.position.x = pixiObj.toLocal(point, this.scene.stage.pixiObj).x;
+			object!.position.x = object!.toLocal(point, this.scene.stage.pixiObj).x;
 			if (this.props.scaleX != null) {
-				pixiObj.position.x *= this.props.scaleX;
+				object!.position.x *= this.props.scaleX;
 			}
 		}
 
 		if (this.props.absPosY != null) {
-			let point = new PIXI.Point();
+			const point = new PIXI.Point();
 			point.y = this.props.absPosY;
-			pixiObj.position.y = pixiObj.toLocal(point, this.scene.stage.pixiObj).y;
+			object!.position.y = object!.toLocal(point, this.scene.stage.pixiObj).y;
 			if (this.props.scaleY != null) {
-				pixiObj.position.y *= this.props.scaleY;
+				object!.position.y *= this.props.scaleY;
 			}
 		}
 
 		if (this.props.anchorX != null) {
 			// sprites and texts have anchors
-			if (pixiObj instanceof Sprite || pixiObj instanceof Text) {
-				pixiObj.anchor.x = this.props.anchorX;
+			if (object instanceof Sprite || object instanceof Text) {
+				object!.anchor.x = this.props.anchorX;
 			} else {
-				pixiObj.pivot.x = this.props.anchorX * pixiObj.width;
+				object!.pivot.x = this.props.anchorX * object!.width;
 			}
 		}
 
 		if (this.props.anchorY != null) {
 			// sprites and texts have anchors
-			if (pixiObj instanceof Sprite || pixiObj instanceof Text) {
-				pixiObj.anchor.y = this.props.anchorY;
+			if (object instanceof Sprite || object instanceof Text) {
+				object!.anchor.y = this.props.anchorY;
 			} else {
-				pixiObj.pivot.y = this.props.anchorY * pixiObj.height;
+				object!.pivot.y = this.props.anchorY * object!.height;
 			}
 		}
 
 		if (this.props.virtAnchorX != null) {
-			let anchor = this.props.virtAnchorX - (this.props.anchorX == null ? 0 : this.props.anchorX);
-			pixiObj.position.x -= anchor * pixiObj.width;
+			const anchor = this.props.virtAnchorX - (this.props.anchorX == null ? 0 : this.props.anchorX);
+			object!.position.x -= anchor * object!.width;
 		}
 
 		if (this.props.virtAnchorY != null) {
-			let anchor = this.props.virtAnchorY - (this.props.anchorY == null ? 0 : this.props.anchorY);
-			pixiObj.position.y -= anchor * pixiObj.height;
+			const anchor = this.props.virtAnchorY - (this.props.anchorY == null ? 0 : this.props.anchorY);
+			object!.position.y -= anchor * object!.height;
 		}
 
 		if (this.props.parent != null) {
-			this.props.parent.pixiObj.addChild(object.pixiObj);
+			this.props.parent.pixiObj.addChild(object!.pixiObj);
 		}
 
 		// now, when this object is already assigned to its parent, we can build children
-		for (let child of this.children) {
+		for (const child of this.children) {
 			child.withParent(<Container><any>object).process(clearData);
 		}
 
@@ -616,7 +616,7 @@ export default class Builder {
 		this.objectProps = {
 			type: ObjectType.Container
 		};
-		this.objectToBuild = null;
+		this.objectToBuild = undefined;
 		this.children = [];
 
 		return this;
