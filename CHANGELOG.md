@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project/subject will be documented in this file.
 
+
+## [0.3.1] - 2023-02-05
+
+### Changed
+- increased version number to be able to publish the library
+
 ## [0.3.0] - 2023-02-05
 
 
