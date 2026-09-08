@@ -1,0 +1,15 @@
+---
+description: TypeScript and style conventions for Colfio src/ and tests/
+globs: src/**/*.ts,tests/**/*.ts
+alwaysApply: false
+---
+
+# TypeScript conventions
+
+- Match existing file style: tabs, naming, comment density.
+- `import type` for type-only imports.
+- `strict` is on; avoid loosening types without reason. `any` appears in attributes/messaging by design.
+- Prefer explicit `Component<Props>` generics for new components.
+- Public exports go through barrel `index.ts` files.
+- Peer Pixi types come from `pixi.js`; do not bundle a second Pixi copy into the library API.
+- When editing wrappers, keep `implements GameObject` and proxy forwarding complete — missing forwards break the ECS facade.

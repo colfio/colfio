@@ -1,0 +1,29 @@
+---
+description: Colfio engine mission, scope, and hard invariants for all agent work
+alwaysApply: true
+---
+
+# Colfio engine work
+
+This repo maintains the **Colfio miniengine** (PixiJS ECS layer). Extend the library; do not add game content to `src/`.
+
+## Knowledge base
+
+Read `AGENTS.md` and `docs/` before non-trivial changes. Prefer `docs/` over outdated `web-docs` for engine internals.
+
+## Scope
+
+- **In:** `src/engine`, `src/components`, `src/utils`, `tests/`, packaging, agent docs
+- **Out (unless asked):** Matter/physics, aph-math, networking, audio, game factories — those belong in examples/libs
+
+## Invariants
+
+- Deferred `addComponent` vs immediate `addComponentAndRun`
+- No `clearScene()` during update (`clearSceneAsync` / `callWithDelay(0, …)`)
+- Message bus: no self-delivery; respect `expired` and `tagFilter`
+- Do not use `_proxy` from game-level component code; use GameObject API
+- Keep Builder fluent (`return this`); additive APIs preferred over renames
+
+## Done checklist
+
+Lint, Jest, `test:typescript`, build. Update `docs/` for public API changes.

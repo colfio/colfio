@@ -1,0 +1,17 @@
+---
+description: Rules when editing Scene, Engine, messaging, or search indexes
+globs: src/engine/scene.ts,src/engine/engine.ts,src/engine/message.ts,src/engine/constants.ts
+alwaysApply: false
+---
+
+# Scene & Engine
+
+- Preserve FIXED vs VARIABLE loop semantics and `gameLoopThreshold` clamping.
+- Search indexes must remain gated by `SceneConfig`; missing enablement should throw (existing UX).
+- `clearScene` must refuse when `isUpdating`; offer async/delay path.
+- `callWithDelay` runs after the update tree; `delay: 0` is end-of-frame.
+- Built-in attribute/state/flag/tag messages only when `notify*Changes` is true.
+- Keep `Messages` enum stable; add new built-ins carefully and document them.
+- After clearScene, stage is a new Container — debug injection and global rehydration must still work.
+
+See `docs/core-api.md` and `docs/lifecycle.md`.
