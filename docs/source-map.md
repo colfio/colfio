@@ -68,4 +68,4 @@ Every game-object file follows `container.ts`:
 
 ## Peer dependency
 
-`pixi.js` `>=6.1.2` (peer). Dev/tests pin `^6.1.2`. Examples also use Pixi 6. Do not casually bump major without validating wrappers and examples.
+`pixi.js` `>=8.0.0` (peer). Dev/tests pin a current 8.x. `APH_examples` may still use Pixi 6 until migrated.

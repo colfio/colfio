@@ -6,17 +6,22 @@ export const HEIGHT = 600;
 export const TIME_STEP = 16.67;
 export const TIMEOUT_SECONDS = 10;
 
-export const testLooper = (action: (scene: Scene, resolve: () => void, tick: () => void) => void) => {
-	// init engine
-	const app = new PIXI.Application({
+const createApp = async () => {
+	const app = new PIXI.Application();
+	await app.init({
 		width: WIDTH,
 		height: HEIGHT,
+		autoStart: false,
 	});
+	app.ticker.autoStart = false;
+	app.ticker.stop();
+	return app;
+};
 
+export const testLooper = async (action: (scene: Scene, resolve: () => void, tick: () => void) => void) => {
+	const app = await createApp();
 	const scene = new Scene('default', app);
 	const ticker = app.ticker;
-	ticker.autoStart = false;
-	ticker.stop();
 
 	let currentTime = 0;
 
@@ -27,15 +32,14 @@ export const testLooper = (action: (scene: Scene, resolve: () => void, tick: () 
 			currentTime += TIME_STEP;
 			scene._update(TIME_STEP, currentTime);
 			ticker.update(currentTime);
-
-		}
+		};
 
 		action(scene, () => {
 			finished = true;
 			resolve(true);
 		}, tick);
 
-		while(!finished) {
+		while (!finished) {
 			if (currentTime >= (TIMEOUT_SECONDS * 1000)) {
 				scene.clearScene({});
 				reject('Timeout after ' + Math.floor(currentTime / 1000) + ' seconds!');
@@ -48,22 +52,16 @@ export const testLooper = (action: (scene: Scene, resolve: () => void, tick: () 
 		scene.clearScene({});
 		resolve(true);
 	});
-}
+};
 
-export const initEngine = () => {
-	const app = new PIXI.Application({
-		width: WIDTH,
-		height: HEIGHT,
-	});
-
+export const initEngine = async () => {
+	const app = await createApp();
 	const scene = new Scene('default', app);
 	const ticker = app.ticker;
-	ticker.autoStart = false;
-	ticker.stop();
 
 	return {
 		scene,
 		app,
 		ticker
-	}
-}
+	};
+};

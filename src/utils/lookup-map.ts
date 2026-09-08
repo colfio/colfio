@@ -54,10 +54,7 @@ export class LookupMap<K, T extends Lookable> {
 	}
 
 	public findFirst(key: K): T | null {
-		if (this.items.has(key)) {
-			return this.items.get(key)?.values().next().value;
-		}
-		return null;
+		return this.items.get(key)?.values().next().value ?? null;
 	}
 
 	public findAll(key: K): T[] {

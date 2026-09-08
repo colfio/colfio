@@ -44,8 +44,9 @@ This repository extends **Colfio itself**. Do not add game-specific content to `
 
 ## Compatibility constraints
 
-- **Pixi peer:** `>=6.1.2`; examples pin 6.x.
-- **TypeScript:** project uses TS 4.4-era options; `strict: true`; prefer `import type` (eslint `consistent-type-imports`).
+- **Pixi peer:** `>=8.0.0`; examples may still pin older Pixi until migrated.
+- **TypeScript:** project uses TS 5.x; `strict: true`; prefer `import type` (eslint `consistent-type-imports`).
+- **Package manager:** pnpm (see `packageManager` in `package.json`).
 - **Tabs** for indentation (historical changelog note; match existing files).
 - Do not rename public exports casually — examples import `colfio` deeply.
 

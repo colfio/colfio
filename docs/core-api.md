@@ -6,12 +6,12 @@ Public surface is re-exported from `src/index.ts` → `./engine`, `./components`
 
 ```ts
 const engine = new Engine();
-engine.init(canvas, {
+await engine.init(canvas, {
   width: 800,
   height: 600,
   resolution: 1,
   resizeToScreen: false,
-  transparent: false,
+  transparent: false, // maps to Pixi backgroundAlpha
   backgroundColor: 0x000000,
   antialias: true,
   gameLoopType: GameLoopType.VARIABLE, // or FIXED
@@ -31,9 +31,12 @@ engine.init(canvas, {
 });
 ```
 
+PixiJS v8 requires async Application setup — `Engine.init` is therefore `async` and must be awaited.
+
 | Member | Meaning |
 |--------|---------|
 | `app` | `PIXI.Application` |
+| `canvas` | `app.canvas` (Pixi v8; formerly `app.view`) |
 | `scene` | Active `Scene` |
 | `virtualWidth` / `virtualHeight` | Logical size |
 | `running` | Loop flag |
@@ -44,6 +47,8 @@ Query strings: `?debug` enables debug; `?responsive` enables resize (unless debu
 ## Scene
 
 Owns stage, indexes, message bus, delayed calls.
+
+`scene.width` / `scene.height` are the logical Pixi screen size in world units (`renderer.width` / `renderer.height`). On Pixi 8 these are already CSS pixels — do not divide by `resolution` again.
 
 ### Globals (stage)
 

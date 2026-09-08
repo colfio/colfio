@@ -104,8 +104,12 @@ export class Scene {
 
 		this.app = app;
 		this.resolution = this.app.renderer.resolution;
-		this.width = this.app.renderer.width / this.resolution;
-		this.height = this.app.renderer.height / this.resolution;
+		// Pixi 8: renderer.width/height are already logical (CSS) screen units.
+		// Pixi ≤5 exposed the backing-store size here, so we used to divide by
+		// resolution; doing that again shrinks the scene by resolution (e.g. 25→0.78)
+		// and breaks cameras / relative layout.
+		this.width = this.app.renderer.width;
+		this.height = this.app.renderer.height;
 		this.clearScene();
 	}
 

@@ -12,9 +12,11 @@ Engine changes are validated by running examples against live `src/`.
 
 | Class | Role |
 |-------|------|
-| `ECSExample` | `new Engine()` → `init(canvas, config)` → `load()` — **canonical Colfio template** |
-| `PIXIExample` | Raw Pixi without Colfio |
+| `ECSExample` | `new Engine()` → **await** `engine.init(canvas, config)` → **await** `load()` — **canonical Colfio template** |
+| `PIXIExample` | Raw Pixi without Colfio (`await app.init` on Pixi 8) |
 | `ThreeJSExample` | Three.js demos (not Colfio) |
+
+`init` is async (Pixi 8 / Colfio). Asset loading uses Pixi `Assets` via helpers in `src/utils/assets.ts` (not the removed `Application.loader`). Audio uses `@pixi/sound`.
 
 ## Directory map
 
@@ -89,7 +91,7 @@ Underused in examples despite existing in engine: `QueryCondition` / `findObject
 | Steering / pathfinding / Perlin / QuadTree | No | `libs/aph-math` |
 | Networking | No | `libs/network-emulator` |
 | Tweens / DynamicsComponent | No | `src/utils/animation.ts`, `dynamics*.ts` |
-| Audio | No | pixi-sound |
+| Audio | No | `@pixi/sound` |
 | Shaders | Thin (`asMesh`) | GLSL in `07-graphics` |
 
 ## Extension gaps visible from examples

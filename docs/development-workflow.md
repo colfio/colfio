@@ -2,22 +2,22 @@
 
 ## Prerequisites
 
-- Node `>=16` (package engines); Node 18+ recommended (web-docs install guide).
-- npm `>=8`.
+- Node `>=18`
+- **pnpm** `>=9` (this repo uses pnpm, not npm). Enable via Corepack or `npm i -g pnpm`.
 
 ## Library commands (repo root)
 
 | Script | Purpose |
 |--------|---------|
-| `npm install` | Install deps (`prepare` runs build) |
-| `npm run build` | Clean + CJS (`dist/cjs`) + ESM (`dist/esm`) |
-| `npm run build:cjs` / `build:esm` | Individual module builds |
-| `npm test` | Jest |
-| `npm run test:cov` | Coverage |
-| `npm run test:typescript` | `tsc --noEmit` |
-| `npm run lint` | ESLint on `src` + `tests` |
-| `npm run typedoc` | Markdown API docs → `api-docs/` |
-| `npm run clean` | Remove `dist` + `coverage` |
+| `pnpm install` | Install deps (`prepare` runs build) |
+| `pnpm run build` | Clean + CJS (`dist/cjs`) + ESM (`dist/esm`) |
+| `pnpm run build:cjs` / `build:esm` | Individual module builds |
+| `pnpm test` | Jest |
+| `pnpm run test:cov` | Coverage |
+| `pnpm run test:typescript` | `tsc --noEmit` |
+| `pnpm run lint` | ESLint on `src` + `tests` |
+| `pnpm run typedoc` | Markdown API docs → `api-docs/` |
+| `pnpm run clean` | Remove `dist` + `coverage` |
 
 Publish gate (`prepublishOnly`): clean → lint → test.
 
@@ -25,12 +25,12 @@ Publish gate (`prepublishOnly`): clean → lint → test.
 
 ```bash
 cd APH_examples
-npm install
-npm run compile-test   # typecheck against aliased ../src
-npm run dev            # Parcel gallery
+pnpm install
+pnpm run compile-test   # typecheck against aliased ../src (Pixi 8 + async Engine.init)
+pnpm run generate-views && pnpm run dev   # Parcel gallery
 ```
 
-`APH_examples/package.json` aliases `colfio` → `../src/index.ts`, so example runs exercise unreleased engine code.
+`APH_examples` uses pnpm + Pixi `^8` and aliases `colfio` → `../src/index.ts`, so example runs exercise unreleased engine code.
 
 ## Docs site
 

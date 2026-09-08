@@ -48,7 +48,7 @@ export class GameObjectProxy {
 	constructor(name: string, pixiObj: Container) {
 		this._id = GameObjectProxy.idCounter++;
 		this._pixiObj = pixiObj;
-		this._pixiObj.name = name;
+		this._pixiObj.label = name;
 	}
 
 	public get id() {

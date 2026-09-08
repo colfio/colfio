@@ -5,7 +5,7 @@ import * as PIXI from 'pixi.js';
 test('BuilderTest', async () => {
 	await testLooper((scene, finish) => {
 		const builder = new Builder(scene);
-		builder.withComponent(() => new FuncComponent('').doOnUpdate((cmp, delta) => cmp.owner.pixiObj.rotation += 0.0001 * delta * cmp.owner.id));
+		builder.withComponent(() => new FuncComponent('').doOnUpdate((cmp, delta) => cmp.owner!.pixiObj.rotation += 0.0001 * delta * cmp.owner!.id));
 		builder.anchor(0.5, 0.5);
 
 		let finishedComponents = 0;
@@ -42,14 +42,14 @@ test('BuilderTest2', async () => {
 				.asText('CHILD2', new PIXI.TextStyle({ fontSize: 35, fill: '#00F' }))
 		);
 		builder.withName('text').asText('PARENT', new PIXI.TextStyle({ fontSize: 80, fill: '#F00' }));
-		builder.withComponent(() => new FuncComponent('').doOnUpdate((cmp, delta) => cmp.owner.pixiObj.rotation += 0.001 * delta));
+		builder.withComponent(() => new FuncComponent('').doOnUpdate((cmp, delta) => cmp.owner!.pixiObj.rotation += 0.001 * delta));
 		builder.anchor(0.5, 0.5);
 		builder.localPos(WIDTH / 2, HEIGHT / 2).withParent(scene.stage).build();
 
 		scene.callWithDelay(2000, () => {
 			const objects = scene.findObjectsByName('text');
 			expect(objects).toHaveLength(3);
-			expect(objects.filter(obj => obj.pixiObj.parent.name === 'text')).toHaveLength(2);
+			expect(objects.filter(obj => obj.pixiObj.parent!.name === 'text')).toHaveLength(2);
 			finish();
 		});
 	});

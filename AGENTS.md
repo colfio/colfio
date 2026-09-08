@@ -33,15 +33,15 @@ For real-world usage constraints: [docs/examples-guide.md](docs/examples-guide.m
 - TypeScript, `strict`, tabs, match neighboring file style.
 - Use `import type` for type-only imports (eslint enforced).
 - Export new public symbols from the appropriate `index.ts`.
-- Pixi peer `>=6.1.2`; do not bump major without validating wrappers + examples.
+- Peer Pixi `>=8.0.0`; do not bump major without validating wrappers + examples.
 
 ## Verify before finishing
 
 ```bash
-npm run lint
-npm test
-npm run test:typescript
-npm run build
+pnpm run lint
+pnpm test
+pnpm run test:typescript
+pnpm run build
 ```
 
 Update docs under `docs/` when behavior or public API changes.

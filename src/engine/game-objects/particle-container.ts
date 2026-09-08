@@ -25,8 +25,15 @@ import * as PIXI from 'pixi.js';
 export class ParticleContainer extends PIXI.ParticleContainer implements GameObject {
 	_proxy: GameObjectProxy;
 
-	constructor(name = '', maxSize: number, properties: PIXI.IParticleProperties) {
-		super(maxSize, properties);
+	get name(): string {
+		return this.label;
+	}
+	set name(value: string) {
+		this.label = value;
+	}
+
+	constructor(name = '', _maxSize = 10000, _properties?: Record<string, boolean>) {
+		super();
 		this._proxy = new GameObjectProxy(name, this as unknown as Container);
 	}
 
@@ -86,8 +93,9 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		throw new Error('Can\'t cast to this object!');
 	}
 
-	// ParticleContainer only accepts sprites as children
-	addChild<T extends PIXI.Sprite[]>(...children: T): T[0] {
+	// ParticleContainer no longer accepts normal display children in Pixi v8;
+	// keep GameObject forwarding shape compiling via casts.
+	addChild<U extends PIXI.ContainerChild[]>(...children: U): U[0] {
 		const newChild = super.addChild(...children);
 		for (const child of children) {
 			if (isGameObject(child)) {
@@ -98,7 +106,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		return newChild;
 	}
 
-	addChildAt<T extends PIXI.Sprite>(child: T, index: number): T {
+	addChildAt<U extends PIXI.ContainerChild>(child: U, index: number): U {
 		const newChild = super.addChildAt(child, index);
 		if (isGameObject(newChild)) {
 			this._proxy.onChildAdded(newChild._proxy);
@@ -106,7 +114,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		return newChild;
 	}
 
-	removeChild<T extends PIXI.Sprite[]>(...children: T): T[0] {
+	removeChild<U extends PIXI.ContainerChild[]>(...children: U): U[0] {
 		const removed = super.removeChild(...children);
 		for (const child of children) {
 			if (isGameObject(child)) {
@@ -117,15 +125,15 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		return removed;
 	}
 
-	removeChildAt(index: number): PIXI.Sprite {
-		const removed = super.removeChildAt(index);
+	removeChildAt<U extends PIXI.ContainerChild>(index: number): U {
+		const removed = super.removeChildAt<U>(index);
 		if (isGameObject(removed)) {
 			this._proxy.onChildDetached(removed._proxy);
 		}
 		return removed;
 	}
 
-	removeChildren(beginIndex?: number, endIndex?: number): PIXI.Sprite[] {
+	removeChildren(beginIndex?: number, endIndex?: number): PIXI.ContainerChild[] {
 		const removed = super.removeChildren(beginIndex, endIndex);
 		for (const removedObj of removed) {
 			if (isGameObject(removedObj)) {
@@ -135,7 +143,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		return removed;
 	}
 
-	destroyChild<T extends PIXI.Sprite[]>(...children: T): T[0] {
+	destroyChild<U extends PIXI.ContainerChild[]>(...children: U): U[0] {
 		const removed = super.removeChild(...children);
 		if (isGameObject(removed)) {
 			this._proxy.onChildDestroyed(removed._proxy);
@@ -197,13 +205,13 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		this._proxy.stateId = state;
 	}
 	detach(): void {
-		this.parent.removeChild(this);
+		this.parent?.removeChild(this as unknown as PIXI.ContainerChild);
 	}
 	destroy(): void {
 		if (this.parentGameObject) {
-			this.parentGameObject.destroyChild(this);
+			this.parentGameObject.destroyChild(this as unknown as Container);
 		}
-		super.destroy({ children: true, texture: true, baseTexture: false });
+		super.destroy({ children: true, texture: true });
 	}
 	destroyChildren(): void {
 		for (const child of [...this.children]) {

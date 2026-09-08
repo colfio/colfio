@@ -15,6 +15,16 @@ Colfio (COLF.IO — *Component-Oriented Library For Interactive Objects*) is a P
 7. [Extending the engine](./extending-the-engine.md) — safe change patterns
 8. [Development workflow](./development-workflow.md) — build, test, lint, examples
 
+## Agentic redesign (planning only — no `src/` change yet)
+
+Proposal to reshape the **game-author / AI-agent API** around composable gameplay primitives. Do not treat this folder as current engine truth until a migration phase lands.
+
+1. [Analysis report](./agentic-redesign/00-analysis-report.md) — friction, concept audit, before/after metrics, risks
+2. [Target API](./agentic-redesign/01-target-api.md) — locked agent-facing surface and architecture
+3. [Prototype sketches](./agentic-redesign/02-prototype-sketches.md) — hypothetical BlockBreaker / platformer + genre tests
+4. [Examples expansion](./agentic-redesign/03-examples-expansion.md) — `m-*` / `g-*` / `b-*` catalog
+5. [Migration plan](./agentic-redesign/04-migration-plan.md) — P0–P6 refactor steps and gates
+
 ## Related paths
 
 | Path | Purpose |

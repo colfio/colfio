@@ -6,3 +6,4 @@ dist
 api-docs
 APH_examples/
 web-docs/
+package-lock.json

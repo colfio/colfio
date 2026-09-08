@@ -140,19 +140,10 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		}
 	}
 
-	private getPos(evt: TouchEvent | MouseEvent): { posX: number; posY: number } {
-		const rect = this.scene!.app.view.getBoundingClientRect();
-		const res = this.scene!.app.renderer.resolution;
-
-		const clientX = 'changedTouches' in evt && evt.changedTouches.length
-			? evt.changedTouches[0].clientX
-			: (evt as MouseEvent).clientX;
-		const clientY = 'changedTouches' in evt && evt.changedTouches.length
-			? evt.changedTouches[0].clientY
-			: (evt as MouseEvent).clientY;
+	private getPos(evt: PIXI.FederatedPointerEvent): { posX: number; posY: number } {
 		return {
-			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene!.app.view.width / res),
-			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene!.app.view.height / res)
+			posX: evt.global.x,
+			posY: evt.global.y,
 		};
 	}
 
@@ -185,9 +176,9 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 	}
 
 
-	private pointerDown = (evt: PIXI.InteractionEvent) => {
-		const id = evt.data.identifier;
-		const pressedButton = this.getPressedButton(this.getPos(evt.data.originalEvent));
+	private pointerDown = (evt: PIXI.FederatedPointerEvent) => {
+		const id = evt.pointerId;
+		const pressedButton = this.getPressedButton(this.getPos(evt));
 		if (pressedButton != null) {
 			this.pressedButtons.set(id, pressedButton);
 			this.renderRequired = true;
@@ -195,17 +186,17 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		}
 	}
 
-	private pointerUp = (evt: PIXI.InteractionEvent) => {
-		const id = evt.data.identifier;
+	private pointerUp = (evt: PIXI.FederatedPointerEvent) => {
+		const id = evt.pointerId;
 		const key = this.pressedButtons.get(id);
 		this.pressedButtons.delete(id);
 		this.renderRequired = true;
 		this.simulateKeyEvent(key, false);
 	}
 
-	private pointerMove = (evt: PIXI.InteractionEvent) => {
-		const id = evt.data.identifier;
-		const pressedButton = this.getPressedButton(this.getPos(evt.data.originalEvent));
+	private pointerMove = (evt: PIXI.FederatedPointerEvent) => {
+		const id = evt.pointerId;
+		const pressedButton = this.getPressedButton(this.getPos(evt));
 		if (pressedButton !== null) {
 			this.pressedButtons.set(id, pressedButton);
 			this.renderRequired = true;

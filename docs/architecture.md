@@ -28,7 +28,7 @@ It is **not** a pure ECS (no separate archetype store or system scheduler). Syst
 
 | Type | Role |
 |------|------|
-| `Engine` | Creates `PIXI.Application`, owns `Scene`, runs rAF loop (FIXED or VARIABLE), optional resize |
+| `Engine` | Creates `PIXI.Application` via async `init()`, owns `Scene`, runs rAF loop (FIXED or VARIABLE), optional resize |
 | `Scene` | Stage root, lookups (name/tag/flag/state/id/query), subscribers, delayed invocations, `clearScene` |
 | `Component<T>` | Behavior; typed `props`; optional `fixedFrequency` |
 | `GameObject` | Interface of Colfio methods on display objects |

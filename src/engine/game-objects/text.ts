@@ -25,6 +25,13 @@ import * as PIXI from 'pixi.js';
 export class Text extends PIXI.Text implements GameObject {
 	_proxy: GameObjectProxy;
 
+	get name(): string {
+		return this.label;
+	}
+	set name(value: string) {
+		this.label = value;
+	}
+
 	constructor(name = '', text = '') {
 		super(text);
 		this._proxy = new GameObjectProxy(name, this);
@@ -77,7 +84,7 @@ export class Text extends PIXI.Text implements GameObject {
 		throw new Error('Can\'t cast to this object!');
 	}
 	asSprite(): Sprite {
-		return this;
+		throw new Error('Can\'t cast to this object!');
 	}
 	asText(): Text {
 		return this;
@@ -87,7 +94,7 @@ export class Text extends PIXI.Text implements GameObject {
 	}
 
 	// overrides pixijs function
-	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
+	addChild<T extends PIXI.Container[]>(...children: T): T[0] {
 		const newChild = super.addChild(...children);
 		for (const child of children) {
 			if (isGameObject(child)) {
@@ -99,7 +106,7 @@ export class Text extends PIXI.Text implements GameObject {
 	}
 
 	// overrides pixijs function
-	addChildAt<T extends PIXI.DisplayObject>(child: T, index: number): T {
+	addChildAt<T extends PIXI.Container>(child: T, index: number): T {
 		const newChild = super.addChildAt(child, index);
 		if (isGameObject(newChild)) {
 			this._proxy.onChildAdded(newChild._proxy);
@@ -108,7 +115,7 @@ export class Text extends PIXI.Text implements GameObject {
 	}
 
 	// overrides pixijs function
-	removeChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
+	removeChild<T extends PIXI.Container[]>(...children: T): T[0] {
 		const removed = super.removeChild(...children);
 		for (const child of children) {
 			if (isGameObject(child)) {
@@ -120,8 +127,8 @@ export class Text extends PIXI.Text implements GameObject {
 	}
 
 	// overrides pixijs function
-	removeChildAt(index: number): PIXI.DisplayObject {
-		const removed = super.removeChildAt(index);
+	removeChildAt<U extends PIXI.ContainerChild>(index: number): U {
+		const removed = super.removeChildAt<U>(index);
 		if (isGameObject(removed)) {
 			this._proxy.onChildDetached(removed._proxy);
 		}
@@ -129,7 +136,7 @@ export class Text extends PIXI.Text implements GameObject {
 	}
 
 	// overrides pixijs function
-	removeChildren(beginIndex?: number, endIndex?: number): PIXI.DisplayObject[] {
+	removeChildren(beginIndex?: number, endIndex?: number): PIXI.Container[] {
 		const removed = super.removeChildren(beginIndex, endIndex);
 		for (const removedObj of removed) {
 			if (isGameObject(removedObj)) {
@@ -139,7 +146,7 @@ export class Text extends PIXI.Text implements GameObject {
 		return removed;
 	}
 
-	destroyChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
+	destroyChild<T extends PIXI.Container[]>(...children: T): T[0] {
 		const removed = super.removeChild(...children);
 		if (isGameObject(removed)) {
 			this._proxy.onChildDestroyed(removed._proxy);
@@ -201,13 +208,13 @@ export class Text extends PIXI.Text implements GameObject {
 		this._proxy.stateId = state;
 	}
 	detach(): void {
-		this.parent.removeChild(this);
+		this.parent?.removeChild(this);
 	}
 	destroy(): void {
 		if (this.parentGameObject) {
 			this.parentGameObject.destroyChild(this);
 		}
-		super.destroy({ children: true, texture: true, baseTexture: false });
+		super.destroy({ children: true, texture: true });
 	}
 	destroyChildren(): void {
 		for (const child of [...this.children]) {

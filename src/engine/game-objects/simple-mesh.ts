@@ -20,13 +20,26 @@ import type { TilingSprite } from './tiling-sprite';
 import * as PIXI from 'pixi.js';
 
 /**
- * Wrapper for PIXI.SimpleMesh
+ * Wrapper for PIXI.MeshSimple
  */
-export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
+export class SimpleMesh extends PIXI.MeshSimple implements GameObject {
 	_proxy: GameObjectProxy;
 
-	constructor(name = '', texture?: PIXI.Texture, vertices?: Float32Array, uvs?: Float32Array, indices?: Uint16Array, drawMode?: number) {
-		super(texture, vertices, uvs, indices, drawMode);
+	get name(): string {
+		return this.label;
+	}
+	set name(value: string) {
+		this.label = value;
+	}
+
+	constructor(name = '', texture?: PIXI.Texture, vertices?: Float32Array, uvs?: Float32Array, indices?: Uint16Array, drawMode?: PIXI.Topology) {
+		super({
+			texture: texture ?? PIXI.Texture.EMPTY,
+			vertices,
+			uvs,
+			indices: indices as unknown as Uint32Array | undefined,
+			topology: drawMode,
+		});
 		this._proxy = new GameObjectProxy(name, this);
 	}
 
@@ -87,7 +100,7 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 	}
 
 	// overrides pixijs function
-	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
+	addChild<T extends PIXI.Container[]>(...children: T): T[0] {
 		const newChild = super.addChild(...children);
 		for (const child of children) {
 			if (isGameObject(child)) {
@@ -99,7 +112,7 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 	}
 
 	// overrides pixijs function
-	addChildAt<T extends PIXI.DisplayObject>(child: T, index: number): T {
+	addChildAt<T extends PIXI.Container>(child: T, index: number): T {
 		const newChild = super.addChildAt(child, index);
 		if (isGameObject(newChild)) {
 			this._proxy.onChildAdded(newChild._proxy);
@@ -108,7 +121,7 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 	}
 
 	// overrides pixijs function
-	removeChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
+	removeChild<T extends PIXI.Container[]>(...children: T): T[0] {
 		const removed = super.removeChild(...children);
 		for (const child of children) {
 			if (isGameObject(child)) {
@@ -120,8 +133,8 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 	}
 
 	// overrides pixijs function
-	removeChildAt(index: number): PIXI.DisplayObject {
-		const removed = super.removeChildAt(index);
+	removeChildAt<U extends PIXI.ContainerChild>(index: number): U {
+		const removed = super.removeChildAt<U>(index);
 		if (isGameObject(removed)) {
 			this._proxy.onChildDetached(removed._proxy);
 		}
@@ -129,7 +142,7 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 	}
 
 	// overrides pixijs function
-	removeChildren(beginIndex?: number, endIndex?: number): PIXI.DisplayObject[] {
+	removeChildren(beginIndex?: number, endIndex?: number): PIXI.Container[] {
 		const removed = super.removeChildren(beginIndex, endIndex);
 		for (const removedObj of removed) {
 			if (isGameObject(removedObj)) {
@@ -139,7 +152,7 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 		return removed;
 	}
 
-	destroyChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
+	destroyChild<T extends PIXI.Container[]>(...children: T): T[0] {
 		const removed = super.removeChild(...children);
 		if (isGameObject(removed)) {
 			this._proxy.onChildDestroyed(removed._proxy);
@@ -201,7 +214,7 @@ export class SimpleMesh extends PIXI.SimpleMesh implements GameObject {
 		this._proxy.stateId = state;
 	}
 	detach(): void {
-		this.parent.removeChild(this);
+		this.parent?.removeChild(this);
 	}
 	destroy(): void {
 		if (this.parentGameObject) {

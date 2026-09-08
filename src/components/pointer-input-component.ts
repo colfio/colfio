@@ -38,7 +38,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		this.lastTouch = null;
 		this.messagesToSend = [];
 
-		const canvas = this.scene!.app.view;
+		const canvas = this.scene!.app.canvas;
 
 		canvas.addEventListener('touchstart', this.handleStart, false);
 		canvas.addEventListener('touchend', this.handleEnd, false);
@@ -60,7 +60,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 	}
 
 	onDetach() {
-		const canvas = this.scene!.app.view;
+		const canvas = this.scene!.app.canvas;
 		canvas.removeEventListener('touchstart', this.handleStart);
 		canvas.removeEventListener('touchend', this.handleEnd);
 		canvas.removeEventListener('mousedown', this.handleStart);
@@ -93,7 +93,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 		if (this.props.handlePointerDown) {
 			this.sendMessage(PointerMessages.POINTER_DOWN, {
-				mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
+				mousePos: this.getMousePos(this.scene!.app.canvas, evt, isTouch),
 				isTouch: isTouch
 			});
 		}
@@ -103,7 +103,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		evt.preventDefault();
 		const isTouch = !!(window.TouchEvent && evt instanceof TouchEvent);
 		this.sendMessage(PointerMessages.POINTER_OVER, {
-			mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
+			mousePos: this.getMousePos(this.scene!.app.canvas, evt, isTouch),
 			isTouch: isTouch
 		});
 	}
@@ -128,12 +128,12 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 				Math.abs(this.lastTouch.pageY - posY) < 10 && (isTouch || this.props.handleClick)) {
 				// at last send the message to all subscribers about this event
 				this.sendMessage(PointerMessages.POINTER_TAP, {
-					mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
+					mousePos: this.getMousePos(this.scene!.app.canvas, evt, isTouch),
 					isTouch: isTouch
 				});
 			} else {
 				this.sendMessage(PointerMessages.POINTER_RELEASE, {
-					mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
+					mousePos: this.getMousePos(this.scene!.app.canvas, evt, isTouch),
 					isTouch: isTouch
 				});
 			}
@@ -147,8 +147,8 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		const clientX = isTouch ? (evt as TouchEvent).changedTouches[0].clientX : (evt as MouseEvent).clientX;
 		const clientY = isTouch ? (evt as TouchEvent).changedTouches[0].clientY : (evt as MouseEvent).clientY;
 		return {
-			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene!.app.view.width / res),
-			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene!.app.view.height / res)
+			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene!.app.canvas.width / res),
+			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene!.app.canvas.height / res)
 		};
 	}
 }

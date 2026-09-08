@@ -156,7 +156,7 @@ export class DebugComponent extends Component<void> {
 				cmpList.appendChild(propsList);
 				propsList.appendChild(propsItem);
 				propsItem.appendChild(propsNode);
-			} catch (err) {
+			} catch (_err) {
 				// cyclic item value err
 			}
 		}

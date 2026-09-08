@@ -375,7 +375,7 @@ test('All components updated when adding a new one', async () => {
 		new FuncComponent('B').doOnUpdate(() => updates.push('B')),
 		new FuncComponent('C').doOnUpdate((cmp) => {  // insert a new component in the middle of the loop
 			updates.push('C');
-			cmp.owner.addComponentAndRun(new FuncComponent('F').doOnUpdate(() => updates.push('F')));
+			cmp.owner!.addComponentAndRun(new FuncComponent('F').doOnUpdate(() => updates.push('F')));
 		}),
 		new FuncComponent('D').doOnUpdate(() => updates.push('D')),
 		new FuncComponent('E').doOnUpdate(() => updates.push('E'))];
