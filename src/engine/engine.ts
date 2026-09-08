@@ -1,5 +1,11 @@
 import * as PIXI from 'pixi.js';
-(window as any).PIXI = PIXI; // workaround for PIXISound
+
+declare global {
+	interface Window {
+		PIXI: typeof PIXI;
+	}
+}
+window.PIXI = PIXI; // workaround for PIXISound
 
 import { Scene } from './scene';
 import { resizeContainer } from '../utils/helpers';
@@ -20,7 +26,7 @@ export enum GameLoopType {
 export interface EngineConfig extends SceneConfig {
 	// if true, the game will be automatically resized to fit the screen
 	resizeToScreen?: boolean;
-	// if true, the canvas will be transparent
+	// if true, the canvas will be transparent (maps to Pixi backgroundAlpha)
 	transparent?: boolean;
 	// color of the canvas
 	backgroundColor?: number;
@@ -72,7 +78,7 @@ export class Engine {
 	config: EngineConfig = {};
 
 
-	init(canvas: HTMLCanvasElement, engineConfig?: EngineConfig) {
+	async init(canvas: HTMLCanvasElement, engineConfig?: EngineConfig) {
 
 		// merge config
 		this.config = {
@@ -89,14 +95,16 @@ export class Engine {
 		this.virtualWidth = this.config.width || canvas.width;
 		this.virtualHeight = this.config.height || canvas.height;
 
-		this.app = new PIXI.Application({
+		this.app = new PIXI.Application();
+		await this.app.init({
 			width: this.virtualWidth / (this.config?.resolution || 1),
 			height: this.virtualHeight / (this.config?.resolution || 1),
-			view: canvas,
+			canvas,
 			resolution: this.config.resolution, // resolution/device pixel ratio
-			transparent: this.config.transparent,
+			backgroundAlpha: this.config.transparent ? 0 : 1,
 			antialias: this.config.antialias,
 			backgroundColor: this.config.backgroundColor,
+			autoStart: false,
 		});
 
 		this.scene = new Scene('default', this.app, this.config);
@@ -115,6 +123,11 @@ export class Engine {
 
 	get running() {
 		return this._running;
+	}
+
+	/** Canvas used by the Pixi application (Pixi v8: `app.canvas`) */
+	get canvas(): HTMLCanvasElement {
+		return this.app!.canvas;
 	}
 
 	destroy() {
@@ -148,9 +161,9 @@ export class Engine {
 	}
 
 	private initResizeHandler() {
-		resizeContainer((this.app as any).view, this.virtualWidth, this.virtualHeight);
+		resizeContainer(this.canvas, this.virtualWidth, this.virtualHeight);
 		window.addEventListener('resize', this.resizeHandler);
 	}
 
-	private resizeHandler = () => resizeContainer((this.app as any).view, this.virtualWidth, this.virtualHeight);
+	private resizeHandler = () => resizeContainer(this.canvas, this.virtualWidth, this.virtualHeight);
 }

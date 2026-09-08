@@ -1,14 +1,16 @@
 {
 	"name": "colfio",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"description": "A component-oriented library for casual games using PixiJS",
 	"license": "MIT",
 	"main": "./dist/cjs/index.js",
 	"module": "./dist/esm/index.js",
 	"types": "./dist/esm/index.d.ts",
 	"homepage": "https://colf.io",
+	"packageManager": "pnpm@9.15.9",
 	"files": [
 		"docs/",
+		"api-docs/",
 		"dist/",
 		"src/",
 		"LICENSE",
@@ -25,8 +27,8 @@
 		"web": "https://dodo.me"
 	},
 	"engines": {
-		"node": ">=16.0.0",
-		"npm": ">=8"
+		"node": ">=18.0.0",
+		"pnpm": ">=9.0.0"
 	},
 	"keywords": [
 		"colfio",
@@ -35,35 +37,37 @@
 	],
 	"scripts": {
 		"clean": "rimraf dist coverage",
-		"prepare": "npm run build",
-		"prepublishOnly": "npm run clean && npm run lint && npm run test",
+		"prepare": "pnpm run build",
+		"prepublishOnly": "pnpm run clean && pnpm run lint && pnpm run test",
 		"lint": "eslint \"{src,tests}/**/*.{js,ts}\"",
 		"test": "jest",
 		"test:cov": "jest --coverage",
 		"test:typescript": "tsc --noEmit",
-		"build:cjs": "tsc --module commonjs --outdir dist/cjs ",
+		"build:cjs": "tsc --module commonjs --outdir dist/cjs",
 		"build:esm": "tsc --outdir dist/esm",
-		"build": "rimraf dist && npm run build:cjs && npm run build:esm",
-		"typedoc": "typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts"
+		"build": "rimraf dist && pnpm run build:cjs && pnpm run build:esm",
+		"typedoc": "typedoc --plugin typedoc-plugin-markdown --out api-docs src/index.ts"
 	},
 	"peerDependencies": {
-		"pixi.js": ">=6.1.2"
+		"pixi.js": ">=8.0.0"
 	},
 	"devDependencies": {
-		"@types/jest": "^27.0.2",
-		"@typescript-eslint/eslint-plugin": "^5.1.0",
-		"@typescript-eslint/parser": "^5.1.0",
-		"canvas": "^2.11.0",
-		"eslint": "^7.32.0",
-		"eslint-plugin-import": "^2.22.1",
-		"jest": "^27.3.1",
-		"jest-webgl-canvas-mock": "^0.2.3",
-		"pixi.js": "^6.1.2",
-		"rimraf": "^3.0.2",
-		"ts-jest": "27.0.7",
-		"tslib": "^2.5.0",
-		"typedoc": "^0.23.24",
-		"typedoc-plugin-markdown": "^3.14.0",
-		"typescript": "^4.4"
+		"@eslint/js": "^10.0.1",
+		"@types/jest": "^30.0.0",
+		"@typescript-eslint/eslint-plugin": "^8.70.0",
+		"@typescript-eslint/parser": "^8.70.0",
+		"canvas": "^3.2.3",
+		"eslint": "^10.10.0",
+		"jest": "^30.5.1",
+		"jest-environment-jsdom": "^30.5.1",
+		"jest-webgl-canvas-mock": "^2.5.3",
+		"pixi.js": "^8.20.1",
+		"rimraf": "^6.1.3",
+		"ts-jest": "^29.4.12",
+		"tslib": "^2.8.1",
+		"typedoc": "^0.28.20",
+		"typedoc-plugin-markdown": "^4.13.0",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.70.0"
 	}
 }

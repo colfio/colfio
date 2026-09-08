@@ -3,4 +3,7 @@ node_modules
 www/
 coverage
 dist
-docs
+api-docs
+APH_examples/
+web-docs/
+package-lock.json

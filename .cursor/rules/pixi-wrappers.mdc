@@ -1,0 +1,23 @@
+---
+description: Rules when editing Pixi game-object wrappers and Builder
+globs: src/engine/game-objects/**/*.ts,src/engine/builder.ts,src/engine/game-object.ts
+alwaysApply: false
+---
+
+# Pixi wrappers & Builder
+
+## Wrappers
+
+- Subclass the Pixi display type; construct `GameObjectProxy`; forward GameObject API.
+- Override child mutators (`addChild`, `removeChild`, …) to call proxy `onChildAdded` / `onChildDetached` / destroy path.
+- `asX()` casts: return `this` for own type; throw for others.
+- Destroy: detach from Colfio parent via `destroyChild` when parented, then Pixi `destroy`.
+
+## Builder
+
+- Add new object kinds via `ObjectType`, `asX` method, and `process()` switch.
+- Support factory components (`() => Component`) for reusable builders.
+- Keep position helpers accepting `number | Vector` with single-arg mirroring.
+- Do not reorder `process()` so that parenting happens before components/attributes without a strong reason — notifications and scene indexes depend on order.
+
+See `docs/source-map.md`.

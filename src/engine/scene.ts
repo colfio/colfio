@@ -104,8 +104,12 @@ export class Scene {
 
 		this.app = app;
 		this.resolution = this.app.renderer.resolution;
-		this.width = this.app.renderer.width / this.resolution;
-		this.height = this.app.renderer.height / this.resolution;
+		// Pixi 8: renderer.width/height are already logical (CSS) screen units.
+		// Pixi ≤5 exposed the backing-store size here, so we used to divide by
+		// resolution; doing that again shrinks the scene by resolution (e.g. 25→0.78)
+		// and breaks cameras / relative layout.
+		this.width = this.app.renderer.width;
+		this.height = this.app.renderer.height;
 		this.clearScene();
 	}
 
@@ -136,16 +140,18 @@ export class Scene {
 
 	/**
 	 * Adds a component to the stage object (global component)
+	 * @returns the component that was added (for chaining)
 	 */
-	addGlobalComponent(cmp: Component<any>) {
-		this.stage.addComponent(cmp);
+	addGlobalComponent<T extends Component<any>>(cmp: T): T {
+		return this.stage.addComponent(cmp);
 	}
 
 	/**
 	 * Adds a component to the stage object and invokes it immediately (global component)
+	 * @returns the component that was added (for chaining)
 	 */
-	addGlobalComponentAndRun(cmp: Component<any>) {
-		this.stage.addComponentAndRun(cmp);
+	addGlobalComponentAndRun<T extends Component<any>>(cmp: T): T {
+		return this.stage.addComponentAndRun(cmp);
 	}
 
 	/**
@@ -290,6 +296,8 @@ export class Scene {
 
 	/**
 	 * Sends message to all subscribers
+	 * @param msg message to send
+	 * @param tagFilter if set, only components whose owner has at least one of these tags will receive the message
 	 */
 	sendMessage(msg: Message, tagFilter?: string[]) {
 		const responses: MessageResponse[] = [];
@@ -298,7 +306,7 @@ export class Scene {
 			// don't send message to its own sender
 			if (!msg.expired && (msg.component == null || msg.component.id !== ent.id)) {
 				// apply tagFilter
-				if (!tagFilter || tagFilter.find(tag => ent.owner.hasTag(tag))) {
+				if (!tagFilter || (ent.owner && tagFilter.find(tag => ent.owner!.hasTag(tag)))) {
 					// collect responses
 					const resp = ent.onMessage(msg);
 					if (resp) {

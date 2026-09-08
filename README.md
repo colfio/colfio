@@ -19,8 +19,12 @@ Wanna see what games have been made with this library? Check out the [APHGames G
 
 
 ### Getting started
-- 🚀 [Install colf.io](https://colf.io/docs/installation)
-- 📖 [Read the tutorial](https://colf.io/docs/tutorialBasics/firstSteps)
+- 🧠 [Agent / engine docs](./docs/README.md) — architecture, API, extending the library
+- 🤖 [AGENTS.md](./AGENTS.md) — instructions for AI-assisted development
+- 🚀 [Install colf.io](./docs/installation.md)
+- 📖 [Tutorial](./docs/tutorial-basics/01-first-steps.md)
+- 🌐 [Public docs site](https://colf.io) (sources in `web-docs/`)
+- 🎮 [Examples](https://aphgames.io/gallery) (sources in `APH_examples/`)
 
 --- 
 

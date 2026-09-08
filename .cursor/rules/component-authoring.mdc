@@ -1,0 +1,17 @@
+---
+description: Rules when editing Colfio Component subclasses and built-in components
+globs: src/components/**/*.ts,src/engine/component.ts,src/engine/game-object-proxy.ts
+alwaysApply: false
+---
+
+# Component authoring
+
+- Lifecycle: `onInit` → `onAttach` → updates/messages → `onDetach` / `onFinish` / `onRemove`.
+- Register DOM/canvas listeners in `onAttach`; remove in `onDetach`.
+- Set `_name` when the component must be found via `findComponentByName` under minification.
+- `fixedFrequency` is optional Hz; without it, `onFixedUpdate` never runs.
+- Subscribe in `onInit`/`onAttach` before relying on messages; FuncComponent auto-subscribes in `onAttach`.
+- Prefer extending `ChainComponent` patterns over expanding experimental `AsyncComponent`.
+- Removal path: `finish()` only works in `RUNNING` state.
+
+See `docs/lifecycle.md` and `docs/built-in-components.md`.

@@ -18,10 +18,10 @@ export enum ComponentState {
 export class Component<T = void> {
 	private static idCounter = 0;
 
-	// owner object of this component
-	owner: Container;
-	// link to scene
-	scene: Scene;
+	// owner object of this component (null until attached)
+	owner: Container | null = null;
+	// link to scene (null until attached)
+	scene: Scene | null = null;
 	// properties
 	props: T;
 	// fixed-update frequency
@@ -35,13 +35,10 @@ export class Component<T = void> {
 	protected _id = 0;
 	protected _name: string | undefined;
 
-	constructor(props: T | void) {
+	constructor(props?: T) {
 		this._id = Component.idCounter++;
 		this._lastFixedUpdate = 0;
-		// TODO fixme workaround
-		this.props = props || (null as any);
-		this.scene = (null as any);
-		this.owner = (null as any);
+		this.props = props as T;
 	}
 
 	public get id() {
@@ -85,6 +82,8 @@ export class Component<T = void> {
 	/**
 	 * Handles fixed update loop
 	 * Called ONLY if fixedFrequency is set
+	 * @param delta time since the previous fixed update in ms
+	 * @param absolute time since the engine started in ms
 	 */
 	onFixedUpdate(delta: number, absolute: number) {
 		// override
@@ -92,6 +91,8 @@ export class Component<T = void> {
 
 	/**
 	 * Handles update loop
+	 * @param delta time since the previous update in ms
+	 * @param absolute time since the engine started in ms
 	 */
 	onUpdate(delta: number, absolute: number) {
 		// override
@@ -123,7 +124,7 @@ export class Component<T = void> {
 	 */
 	subscribe(...actions: string[]) {
 		for (const action of actions) {
-			this.scene._subscribeComponent(action, this);
+			this.scene!._subscribeComponent(action, this);
 		}
 	}
 
@@ -132,16 +133,19 @@ export class Component<T = void> {
 	 */
 	unsubscribe(...actions: string[]) {
 		for (const action of actions) {
-			this.scene._unsubscribeComponent(action, this);
+			this.scene!._unsubscribeComponent(action, this);
 		}
 	}
 
 	/**
 	 * Sends a message to all subscribers
+	 * @param action message action key
+	 * @param data optional payload
+	 * @param tagFilter if set, only components whose owner has at least one of these tags will receive the message
 	 */
 	sendMessage(action: string, data?: any, tagFilter?: string[]): Message | null {
-		const msg = new Message(action, this, this.owner, data);
-		this.scene.sendMessage(msg, tagFilter);
+		const msg = new Message(action, this, this.owner ?? undefined, data);
+		this.scene!.sendMessage(msg, tagFilter);
 		return msg;
 	}
 

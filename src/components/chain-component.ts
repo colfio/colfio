@@ -332,7 +332,8 @@ export class ChainComponent extends Component<void> {
 
 	onUpdate(delta: number, absolute: number) {
 
-		if (this.owner === null) {
+		const owner = this.owner;
+		if (owner === null) {
 			// someone might have removed this component from its parent. Hence this check
 			return;
 		}
@@ -489,7 +490,7 @@ export class ChainComponent extends Component<void> {
 				break;
 			case CMD_ADD_COMPONENT:
 				// pop the object and its component, do the zamazingo thingy and go to the next item
-				const gameObj = (this.current.getParam2() != null ? this.current.getParam2() : this.owner) as Container;
+				const gameObj = (this.current.getParam2() != null ? this.current.getParam2() : owner) as Container;
 				gameObj.addComponent(this.current.getParam1());
 				this.gotoNextImmediately(delta, absolute);
 				break;
@@ -505,9 +506,9 @@ export class ChainComponent extends Component<void> {
 				// attach component to this game object if they don't have an owner yet
 				if (checkInit) {
 					if (!isArray && (cmp as Component<any>).cmpState === ComponentState.NEW) {
-						this.owner.addComponentAndRun(cmp);
+						owner.addComponentAndRun(cmp);
 					} else if (isArray) {
-						(cmp as Component<any>[]).filter(cmp => cmp.cmpState === ComponentState.NEW).forEach(cmp => this.owner.addComponentAndRun(cmp));
+						(cmp as Component<any>[]).filter(cmp => cmp.cmpState === ComponentState.NEW).forEach(cmp => owner.addComponentAndRun(cmp));
 					}
 				}
 
@@ -524,7 +525,7 @@ export class ChainComponent extends Component<void> {
 				}
 				const cmps = this.current.getParam1() as Component<any>[];
 				if (checkInitFirst) {
-					cmps.filter(cmp => cmp._cmpState === ComponentState.NEW).forEach(cmp => this.owner.addComponentAndRun(cmp));
+					cmps.filter(cmp => cmp._cmpState === ComponentState.NEW).forEach(cmp => owner.addComponentAndRun(cmp));
 				}
 				if (cmps.filter(c => c.isCompleted).length !== 0) {
 					this.current.resetCache();
@@ -568,19 +569,19 @@ export class ChainComponent extends Component<void> {
 				break;
 			case CMD_REMOVE_COMPONENT:
 				// pop the object, the name of the component, remove it and go to the next item
-				const gameObj2 = (this.current.param2 != null ? this.current.param2 : this.owner) as Container;
+				const gameObj2 = (this.current.param2 != null ? this.current.param2 : owner) as Container;
 				gameObj2.removeComponent(gameObj2.findComponentByName(this.current.param1)!);
 				this.gotoNextImmediately(delta, absolute);
 				break;
 			case CMD_DETACH_GAME_OBJECTS_BY_QUERY:
-				const objectsToDetach = this.scene.findObjectsByQuery(this.current.param1);
+				const objectsToDetach = this.scene!.findObjectsByQuery(this.current.param1);
 				for (const obj of objectsToDetach) {
 					obj.detach();
 				}
 				this.gotoNextImmediately(delta, absolute);
 				break;
 			case CMD_DESTROY_GAME_OBJECTS_BY_QUERY:
-				const objectsToDestroy = this.scene.findObjectsByQuery(this.current.param1);
+				const objectsToDestroy = this.scene!.findObjectsByQuery(this.current.param1);
 				for (const obj of objectsToDestroy) {
 					obj.detach();
 				}

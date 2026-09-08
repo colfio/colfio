@@ -2,6 +2,22 @@
 All notable changes to this project/subject will be documented in this file.
 
 
+## [0.4.0] - 2026-09-08
+
+### Added
+- Agentic development docs (`docs/`, `AGENTS.md`) and Cursor rules/skills for extending the engine
+- Flat ESLint config and Jest earcut shim for Pixi 8 ESM deps
+
+### Changed
+- Peer dependency on `pixi.js` is now `>=8.0.0` (breaking for Pixi 6/7 consumers)
+- `Engine.init` is async and must be awaited
+- GameObject wrappers updated for Pixi 8 (`Container` base, `label` bridge, mesh/nine-slice class renames)
+- Toolchain switched from npm to pnpm; TypeScript, Jest, ESLint, and Typedoc bumped to current majors
+- Prefer `engine.canvas` / `app.canvas` over deprecated `app.view`
+
+### Removed
+- Legacy `.eslintrc` and `package-lock.json` (use `pnpm-lock.yaml`)
+
 ## [0.3.1] - 2023-02-05
 
 ### Changed

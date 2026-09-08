@@ -42,7 +42,7 @@ enum ObjectType {
  */
 type ObjectProps = {
 	type: ObjectType;
-	textures?: PIXI.Texture[] | PIXI.FrameObject[]; // animatedsprite
+	textures?: PIXI.Texture[] | { texture: PIXI.Texture; time: number }[]; // animatedsprite
 	texture?: PIXI.Texture; // sprite, tilingsprite, simpleplane, simplerope, nineSlicePlane
 	leftWidth?: number;
 	topHeight?: number;
@@ -56,7 +56,7 @@ type ObjectProps = {
 	fontSize?: number; // bitmaptext
 	fontColor?: number; // bitmaptext
 	geometry?: PIXI.Geometry; // mesh
-	shader?: PIXI.Shader | PIXI.MeshMaterial; // mesh
+	shader?: PIXI.Shader; // mesh
 	vertices?: Float32Array; // simpleMesh
 	verticesX?: number; // simplePlane
 	verticesY?: number; // simplePlane
@@ -282,7 +282,7 @@ export class Builder {
 		return this;
 	}
 
-	asAnimatedSprite(textures: PIXI.Texture[] | PIXI.FrameObject[]): Builder {
+	asAnimatedSprite(textures: PIXI.Texture[] | { texture: PIXI.Texture; time: number }[]): Builder {
 		this.objectProps = {
 			type: ObjectType.AnimatedSprite,
 			textures
@@ -304,7 +304,7 @@ export class Builder {
 		return this;
 	}
 
-	asMesh(geometry: PIXI.Geometry, shader: PIXI.Shader | PIXI.MeshMaterial): Builder {
+	asMesh(geometry: PIXI.Geometry, shader: PIXI.Shader): Builder {
 		this.objectProps = {
 			geometry, shader, type: ObjectType.Mesh
 		};
@@ -441,7 +441,7 @@ export class Builder {
 						this.objectProps.topHeight!, this.objectProps.rightWidth!, this.objectProps.bottomHeight!);
 					break;
 				case ObjectType.ParticleContainer:
-					object = new ParticleContainer(this.props.name, 10000, { /* TODO */ });
+					object = new ParticleContainer(this.props.name) as unknown as Container;
 					break;
 				case ObjectType.SimpleMesh:
 					object = new SimpleMesh(this.props.name, this.objectProps.texture, this.objectProps.vertices);
@@ -453,14 +453,14 @@ export class Builder {
 					object = new SimpleRope(this.props.name, this.objectProps.texture!, this.objectProps.points!);
 					break;
 				case ObjectType.Sprite:
-					object = new Sprite(this.props.name, this.objectProps.texture?.clone());
+					object = new Sprite(this.props.name, this.objectProps.texture);
 					break;
 				case ObjectType.Text:
 					object = new Text(this.props.name, this.objectProps.text);
 					(object as Text).style = this.objectProps.fontStyle!;
 					break;
 				case ObjectType.TilingSprite:
-					object = new TilingSprite(this.props.name, this.objectProps.texture!.clone(), this.objectProps.width, this.objectProps.height);
+					object = new TilingSprite(this.props.name, this.objectProps.texture!, this.objectProps.width, this.objectProps.height);
 					break;
 				default:
 					throw new Error('Unsupported object type');
@@ -595,7 +595,7 @@ export class Builder {
 
 		// now, when this object is already assigned to its parent, we can build children
 		for (const child of this.children) {
-			child.withParent(<Container><any>object).process(clearData);
+			child.withParent(object as Container).process(clearData);
 		}
 
 		if (clearData) {
