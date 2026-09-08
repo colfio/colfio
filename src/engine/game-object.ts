@@ -19,6 +19,14 @@ import type { TilingSprite } from './game-objects/tiling-sprite';
 import type * as PIXI from 'pixi.js';
 
 /**
+ * Type guard for PIXI display objects that implement the GameObject interface
+ */
+export function isGameObject(obj: unknown): obj is GameObject {
+	return typeof obj === 'object' && obj !== null && '_proxy' in obj
+		&& (obj as GameObject)._proxy != null;
+}
+
+/**
  * Interface for PIXI objects attached to the component architecture
  */
 export interface GameObject {
@@ -108,13 +116,15 @@ export interface GameObject {
 
 	/**
 	 * Adds a new component
+	 * @returns the component that was added (for chaining)
 	 */
-	addComponent(component: Component<any>): void;
+	addComponent<T extends Component<any>>(component: T): T;
 
 	/**
 	 * Adds a new component and runs it instantly
+	 * @returns the component that was added (for chaining)
 	 */
-	addComponentAndRun(component: Component<any>): void;
+	addComponentAndRun<T extends Component<any>>(component: T): T;
 	/**
 	 * Tries to find a component by its class
 	 */

@@ -45,8 +45,8 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 
 	renderButtons() {
 		this.gamePadRenderer?.clear();
-		const w = this.scene.app.screen.width;
-		const h = this.scene.app.screen.height;
+		const w = this.scene!.app.screen.width;
+		const h = this.scene!.app.screen.height;
 		// TODO make it configurable. This is a mess. Mess mess messsssssssss
 		const circX = w * 0.17;
 		const circX2 = w * 0.82;
@@ -119,9 +119,9 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 			this.gamePadRenderer.on('touchcancel', this.pointerUp);
 			this.gamePadRenderer.on('touchmove', this.pointerMove);
 			this.gamePadRenderer.interactive = true;
-			this.owner.asContainer().sortableChildren = true;
+			this.owner!.asContainer().sortableChildren = true;
 			this.gamePadRenderer.zIndex = 1000;
-			this.owner.asContainer().addChild(this.gamePadRenderer);
+			this.owner!.asContainer().addChild(this.gamePadRenderer);
 		}
 	}
 
@@ -140,15 +140,19 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		}
 	}
 
-	private getPos(evt: TouchEvent): { posX: number; posY: number } {
-		const rect = this.scene.app.view.getBoundingClientRect();
-		const res = this.scene.app.renderer.resolution;
+	private getPos(evt: TouchEvent | MouseEvent): { posX: number; posY: number } {
+		const rect = this.scene!.app.view.getBoundingClientRect();
+		const res = this.scene!.app.renderer.resolution;
 
-		const clientX = evt.changedTouches ? evt.changedTouches[0].clientX : (evt as any).clientX;
-		const clientY = evt.changedTouches ? evt.changedTouches[0].clientY : (evt as any).clientY;
+		const clientX = 'changedTouches' in evt && evt.changedTouches.length
+			? evt.changedTouches[0].clientX
+			: (evt as MouseEvent).clientX;
+		const clientY = 'changedTouches' in evt && evt.changedTouches.length
+			? evt.changedTouches[0].clientY
+			: (evt as MouseEvent).clientY;
 		return {
-			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene.app.view.width / res),
-			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene.app.view.height / res)
+			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene!.app.view.width / res),
+			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene!.app.view.height / res)
 		};
 	}
 
@@ -181,9 +185,9 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 	}
 
 
-	private pointerDown = (evt: any) => {
+	private pointerDown = (evt: PIXI.InteractionEvent) => {
 		const id = evt.data.identifier;
-		const pressedButton = this.getPressedButton(this.getPos(evt.data.originalEvent as TouchEvent));
+		const pressedButton = this.getPressedButton(this.getPos(evt.data.originalEvent));
 		if (pressedButton != null) {
 			this.pressedButtons.set(id, pressedButton);
 			this.renderRequired = true;
@@ -191,7 +195,7 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		}
 	}
 
-	private pointerUp = (evt: any) => {
+	private pointerUp = (evt: PIXI.InteractionEvent) => {
 		const id = evt.data.identifier;
 		const key = this.pressedButtons.get(id);
 		this.pressedButtons.delete(id);
@@ -199,9 +203,9 @@ export class VirtualGamepadComponent extends KeyInputComponent {
 		this.simulateKeyEvent(key, false);
 	}
 
-	private pointerMove = (evt: any) => {
+	private pointerMove = (evt: PIXI.InteractionEvent) => {
 		const id = evt.data.identifier;
-		const pressedButton = this.getPressedButton(this.getPos(evt.data.originalEvent as TouchEvent));
+		const pressedButton = this.getPressedButton(this.getPos(evt.data.originalEvent));
 		if (pressedButton !== null) {
 			this.pressedButtons.set(id, pressedButton);
 			this.renderRequired = true;

@@ -19,8 +19,8 @@ Wanna see what games have been made with this library? Check out the [APHGames G
 
 
 ### Getting started
-- 🚀 [Install colf.io](https://colf.io/docs/installation)
-- 📖 [Read the tutorial](https://colf.io/docs/tutorialBasics/firstSteps)
+- 🚀 [Install colf.io](./docs/installation.md)
+- 📖 [Read the tutorial](./docs/tutorial-basics/01-first-steps.md)
 
 --- 
 

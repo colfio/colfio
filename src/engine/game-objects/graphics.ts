@@ -1,6 +1,7 @@
 import { GameObjectProxy } from '../game-object-proxy';
 import type { Component } from '../component';
 import type { Scene } from '../scene';
+import { isGameObject } from '../game-object';
 import type { GameObject } from '../game-object';
 
 import type { AnimatedSprite } from './animated-sprite';
@@ -42,7 +43,7 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 	}
 
 	get parentGameObject(): Container {
-		return <Container><any>this.parent;
+		return this.parent as Container;
 	}
 
 	asAnimatedSprite(): AnimatedSprite {
@@ -89,9 +90,8 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
 		const newChild = super.addChild(...children);
 		for (const child of children) {
-			const cmpObj = <GameObject><any>child;
-			if (cmpObj && cmpObj._proxy) {
-				this._proxy.onChildAdded(cmpObj._proxy);
+			if (isGameObject(child)) {
+				this._proxy.onChildAdded(child._proxy);
 			}
 		}
 
@@ -101,9 +101,8 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 	// overrides pixijs function
 	addChildAt<T extends PIXI.DisplayObject>(child: T, index: number): T {
 		const newChild = super.addChildAt(child, index);
-		const cmpObj = <GameObject><any>newChild;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildAdded(cmpObj._proxy);
+		if (isGameObject(newChild)) {
+			this._proxy.onChildAdded(newChild._proxy);
 		}
 		return newChild;
 	}
@@ -111,9 +110,8 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 	// overrides pixijs function
 	removeChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
 		const removed = super.removeChild(...children);
-		const cmpObj = <GameObject><any>removed;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildDetached(cmpObj._proxy);
+		if (isGameObject(removed)) {
+			this._proxy.onChildDetached(removed._proxy);
 		}
 		return removed;
 	}
@@ -121,9 +119,8 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 	// overrides pixijs function
 	removeChildAt(index: number): PIXI.DisplayObject {
 		const removed = super.removeChildAt(index);
-		const cmpObj = <GameObject><any>removed;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildDetached(cmpObj._proxy);
+		if (isGameObject(removed)) {
+			this._proxy.onChildDetached(removed._proxy);
 		}
 		return removed;
 	}
@@ -132,9 +129,8 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 	removeChildren(beginIndex?: number, endIndex?: number): PIXI.DisplayObject[] {
 		const removed = super.removeChildren(beginIndex, endIndex);
 		for (const removedObj of removed) {
-			const cmpObj = <GameObject><any>removedObj;
-			if (cmpObj && cmpObj._proxy) {
-				this._proxy.onChildDetached(cmpObj._proxy);
+			if (isGameObject(removedObj)) {
+				this._proxy.onChildDetached(removedObj._proxy);
 			}
 		}
 		return removed;
@@ -142,18 +138,19 @@ export class Graphics extends PIXI.Graphics implements GameObject {
 
 	destroyChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
 		const removed = super.removeChild(...children);
-		const cmpObj = <GameObject><any>removed;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildDestroyed(cmpObj._proxy);
+		if (isGameObject(removed)) {
+			this._proxy.onChildDestroyed(removed._proxy);
 		}
 		return removed;
 	}
 
-	addComponent(component: Component<any>) {
+	addComponent<T extends Component<any>>(component: T): T {
 		this._proxy.addComponent(component, false);
+		return component;
 	}
-	addComponentAndRun(component: Component<any>) {
+	addComponentAndRun<T extends Component<any>>(component: T): T {
 		this._proxy.addComponent(component, true);
+		return component;
 	}
 	findComponentByName<T extends Component<any>>(name: string): T | null {
 		return this._proxy.findComponentByName<T>(name);

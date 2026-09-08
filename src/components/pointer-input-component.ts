@@ -38,7 +38,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 		this.lastTouch = null;
 		this.messagesToSend = [];
 
-		const canvas = this.scene.app.view;
+		const canvas = this.scene!.app.view;
 
 		canvas.addEventListener('touchstart', this.handleStart, false);
 		canvas.addEventListener('touchend', this.handleEnd, false);
@@ -54,13 +54,13 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 	onUpdate() {
 		for (const msg of this.messagesToSend) {
-			this.scene.sendMessage(msg);
+			this.scene!.sendMessage(msg);
 		}
 		this.messagesToSend = [];
 	}
 
 	onDetach() {
-		const canvas = this.scene.app.view;
+		const canvas = this.scene!.app.view;
 		canvas.removeEventListener('touchstart', this.handleStart);
 		canvas.removeEventListener('touchend', this.handleEnd);
 		canvas.removeEventListener('mousedown', this.handleStart);
@@ -83,7 +83,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 	protected handleStart = (evt: TouchEvent | MouseEvent) => {
 		evt.preventDefault();
-		const isTouch = (window.TouchEvent && evt instanceof TouchEvent);
+		const isTouch = !!(window.TouchEvent && evt instanceof TouchEvent);
 		if (isTouch && (evt as TouchEvent).changedTouches.length === 1) {
 			// only single-touch
 			this.lastTouch = (evt as TouchEvent).changedTouches[0];
@@ -93,7 +93,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 		if (this.props.handlePointerDown) {
 			this.sendMessage(PointerMessages.POINTER_DOWN, {
-				mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
+				mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
 				isTouch: isTouch
 			});
 		}
@@ -101,9 +101,9 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 
 	protected handleMove = (evt: TouchEvent | MouseEvent) => {
 		evt.preventDefault();
-		const isTouch = typeof ((evt as any).changedTouches) !== 'undefined';
+		const isTouch = !!(window.TouchEvent && evt instanceof TouchEvent);
 		this.sendMessage(PointerMessages.POINTER_OVER, {
-			mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
+			mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
 			isTouch: isTouch
 		});
 	}
@@ -111,7 +111,7 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 	protected handleEnd = (evt: TouchEvent | MouseEvent) => {
 		evt.preventDefault();
 		let posX, posY;
-		const isTouch = (window.TouchEvent && evt instanceof TouchEvent);
+		const isTouch = !!(window.TouchEvent && evt instanceof TouchEvent);
 		if (this.lastTouch != null) {
 			if (isTouch && (evt as TouchEvent).changedTouches.length === 1) {
 				posX = (evt as TouchEvent).changedTouches[0].pageX;
@@ -128,12 +128,12 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 				Math.abs(this.lastTouch.pageY - posY) < 10 && (isTouch || this.props.handleClick)) {
 				// at last send the message to all subscribers about this event
 				this.sendMessage(PointerMessages.POINTER_TAP, {
-					mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
+					mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
 					isTouch: isTouch
 				});
 			} else {
 				this.sendMessage(PointerMessages.POINTER_RELEASE, {
-					mousePos: this.getMousePos(this.scene.app.view, evt, isTouch),
+					mousePos: this.getMousePos(this.scene!.app.view, evt, isTouch),
 					isTouch: isTouch
 				});
 			}
@@ -143,12 +143,12 @@ export class PointerInputComponent extends Component<PointerInputComponentProps>
 	// Get the mouse position
 	protected getMousePos(canvas: HTMLCanvasElement, evt: TouchEvent | MouseEvent, isTouch: boolean) {
 		const rect = canvas.getBoundingClientRect();
-		const res = this.scene.app.renderer.resolution;
+		const res = this.scene!.app.renderer.resolution;
 		const clientX = isTouch ? (evt as TouchEvent).changedTouches[0].clientX : (evt as MouseEvent).clientX;
 		const clientY = isTouch ? (evt as TouchEvent).changedTouches[0].clientY : (evt as MouseEvent).clientY;
 		return {
-			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene.app.view.width / res),
-			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene.app.view.height / res)
+			posX: Math.round((clientX - rect.left) / (rect.right - rect.left) * this.scene!.app.view.width / res),
+			posY: Math.round((clientY - rect.top) / (rect.bottom - rect.top) * this.scene!.app.view.height / res)
 		};
 	}
 }

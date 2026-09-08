@@ -2,7 +2,7 @@ import type { Component } from './component';
 import { ComponentState } from './component';
 import type { Scene } from './scene';
 import type { Container } from './game-objects/container';
-import type { GameObject } from './game-object';
+import { isGameObject } from './game-object';
 import { Flags } from '../utils/flags';
 
 /**
@@ -101,8 +101,9 @@ export class GameObjectProxy {
 
 	/**
 	 * Adds a new component
+	 * @returns the component that was added (for chaining)
 	 */
-	addComponent(component: Component<any>, runInstantly = false) {
+	addComponent<T extends Component<any>>(component: T, runInstantly = false): T {
 		if (runInstantly) {
 			if (!this.isOnScene) {
 				throw new Error('This object hasn\'t been added to the scene yet');
@@ -118,6 +119,7 @@ export class GameObjectProxy {
 		} else {
 			this.componentsToAdd.push(component);
 		}
+		return component;
 	}
 
 	/**
@@ -133,7 +135,7 @@ export class GameObjectProxy {
 		cmp.onRemove();
 		cmp._cmpState = ComponentState.REMOVED;
 		cmp._lastFixedUpdate = 0;
-		(cmp as any).owner = null;
+		cmp.owner = null;
 
 		this.components.delete(cmp.id);
 
@@ -342,9 +344,8 @@ export class GameObjectProxy {
 
 		// update all children recursively and their components
 		for (const child of this.pixiObj!.children) {
-			const cmpChild = <GameObject><any>child;
-			if (cmpChild && cmpChild._proxy) { // some object may be regular PIXI objects, not PIXICmp
-				cmpChild._proxy.update(delta, absolute);
+			if (isGameObject(child)) {
+				child._proxy.update(delta, absolute);
 			}
 		}
 
@@ -397,9 +398,8 @@ export class GameObjectProxy {
 		});
 
 		for (const child of this.pixiObj!.children) {
-			const cmpObj = <GameObject><any>child;
-			if (cmpObj && cmpObj._proxy) {
-				cmpObj._proxy.attach();
+			if (isGameObject(child)) {
+				child._proxy.attach();
 			}
 		}
 	}
@@ -419,9 +419,8 @@ export class GameObjectProxy {
 		this.scene._onObjectRemoved(this);
 
 		for (const child of this.pixiObj!.children) {
-			const cmpObj = <GameObject><any>child;
-			if (cmpObj && cmpObj._proxy) {
-				cmpObj._proxy.detach();
+			if (isGameObject(child)) {
+				child._proxy.detach();
 			}
 		}
 	}
@@ -433,9 +432,8 @@ export class GameObjectProxy {
 		this.scene._onObjectRemoved(this);
 
 		for (const child of this.pixiObj!.children) {
-			const cmpObj = <GameObject><any>child;
-			if (cmpObj && cmpObj._proxy) {
-				cmpObj._proxy.destroy();
+			if (isGameObject(child)) {
+				child._proxy.destroy();
 			}
 		}
 	}

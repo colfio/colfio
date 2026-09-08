@@ -1,6 +1,7 @@
 import { GameObjectProxy } from '../game-object-proxy';
 import type { Component } from '../component';
 import type { Scene } from '../scene';
+import { isGameObject } from '../game-object';
 import type { GameObject } from '../game-object';
 
 import type { AnimatedSprite } from './animated-sprite';
@@ -26,7 +27,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 
 	constructor(name = '', maxSize: number, properties: PIXI.IParticleProperties) {
 		super(maxSize, properties);
-		this._proxy = new GameObjectProxy(name, this);
+		this._proxy = new GameObjectProxy(name, this as unknown as Container);
 	}
 
 	get id(): number {
@@ -34,7 +35,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 	}
 
 	get pixiObj(): PIXI.Container {
-		return this;
+		return this as unknown as PIXI.Container;
 	}
 
 	get scene(): Scene {
@@ -42,7 +43,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 	}
 
 	get parentGameObject(): Container {
-		return <Container><any>this.parent;
+		return this.parent as Container;
 	}
 
 	asAnimatedSprite(): AnimatedSprite {
@@ -52,7 +53,7 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		throw new Error('Can\'t cast to this object!');
 	}
 	asContainer(): Container {
-		return this;
+		return this as unknown as Container;
 	}
 	asGraphics(): Graphics {
 		throw new Error('Can\'t cast to this object!');
@@ -85,78 +86,70 @@ export class ParticleContainer extends PIXI.ParticleContainer implements GameObj
 		throw new Error('Can\'t cast to this object!');
 	}
 
-	// overrides pixijs function
-	addChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		const newChild = super.addChild(...children as any);
+	// ParticleContainer only accepts sprites as children
+	addChild<T extends PIXI.Sprite[]>(...children: T): T[0] {
+		const newChild = super.addChild(...children);
 		for (const child of children) {
-			const cmpObj = <GameObject><any>child;
-			if (cmpObj && cmpObj._proxy) {
-				this._proxy.onChildAdded(cmpObj._proxy);
+			if (isGameObject(child)) {
+				this._proxy.onChildAdded(child._proxy);
 			}
 		}
 
 		return newChild;
 	}
 
-	// overrides pixijs function
-	addChildAt<T extends PIXI.DisplayObject>(child: T, index: number): T {
-		const newChild = super.addChildAt(child as any, index);
-		const cmpObj = <GameObject><any>newChild;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildAdded(cmpObj._proxy);
+	addChildAt<T extends PIXI.Sprite>(child: T, index: number): T {
+		const newChild = super.addChildAt(child, index);
+		if (isGameObject(newChild)) {
+			this._proxy.onChildAdded(newChild._proxy);
 		}
 		return newChild;
 	}
 
-	// overrides pixijs function
-	removeChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		const removed = super.removeChild(...children as any);
+	removeChild<T extends PIXI.Sprite[]>(...children: T): T[0] {
+		const removed = super.removeChild(...children);
 		for (const child of children) {
-			const cmpObj = <GameObject><any>child;
-			if (cmpObj && cmpObj._proxy) {
-				this._proxy.onChildDetached(cmpObj._proxy);
+			if (isGameObject(child)) {
+				this._proxy.onChildDetached(child._proxy);
 			}
 		}
 
 		return removed;
 	}
 
-	// overrides pixijs function
 	removeChildAt(index: number): PIXI.Sprite {
 		const removed = super.removeChildAt(index);
-		const cmpObj = <GameObject><any>removed;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildDetached(cmpObj._proxy);
+		if (isGameObject(removed)) {
+			this._proxy.onChildDetached(removed._proxy);
 		}
 		return removed;
 	}
 
-	// overrides pixijs function
 	removeChildren(beginIndex?: number, endIndex?: number): PIXI.Sprite[] {
 		const removed = super.removeChildren(beginIndex, endIndex);
 		for (const removedObj of removed) {
-			const cmpObj = <GameObject><any>removedObj;
-			if (cmpObj && cmpObj._proxy) {
-				this._proxy.onChildDetached(cmpObj._proxy);
+			if (isGameObject(removedObj)) {
+				this._proxy.onChildDetached(removedObj._proxy);
 			}
 		}
 		return removed;
 	}
 
-	destroyChild<T extends PIXI.DisplayObject[]>(...children: T): T[0] {
-		const removed = super.removeChild(...children as any);
-		const cmpObj = <GameObject><any>removed;
-		if (cmpObj && cmpObj._proxy) {
-			this._proxy.onChildDestroyed(cmpObj._proxy);
+	destroyChild<T extends PIXI.Sprite[]>(...children: T): T[0] {
+		const removed = super.removeChild(...children);
+		if (isGameObject(removed)) {
+			this._proxy.onChildDestroyed(removed._proxy);
 		}
 		return removed;
 	}
 
-	addComponent(component: Component<any>) {
+	addComponent<T extends Component<any>>(component: T): T {
 		this._proxy.addComponent(component, false);
+		return component;
 	}
-	addComponentAndRun(component: Component<any>) {
+	addComponentAndRun<T extends Component<any>>(component: T): T {
 		this._proxy.addComponent(component, true);
+		return component;
 	}
 	findComponentByName<T extends Component<any>>(name: string): T | null {
 		return this._proxy.findComponentByName<T>(name);

@@ -1,5 +1,11 @@
 import * as PIXI from 'pixi.js';
-(window as any).PIXI = PIXI; // workaround for PIXISound
+
+declare global {
+	interface Window {
+		PIXI: typeof PIXI;
+	}
+}
+window.PIXI = PIXI; // workaround for PIXISound
 
 import { Scene } from './scene';
 import { resizeContainer } from '../utils/helpers';
@@ -148,9 +154,9 @@ export class Engine {
 	}
 
 	private initResizeHandler() {
-		resizeContainer((this.app as any).view, this.virtualWidth, this.virtualHeight);
+		resizeContainer(this.app!.view, this.virtualWidth, this.virtualHeight);
 		window.addEventListener('resize', this.resizeHandler);
 	}
 
-	private resizeHandler = () => resizeContainer((this.app as any).view, this.virtualWidth, this.virtualHeight);
+	private resizeHandler = () => resizeContainer(this.app!.view, this.virtualWidth, this.virtualHeight);
 }

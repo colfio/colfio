@@ -80,10 +80,10 @@ export class Message {
 	 */
 	private _gameObject?: Container;
 
-	constructor(action: string, component?: Component<any>, gameObject?: Container, data?: any) {
+	constructor(action: string, component?: Component<any>, gameObject?: Container | null, data?: any) {
 		this._action = action;
 		this._component = component;
-		this._gameObject = gameObject;
+		this._gameObject = gameObject ?? undefined;
 		this.data = data;
 		this.responses = new MessageResponses();
 	}

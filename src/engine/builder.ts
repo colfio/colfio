@@ -441,7 +441,7 @@ export class Builder {
 						this.objectProps.topHeight!, this.objectProps.rightWidth!, this.objectProps.bottomHeight!);
 					break;
 				case ObjectType.ParticleContainer:
-					object = new ParticleContainer(this.props.name, 10000, { /* TODO */ });
+					object = new ParticleContainer(this.props.name, 10000, { /* TODO */ }) as unknown as Container;
 					break;
 				case ObjectType.SimpleMesh:
 					object = new SimpleMesh(this.props.name, this.objectProps.texture, this.objectProps.vertices);
@@ -595,7 +595,7 @@ export class Builder {
 
 		// now, when this object is already assigned to its parent, we can build children
 		for (const child of this.children) {
-			child.withParent(<Container><any>object).process(clearData);
+			child.withParent(object as Container).process(clearData);
 		}
 
 		if (clearData) {

@@ -36,7 +36,7 @@ export class DebugComponent extends Component<void> {
 	onMessage(msg: Message) {
 
 		// discared messages from the log
-		if (this.discaredMessages.indexOf(msg.action as any) === -1) {
+		if (this.discaredMessages.indexOf(msg.action) === -1) {
 			const row = document.createElement('tr');
 			const cell1 = document.createElement('td');
 			const cell2 = document.createElement('td');
@@ -46,7 +46,7 @@ export class DebugComponent extends Component<void> {
 			cell2.style.color = '#ff7e7e';
 			cell3.style.color = '#7e8bff';
 			cell4.style.color = '#7eff80';
-			cell1.innerText = (this.scene.currentAbsolute / 1000).toFixed(2);
+			cell1.innerText = (this.scene!.currentAbsolute / 1000).toFixed(2);
 			cell2.innerText = msg.action;
 			cell3.innerText = msg.component ? msg.component.name : 'n/a';
 			cell4.innerText = msg.gameObject ? msg.gameObject.name : 'n/a';
@@ -90,11 +90,11 @@ export class DebugComponent extends Component<void> {
 			item = document.createElement('li');
 			list.appendChild(item);
 			item.id = this.getObjectId(obj);
-			let parent = document.getElementById(this.getObjectId(<Container><any>obj.pixiObj.parent));
+			let parent = document.getElementById(this.getObjectId(obj.pixiObj.parent as Container));
 			if (parent == null) {
 				// parent hasn't been created yet -> create it accordingly
 				this.addGameObject(obj.parentGameObject);
-				parent = document.getElementById(this.getObjectId(<Container><any>obj.pixiObj.parent));
+				parent = document.getElementById(this.getObjectId(obj.pixiObj.parent as Container));
 			}
 			parent?.appendChild(list);
 		} else {
@@ -198,7 +198,8 @@ export class DebugComponent extends Component<void> {
 
 		// prevent key down as we don't want to scroll while playing the game
 		document.onkeydown = (evt) => {
-			if ([Keys.KEY_LEFT, Keys.KEY_RIGHT, Keys.KEY_UP, Keys.KEY_DOWN].indexOf(evt.keyCode as any) !== -1) {
+			const arrowKeys: number[] = [Keys.KEY_LEFT, Keys.KEY_RIGHT, Keys.KEY_UP, Keys.KEY_DOWN];
+			if (arrowKeys.indexOf(evt.keyCode) !== -1) {
 				evt.preventDefault();
 			}
 		};

@@ -9,6 +9,7 @@
 	"homepage": "https://colf.io",
 	"files": [
 		"docs/",
+		"api-docs/",
 		"dist/",
 		"src/",
 		"LICENSE",
@@ -44,7 +45,7 @@
 		"build:cjs": "tsc --module commonjs --outdir dist/cjs ",
 		"build:esm": "tsc --outdir dist/esm",
 		"build": "rimraf dist && npm run build:cjs && npm run build:esm",
-		"typedoc": "typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts"
+		"typedoc": "typedoc --plugin typedoc-plugin-markdown --out api-docs src/index.ts"
 	},
 	"peerDependencies": {
 		"pixi.js": ">=6.1.2"
