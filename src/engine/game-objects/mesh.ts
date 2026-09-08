@@ -38,7 +38,7 @@ export class Mesh extends PIXI.Mesh implements GameObject {
 		}
 		super({
 			geometry: geometry as PIXI.MeshGeometry,
-			shader,
+			shader: shader as PIXI.TextureShader,
 			state,
 		});
 		this._proxy = new GameObjectProxy(name, this);
