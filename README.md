@@ -46,5 +46,5 @@ Wanna see what games have been made with this library? Check out the [APHGames G
 
 
 <div align="center">
-  MIT licensed | Copyright © 2018-2023 Adam Vesecký
+  MIT licensed | Copyright © 2018-2026 Adam Vesecký
 </div>
