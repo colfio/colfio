@@ -38,6 +38,16 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Check npm auth
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then
+            echo "::error::Missing repository secret NPM_TOKEN. Add an npm Automation token at Settings → Secrets → Actions, named NPM_TOKEN, then re-run this workflow."
+            echo "Alternatively configure npm Trusted Publishing for colfio/colfio on https://www.npmjs.com/package/colfio"
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish
         run: pnpm publish --access public --no-git-checks --provenance
         env:
